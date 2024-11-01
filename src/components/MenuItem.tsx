@@ -37,7 +37,7 @@ const MenuItem: React.FC<MenuItemProps> = ({ route }) => {
         )}
         {route.highlight && (
           <span
-            className={`bg-red-500 text-white text-sm font-semibold rounded-full px-2 py-0.5 ml-auto max-lg:hidden`}
+            className={`bg-red-500 text-white text-sm font-semibold rounded-full px-2 py-0.5 ml-auto max-[1090px]:hidden`}
             style={{ marginLeft: "15%" }}
           >
             Новый
