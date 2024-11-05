@@ -10,10 +10,10 @@ type MenuGroupProps = {
 const MenuGroup: React.FC<MenuGroupProps> = ({ title, items }) => {
   return (
     <div className="mb-4">
-      <p className={`text-[#717579] font-semibold uppercase mb-3 text-sm`}>
+      <p className={`text-[#717579] font-semibold uppercase mb-2 text-sm`}>
         {title}
       </p>
-      <ul className={`space-y-3`}>
+      <ul className={`space-y-2`}>
         {items.map((item, index) => (
           <MenuItem key={index} route={item} />
         ))}

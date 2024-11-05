@@ -1,27 +1,53 @@
-// components/TabsNavigation.tsx
-import React from "react";
+import React, { useState } from "react";
+import { FaCloudUploadAlt, FaSlidersH } from "react-icons/fa";
 
 const TabsNavigation = () => {
+  const [activeTab, setActiveTab] = useState("Акт приема"); // default active tab
+
+  const tabs = [
+    "TTN",
+    "CMP",
+    "QR",
+    "Заявка",
+    "Excell",
+    "Акт приема",
+    "Акт сдачи",
+  ];
+
   return (
-    <div className="flex gap-2 p-4 bg-white shadow rounded-t-lg">
-      {["TTN", "CMP", "QR", "Заявка", "Excell", "Акт сдачи", "Акт приема"].map(
-        (tab, index) => (
-          <button
-            key={index}
-            className={`px-4 py-2 ${
-              tab === "Акт приема"
-                ? "bg-green-500 text-white"
-                : "bg-gray-200 text-gray-700"
-            } rounded-md`}
-          >
-            {tab}
-          </button>
-        )
-      )}
-      <button className="ml-auto bg-blue-500 text-white px-4 py-2 rounded-md">
-        Отправить на хранение
+    <div className="flex gap-2 py-4 items-center rounded-lg my-4">
+      <div className="bg-white flex items-center shadow-md rounded-lg">
+        {tabs.map((tab, index) => (
+          <React.Fragment key={index}>
+            <button
+              onClick={() => setActiveTab(tab)}
+              className={`px-4 py-2 text-sm font-medium rounded-md ${
+                activeTab === tab
+                  ? "bg-[#09BD3C] text-white font-bold py-3"
+                  : "text-[#1D1B23] hover:bg-gray-200"
+              }`}
+            >
+              {tab}
+            </button>
+            {/* Line separator after each button except the last one and not next to active button */}
+            {index < tabs.length - 1 &&
+              activeTab !== tab &&
+              activeTab !== tabs[index + 1] && (
+                <div className="w-[1px] h-[24px] bg-gray-300 mx-2" />
+              )}
+          </React.Fragment>
+        ))}
+      </div>
+      <button className="flex items-center justify-center bg-white text-[#09BD3C] px-4 py-3 rounded-md text-sm font-semibold hover:bg-green-50 w-72 shadow-md">
+        <FaCloudUploadAlt className="mr-2" size={22} />
+        <span className="text-[#1D1B23] font-semibold">
+          Отправить на хранение
+        </span>
       </button>
-      <button className="ml-2 bg-gray-200 text-gray-700 px-4 py-2 rounded-md">
+      <button className="bg-[#09BD3C] text-white p-3 rounded-md flex items-center ml-auto">
+        <FaSlidersH />
+      </button>
+      <button className="bg-white text-[#1D1B23] px-4 py-2 rounded-md border text-sm font-semibold ml-2 hover:bg-gray-100 h-11">
         Новые
       </button>
     </div>

@@ -3,11 +3,41 @@
 @import "tailwindcss/utilities";
 @import url("https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap");
 
-h1 {
+h1,
+h2 {
   color: #1d1b23;
 }
 
 body {
   font-family: "Poppins", sans-serif;
   background: #fbfbfb;
+}
+
+input,
+select,
+textarea {
+  background-color: white;
+  -webkit-appearance: none; /* Remove default styling in Safari */
+  -moz-appearance: none; /* Remove default styling in Firefox */
+  appearance: none;
+}
+
+label {
+  color: #3c3c3c;
+  opacity: 0.8;
+}
+
+.table-no-side-borders td:first-child,
+.table-no-side-borders th:first-child {
+  border-left: none;
+}
+
+.table-no-side-borders td:last-child,
+.table-no-side-borders th:last-child {
+  border-right: none;
+}
+
+.table-no-side-borders tr:last-child td,
+.table-no-side-borders tr:last-child th {
+  border-bottom: none;
 }

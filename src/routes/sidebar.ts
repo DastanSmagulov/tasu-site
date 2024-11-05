@@ -9,7 +9,7 @@ export type Route = {
 
 const routes: Route[] = [
   {
-    path: "/app/act",
+    path: "/act",
     name: "Акт",
     icon: "act",
     submenu: [
@@ -21,7 +21,7 @@ const routes: Route[] = [
     ],
   },
   {
-    path: "/app/warehouse",
+    path: "/warehouse",
     name: "Склад",
     icon: "warehouse",
     count: 14,
