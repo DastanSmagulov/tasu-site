@@ -1,12 +1,32 @@
 import NextAuth, { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 
+interface CustomUser {
+  id: string;
+  jwt: string;
+  refreshToken: string;
+}
+
+declare module "next-auth" {
+  interface User extends CustomUser {}
+
+  interface Session {
+    jwt: string;
+    refreshToken: string;
+  }
+
+  interface JWT {
+    jwt: string;
+    refreshToken: string;
+  }
+}
+
 export const authOptions: NextAuthOptions = {
   providers: [
     CredentialsProvider({
       name: "Credentials",
       credentials: {
-        identifier: { label: "Email", type: "text" }, // Expect `identifier`
+        identifier: { label: "Email", type: "text" },
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
@@ -21,13 +41,15 @@ export const authOptions: NextAuthOptions = {
           });
 
           const data = await res.json();
-          console.log(data);
 
           if (res.ok && data.access && data.refresh) {
-            return {
+            const user: CustomUser = {
+              id: data.userId,
               jwt: data.access,
               refreshToken: data.refresh,
             };
+
+            return user;
           } else {
             throw new Error(data.error?.message || "Authentication failed");
           }
@@ -40,8 +62,8 @@ export const authOptions: NextAuthOptions = {
   ],
   callbacks: {
     async session({ session, token }) {
-      session.jwt = token.jwt;
-      session.refreshToken = token.refreshToken;
+      session.jwt = (token as { jwt: string }).jwt;
+      session.refreshToken = (token as { refreshToken: string }).refreshToken;
       return session;
     },
     async jwt({ token, user }) {
