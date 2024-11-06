@@ -2,49 +2,47 @@
 
 import { useState, FormEvent } from "react";
 import { signIn } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import Image from "next/image";
 
 const Login: React.FC = () => {
-  const [username, setUsername] = useState<string>("");
+  const [identifier, setIdentifier] = useState<string>("");
   const [password, setPassword] = useState<string>("");
   const [error, setError] = useState<string>("");
+  const router = useRouter();
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+
     const result = await signIn("credentials", {
       redirect: false,
-      username,
+      identifier,
       password,
     });
 
     if (result?.error) {
-      setError("Login failed. Please check your credentials.");
+      setError("Ошибка входа. Пожалуйста, проверьте свои данные.");
     } else {
-      console.log("Login successful");
-      // Optionally redirect or update UI on successful login
+      console.log("Login successful:", result);
+      router.push("/");
     }
   };
 
   return (
     <div className="min-h-screen bg-[#0d0d13] flex">
-      {/* Left side with image */}
       <div className="hidden md:flex w-1/2 relative">
         <Image
           src="/images/login.jpg"
           alt="Truck"
-          layout="fill" // Fill the parent container
-          objectFit="cover" // Ensure the image covers the container
+          layout="fill"
+          objectFit="cover"
           className="object-cover"
         />
       </div>
 
-      {/* Right side with login form */}
       <div className="w-full md:w-1/2 bg-[#131826] p-8 flex flex-col justify-center">
-        <a href="/" className="text-[#9a00ff] text-sm mb-4">
-          &larr; Return to site
-        </a>
         <h2 className="text-2xl font-bold mt-6 mb-4">
-          Welcome back to{" "}
+          <span className="text-white">Welcome back to </span>
           <span className="text-[#9a00ff]">TASU KAZAKHSTAN</span>
         </h2>
 
@@ -52,21 +50,24 @@ const Login: React.FC = () => {
 
         <form onSubmit={handleSubmit}>
           <div className="mb-6">
-            <label htmlFor="email" className="block text-sm mb-1">
+            <label
+              htmlFor="identifier"
+              className="block text-sm mb-1 text-white"
+            >
               Адрес электронной почты
             </label>
             <input
               type="text"
-              id="email"
+              id="identifier" // Renamed from `email` to `identifier`
               placeholder="Введите электронную почту"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
+              value={identifier} // Use identifier here
+              onChange={(e) => setIdentifier(e.target.value)} // Update identifier
               className="w-full bg-[#1f1f2e] border-none rounded-lg p-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#9a00ff]"
               required
             />
           </div>
           <div className="mb-6">
-            <label htmlFor="password" className="block text-sm mb-1">
+            <label htmlFor="password" className="block text-sm mb-1 text-white">
               Пароль
             </label>
             <input

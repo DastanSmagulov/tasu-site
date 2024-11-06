@@ -33,8 +33,8 @@ const Signature: React.FC<SignatureProps> = ({ onSubmit, onUpload }) => {
 
   return (
     <div className="flex flex-col items-center gap-4">
-      <div className="border-2 border-gray-800 bg-gray-200 p-2">
-        <label className="text-gray-800">Подпись заказчика:</label>
+      <div className="border-2 border-gray-800 bg-black pt-1 pb-1 px-3">
+        <label className="text-gray-300">Подпись заказчика:</label>
         <SignatureCanvas
           ref={signaturePadRef}
           penColor="blue"
@@ -44,20 +44,20 @@ const Signature: React.FC<SignatureProps> = ({ onSubmit, onUpload }) => {
             className: "bg-gray-100 border",
           }}
         />
+        <label onClick={handleClear} className="text-gray-300">
+          Reset
+        </label>
       </div>
-      <button onClick={handleClear} className="text-blue-500 mt-2">
-        Reset
-      </button>
 
-      <div className="flex gap-4 mt-4">
+      <div className="flex gap-4 mt-4 text-[#000000]">
         <button
           onClick={handleSave}
-          className="border border-gray-500 rounded-md px-4 py-2 bg-white hover:bg-gray-100 text-black"
+          className="font-semibold border border-gray-500 px-4 py-2 bg-white hover:bg-gray-100 text-black rounded-lg"
         >
           Отправить на подпись
         </button>
-        <span className="text-gray-500">Или</span>
-        <label className="border border-gray-500 rounded-md px-4 py-2 bg-white hover:bg-gray-100 text-black cursor-pointer">
+        <span className="mt-2 font-semibold">Или</span>
+        <label className="border font-semibold border-gray-500 rounded-lg px-4 py-2 bg-white hover:bg-gray-100 text-black cursor-pointer">
           Загрузить фото
           <input
             type="file"

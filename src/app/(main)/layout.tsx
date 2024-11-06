@@ -16,6 +16,8 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   let headerText = "Акт передачи документов";
   if (pathname === "/create-act") {
     headerText = "Создать акт";
+  } else if (pathname === "/cost-calculation") {
+    headerText = "Расчет стоимости";
   } else if (pathname === "/warehouse") {
     headerText = "Склад";
   }

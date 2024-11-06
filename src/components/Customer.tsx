@@ -1,7 +1,6 @@
 import React, { useState } from "react";
-import { FaEdit, FaPlus, FaTrash } from "react-icons/fa";
-import Settings from "../../public/icons/settings.svg";
-import Image from "next/image";
+import { PencilIcon } from "@heroicons/react/solid";
+import { FaEdit, FaPlus, FaTrash, FaCog } from "react-icons/fa";
 
 const Customer: React.FC = () => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -41,34 +40,28 @@ const Customer: React.FC = () => {
           onClick={toggleDropdown}
           className="absolute right-2 top-1/2 transform -translate-y-1/2 focus:outline-none"
         >
-          <Image
-            src={Settings}
-            alt="settings"
-            className="text-gray-600 cursor-pointer"
-            width={24}
-            height={24}
-          />
+          <FaCog className="fill-gray-400 cursor-pointer" size={22} />
         </button>
         {dropdownOpen && (
           <div className="absolute right-0 mt-2 w-40 bg-white border border-gray-300 rounded-lg shadow-lg z-10">
             <ul className="py-2">
               <li
                 onClick={handleEdit}
-                className="flex items-center px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                className="flex items-center px-2 py-2 hover:bg-gray-100 cursor-pointer"
               >
-                <FaEdit className="mr-2 text-gray-600" />
+                <FaEdit className="mr-2 text-gray-600" size={30} />
                 Редактировать
               </li>
               <li
                 onClick={handleAdd}
-                className="flex items-center px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                className="flex items-center px-2 py-2 hover:bg-gray-100 cursor-pointer"
               >
                 <FaPlus className="mr-2 text-gray-600" />
                 Добавить
               </li>
               <li
                 onClick={handleDelete}
-                className="flex items-center px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                className="flex items-center px-2 py-2 hover:bg-gray-100 cursor-pointer"
               >
                 <FaTrash className="mr-2 text-gray-600" />
                 Удалить

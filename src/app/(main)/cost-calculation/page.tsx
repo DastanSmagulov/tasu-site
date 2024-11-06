@@ -1,13 +1,12 @@
 "use client";
 
 import Customer from "../../../components/Customer";
-import DeliveryCity from "./components/DeliveryCity";
+import DeliveryCity from "../create-act/components/DeliveryCity";
 import Reciever from "../../../components/Reciever";
-import RecieverCity from "../../../components/RecieverCity";
-import PackageCharacteristics from "./components/PackageCharacteristics";
-import CargoPhoto from "./components/CargoPhoto";
 import Insurance from "./components/Insurance";
-import Signature from "@/app/(main)/create-act/components/Signature";
+import TransportationServices from "./components/TransportationServices";
+import PackagingService from "./components/PackagingService";
+import WarehouseServices from "./components/WarehouseServices";
 
 ("./globals.css");
 
@@ -35,23 +34,14 @@ export default function Home() {
   };
   return (
     <div className="flex gap-10 mt-4 w-full">
-      <div className="flex flex-col w-1/2 space-y-4">
+      <div className="space-y-4">
         <Customer />
         <Reciever />
         <DeliveryCity />
-        <RecieverCity />
-        <PackageCharacteristics />
-      </div>
-      <div className="flex flex-col w-1/2 space-y-8">
-        <h2 className="ml-auto my-6 font-semibold text-lg">
-          Номер акта № 754857345
-        </h2>
-        <CargoPhoto />
         <Insurance />
-        <Signature
-          onSubmit={handleSignatureSubmit}
-          onUpload={handlePhotoUpload}
-        />
+        <TransportationServices />
+        <PackagingService />
+        <WarehouseServices />
       </div>
     </div>
   );

@@ -4,6 +4,7 @@ import FilterPanel from "../../../components/FilterPanel";
 import Table from "../../../components/Table";
 import Pagination from "../../../components/Pagination";
 import { useState } from "react";
+import WarehouseActList from "@/components/WarehouseActList";
 ("./globals.css");
 
 // Define the data type
@@ -190,6 +191,7 @@ export default function Home() {
 
   return (
     <div>
+      <WarehouseActList />
       <FilterPanel />
       <Table data={data} />
       <Pagination

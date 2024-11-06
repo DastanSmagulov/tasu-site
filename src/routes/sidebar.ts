@@ -27,7 +27,7 @@ const routes: Route[] = [
     count: 14,
   },
   {
-    path: "/app/cost-calculation",
+    path: "/cost-calculation",
     name: "Расчет стоимости",
     icon: "cost",
   },
