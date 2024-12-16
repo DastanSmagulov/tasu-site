@@ -1,6 +1,6 @@
 import { useState } from "react";
 import MenuItem from "./MenuItem";
-import { Route } from "../routes/sidebar";
+import { Route } from "../helper/sidebar-routes";
 
 type MenuGroupProps = {
   title: string;

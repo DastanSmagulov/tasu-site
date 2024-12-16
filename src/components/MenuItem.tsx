@@ -1,6 +1,6 @@
 import { useState } from "react";
 import Image from "next/image";
-import { Route } from "../routes/sidebar";
+import { Route } from "../helper/sidebar-routes";
 
 type MenuItemProps = {
   route: Route;

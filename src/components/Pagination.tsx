@@ -18,44 +18,40 @@ const Pagination: React.FC<PaginationProps> = ({
       <div>
         <p className="font-medium text-[#1D1B23]">Показано 10 из 160 данных</p>
       </div>
-      <div className="flex items-center mt-4 font-medium text-lg">
+      <div className="flex items-center space-x-2 font-medium text-lg">
         <button
           onClick={() => onPageChange(currentPage - 1)}
           disabled={currentPage === 1}
-          className={`btn bg-[#FED035] text-[#FFFFFF] border-none mr-4 flex items-center ${
+          className={`flex items-center justify-center w-10 h-10 bg-[#FED035] text-[#FFFFFF] rounded-full ${
             currentPage === 1 ? "opacity-50 cursor-not-allowed" : ""
           }`}
         >
           <Image src={Arrow} alt="arrow-left" width={18} height={18} />
-          Предыдущий
         </button>
-        <div className="border border-[#FED035] rounded-lg">
-          {[...Array(totalPages)].map((_, index) => {
-            const pageNumber = index + 1;
-            const isActive = currentPage === pageNumber;
-            return (
-              <button
-                key={index}
-                onClick={() => onPageChange(pageNumber)}
-                className={`btn border-none ${
-                  !isActive
-                    ? "bg-white text-[#FF7D34]"
-                    : "bg-[#FED035] text-[#FFFFFF]"
-                } hover:bg-[#f0d16d] hover:text-white]`}
-              >
-                {pageNumber}
-              </button>
-            );
-          })}
-        </div>
+        {[...Array(totalPages)].map((_, index) => {
+          const pageNumber = index + 1;
+          const isActive = currentPage === pageNumber;
+          return (
+            <button
+              key={index}
+              onClick={() => onPageChange(pageNumber)}
+              className={`w-10 h-10 rounded-full ${
+                !isActive
+                  ? "bg-white text-[#FF7D34] border border-[#FED035]"
+                  : "bg-[#FED035] text-[#FFFFFF]"
+              } hover:bg-[#f0d16d] hover:text-white`}
+            >
+              {pageNumber}
+            </button>
+          );
+        })}
         <button
           onClick={() => onPageChange(currentPage + 1)}
           disabled={currentPage === totalPages}
-          className={`btn bg-[#FED035] text-[#FFFFFF] border-none ml-4 flex items-center ${
+          className={`flex items-center justify-center w-10 h-10 bg-[#FED035] text-[#FFFFFF] rounded-full ${
             currentPage === totalPages ? "opacity-50 cursor-not-allowed" : ""
           }`}
         >
-          Следующий
           <Image src={Arrow2} alt="arrow-right" width={18} height={18} />
         </button>
       </div>

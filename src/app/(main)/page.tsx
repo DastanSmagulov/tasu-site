@@ -3,11 +3,12 @@
 import FilterPanel from "../../components/FilterPanel";
 import Table from "../../components/Table";
 import Pagination from "../../components/Pagination";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import TabsNavigation from "@/components/TabsNavigation";
+import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 ("./globals.css");
 
-// Define the data type
 type DocumentData = {
   id: string;
   date: string;
@@ -21,167 +22,148 @@ type DocumentData = {
   amount: string;
 };
 
-export default function Home() {
-  const [data, setData] = useState<DocumentData[]>([
+const Home = () => {
+  const data = [
     {
-      id: "#001234",
-      customer: "Белескызы Инжу",
-      date: "04 05 2020",
-      place: "1 место",
-      weight: "20 кг",
-      volume: "1.6 м",
-      status: "акт сформирован",
-      statusColor: "bg-blue-200 text-blue-800",
-      view: "-",
-      amount: "-",
-    },
-    {
-      id: "#001234",
-      customer: "Санжар Сапар",
-      date: "01 29 2020",
-      place: "1 место",
-      weight: "5 кг",
-      volume: "1.6 м",
+      id: "#000101",
+      customer: "Иванов Иван",
+      date: "03 20 2021",
+      place: "2 места",
+      weight: "15 кг",
+      volume: "1.2 м³",
       status: "заявка сформирована",
       statusColor: "bg-blue-300 text-blue-800",
       view: "-",
       amount: "-",
     },
     {
-      id: "#001234",
-      customer: "Белескызы Инжу",
-      date: "04 05 2020",
+      id: "#000102",
+      customer: "Петрова Анна",
+      date: "05 15 2021",
       place: "1 место",
-      weight: "20 кг",
-      volume: "1.6 м",
+      weight: "10 кг",
+      volume: "0.8 м³",
       status: "оплата подтверждена",
       statusColor: "bg-purple-200 text-purple-800",
       view: "-",
       amount: "-",
     },
     {
-      id: "#001234",
-      customer: "Белескызы Инжу",
-      date: "04 05 2020",
+      id: "#000103",
+      customer: "Сидоров Алексей",
+      date: "07 01 2021",
+      place: "3 места",
+      weight: "25 кг",
+      volume: "2.0 м³",
+      status: "акт сформирован",
+      statusColor: "bg-blue-200 text-blue-800",
+      view: "-",
+      amount: "-",
+    },
+    {
+      id: "#000104",
+      customer: "Кузнецова Мария",
+      date: "09 10 2021",
       place: "1 место",
-      weight: "20 кг",
-      volume: "1.6 м",
+      weight: "8 кг",
+      volume: "0.5 м³",
+      status: "доставка завершена",
+      statusColor: "bg-green-200 text-green-800",
+      view: "-",
+      amount: "-",
+    },
+    {
+      id: "#000105",
+      customer: "Коновалов Сергей",
+      date: "11 18 2021",
+      place: "2 места",
+      weight: "12 кг",
+      volume: "1.1 м³",
+      status: "заявка сформирована",
+      statusColor: "bg-blue-300 text-blue-800",
+      view: "-",
+      amount: "-",
+    },
+    {
+      id: "#000106",
+      customer: "Федоров Дмитрий",
+      date: "12 25 2021",
+      place: "1 место",
+      weight: "5 кг",
+      volume: "0.4 м³",
       status: "оплата подтверждена",
       statusColor: "bg-purple-200 text-purple-800",
       view: "-",
       amount: "-",
     },
     {
-      id: "#001234",
-      customer: "Белескызы Инжу",
-      date: "04 05 2020",
+      id: "#000107",
+      customer: "Смирнова Ольга",
+      date: "02 14 2022",
+      place: "2 места",
+      weight: "18 кг",
+      volume: "1.5 м³",
+      status: "акт сформирован",
+      statusColor: "bg-blue-200 text-blue-800",
+      view: "-",
+      amount: "-",
+    },
+    {
+      id: "#000108",
+      customer: "Васильев Александр",
+      date: "03 30 2022",
+      place: "3 места",
+      weight: "22 кг",
+      volume: "2.3 м³",
+      status: "доставка завершена",
+      statusColor: "bg-green-200 text-green-800",
+      view: "-",
+      amount: "-",
+    },
+    {
+      id: "#000109",
+      customer: "Егоров Алексей",
+      date: "05 21 2022",
       place: "1 место",
-      weight: "20 кг",
-      volume: "1.6 м",
+      weight: "7 кг",
+      volume: "0.7 м³",
       status: "оплата подтверждена",
       statusColor: "bg-purple-200 text-purple-800",
       view: "-",
       amount: "-",
     },
     {
-      id: "#001234",
-      customer: "Белескызы Инжу",
-      date: "04 05 2020",
-      place: "1 место",
-      weight: "20 кг",
-      volume: "1.6 м",
-      status: "оплата подтверждена",
-      statusColor: "bg-purple-200 text-purple-800",
+      id: "#000110",
+      customer: "Павлова Ирина",
+      date: "06 10 2022",
+      place: "2 места",
+      weight: "14 кг",
+      volume: "1.3 м³",
+      status: "заявка сформирована",
+      statusColor: "bg-blue-300 text-blue-800",
       view: "-",
       amount: "-",
     },
-    {
-      id: "#001234",
-      customer: "Белескызы Инжу",
-      date: "04 05 2020",
-      place: "1 место",
-      weight: "20 кг",
-      volume: "1.6 м",
-      status: "оплата подтверждена",
-      statusColor: "bg-purple-200 text-purple-800",
-      view: "-",
-      amount: "-",
-    },
-    {
-      id: "#001234",
-      customer: "Белескызы Инжу",
-      date: "04 05 2020",
-      place: "1 место",
-      weight: "20 кг",
-      volume: "1.6 м",
-      status: "оплата подтверждена",
-      statusColor: "bg-purple-200 text-purple-800",
-      view: "-",
-      amount: "-",
-    },
-    {
-      id: "#001234",
-      customer: "Белескызы Инжу",
-      date: "04 05 2020",
-      place: "1 место",
-      weight: "20 кг",
-      volume: "1.6 м",
-      status: "оплата подтверждена",
-      statusColor: "bg-purple-200 text-purple-800",
-      view: "-",
-      amount: "-",
-    },
-    {
-      id: "#001234",
-      customer: "Белескызы Инжу",
-      date: "04 05 2020",
-      place: "1 место",
-      weight: "20 кг",
-      volume: "1.6 м",
-      status: "оплата подтверждена",
-      statusColor: "bg-purple-200 text-purple-800",
-      view: "-",
-      amount: "-",
-    },
-    {
-      id: "#001234",
-      customer: "Белескызы Инжу",
-      date: "04 05 2020",
-      place: "1 место",
-      weight: "20 кг",
-      volume: "1.6 м",
-      status: "оплата подтверждена",
-      statusColor: "bg-purple-200 text-purple-800",
-      view: "-",
-      amount: "-",
-    },
-    {
-      id: "#001234",
-      customer: "Белескызы Инжу",
-      date: "04 05 2020",
-      place: "1 место",
-      weight: "20 кг",
-      volume: "1.6 м",
-      status: "оплата подтверждена",
-      statusColor: "bg-purple-200 text-purple-800",
-      view: "-",
-      amount: "-",
-    },
-    {
-      id: "#001234",
-      customer: "Белескызы Инжу",
-      date: "04 05 2020",
-      place: "1 место",
-      weight: "20 кг",
-      volume: "1.6 м",
-      status: "оплата подтверждена",
-      statusColor: "bg-purple-200 text-purple-800",
-      view: "-",
-      amount: "-",
-    },
-  ]);
+  ];
 
   const [currentPage, setCurrentPage] = useState(1);
+  const { data: session, status } = useSession();
+  const router = useRouter();
+
+  // useEffect(() => {
+  //   if (status === "unauthenticated") {
+  //     router.push("/login");
+  //   }
+  // }, [status, router]);
+
+  if (status === "loading") {
+    return <div>Loading...</div>;
+  }
+
+  // if (!session) {
+  //   return null;
+  // }
+
   const totalPages = 4;
 
   const onPageChange = (page: number) => {
@@ -191,7 +173,7 @@ export default function Home() {
 
   return (
     <div>
-      <TabsNavigation />
+      {/* <TabsNavigation /> */}
       <FilterPanel />
       <Table data={data} />
       <Pagination
@@ -201,4 +183,6 @@ export default function Home() {
       />
     </div>
   );
-}
+};
+
+export default Home;

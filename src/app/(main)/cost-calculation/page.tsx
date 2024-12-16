@@ -7,6 +7,9 @@ import Insurance from "./components/Insurance";
 import TransportationServices from "./components/TransportationServices";
 import PackagingService from "./components/PackagingService";
 import WarehouseServices from "./components/WarehouseServices";
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 
 ("./globals.css");
 
@@ -25,6 +28,22 @@ type DocumentData = {
 };
 
 export default function Home() {
+  const { data: session, status } = useSession();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (status === "unauthenticated") {
+      router.push("/login");
+    }
+  }, [status, router]);
+
+  if (status === "loading") {
+    return <div>Loading...</div>;
+  }
+
+  if (!session) {
+    return null;
+  }
   const handleSignatureSubmit = (signatureDataUrl: string) => {
     console.log("Signature submitted:", signatureDataUrl);
   };

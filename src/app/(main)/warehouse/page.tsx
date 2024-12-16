@@ -3,8 +3,10 @@
 import FilterPanel from "../../../components/FilterPanel";
 import Table from "../../../components/Table";
 import Pagination from "../../../components/Pagination";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import WarehouseActList from "@/components/WarehouseActList";
+import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 ("./globals.css");
 
 // Define the data type
@@ -22,7 +24,7 @@ type DocumentData = {
 };
 
 export default function Home() {
-  const [data, setData] = useState<DocumentData[]>([
+  const data: DocumentData[] = [
     {
       id: "#001234",
       customer: "Белескызы Инжу",
@@ -42,146 +44,31 @@ export default function Home() {
       place: "1 место",
       weight: "5 кг",
       volume: "1.6 м",
-      status: "заявка сформирована",
+      status: "акт сформирован",
       statusColor: "bg-blue-300 text-blue-800",
       view: "-",
       amount: "-",
     },
-    {
-      id: "#001234",
-      customer: "Белескызы Инжу",
-      date: "04 05 2020",
-      place: "1 место",
-      weight: "20 кг",
-      volume: "1.6 м",
-      status: "оплата подтверждена",
-      statusColor: "bg-purple-200 text-purple-800",
-      view: "-",
-      amount: "-",
-    },
-    {
-      id: "#001234",
-      customer: "Белескызы Инжу",
-      date: "04 05 2020",
-      place: "1 место",
-      weight: "20 кг",
-      volume: "1.6 м",
-      status: "оплата подтверждена",
-      statusColor: "bg-purple-200 text-purple-800",
-      view: "-",
-      amount: "-",
-    },
-    {
-      id: "#001234",
-      customer: "Белескызы Инжу",
-      date: "04 05 2020",
-      place: "1 место",
-      weight: "20 кг",
-      volume: "1.6 м",
-      status: "оплата подтверждена",
-      statusColor: "bg-purple-200 text-purple-800",
-      view: "-",
-      amount: "-",
-    },
-    {
-      id: "#001234",
-      customer: "Белескызы Инжу",
-      date: "04 05 2020",
-      place: "1 место",
-      weight: "20 кг",
-      volume: "1.6 м",
-      status: "оплата подтверждена",
-      statusColor: "bg-purple-200 text-purple-800",
-      view: "-",
-      amount: "-",
-    },
-    {
-      id: "#001234",
-      customer: "Белескызы Инжу",
-      date: "04 05 2020",
-      place: "1 место",
-      weight: "20 кг",
-      volume: "1.6 м",
-      status: "оплата подтверждена",
-      statusColor: "bg-purple-200 text-purple-800",
-      view: "-",
-      amount: "-",
-    },
-    {
-      id: "#001234",
-      customer: "Белескызы Инжу",
-      date: "04 05 2020",
-      place: "1 место",
-      weight: "20 кг",
-      volume: "1.6 м",
-      status: "оплата подтверждена",
-      statusColor: "bg-purple-200 text-purple-800",
-      view: "-",
-      amount: "-",
-    },
-    {
-      id: "#001234",
-      customer: "Белескызы Инжу",
-      date: "04 05 2020",
-      place: "1 место",
-      weight: "20 кг",
-      volume: "1.6 м",
-      status: "оплата подтверждена",
-      statusColor: "bg-purple-200 text-purple-800",
-      view: "-",
-      amount: "-",
-    },
-    {
-      id: "#001234",
-      customer: "Белескызы Инжу",
-      date: "04 05 2020",
-      place: "1 место",
-      weight: "20 кг",
-      volume: "1.6 м",
-      status: "оплата подтверждена",
-      statusColor: "bg-purple-200 text-purple-800",
-      view: "-",
-      amount: "-",
-    },
-    {
-      id: "#001234",
-      customer: "Белескызы Инжу",
-      date: "04 05 2020",
-      place: "1 место",
-      weight: "20 кг",
-      volume: "1.6 м",
-      status: "оплата подтверждена",
-      statusColor: "bg-purple-200 text-purple-800",
-      view: "-",
-      amount: "-",
-    },
-    {
-      id: "#001234",
-      customer: "Белескызы Инжу",
-      date: "04 05 2020",
-      place: "1 место",
-      weight: "20 кг",
-      volume: "1.6 м",
-      status: "оплата подтверждена",
-      statusColor: "bg-purple-200 text-purple-800",
-      view: "-",
-      amount: "-",
-    },
-    {
-      id: "#001234",
-      customer: "Белескызы Инжу",
-      date: "04 05 2020",
-      place: "1 место",
-      weight: "20 кг",
-      volume: "1.6 м",
-      status: "оплата подтверждена",
-      statusColor: "bg-purple-200 text-purple-800",
-      view: "-",
-      amount: "-",
-    },
-  ]);
+  ];
 
   const [currentPage, setCurrentPage] = useState(1);
+  const { data: session, status } = useSession();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (status === "unauthenticated") {
+      router.push("/login");
+    }
+  }, [status, router]);
+
+  if (status === "loading") {
+    return <div>Loading...</div>;
+  }
+
+  if (status === "unauthenticated" || !session) {
+    return null;
+  }
+
   const totalPages = 4;
 
   const onPageChange = (page: number) => {

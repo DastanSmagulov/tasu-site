@@ -4,15 +4,7 @@ import { FaCloudUploadAlt, FaSlidersH } from "react-icons/fa";
 const TabsNavigation = () => {
   const [activeTab, setActiveTab] = useState("Акт приема"); // default active tab
 
-  const tabs = [
-    "TTN",
-    "CMP",
-    "QR",
-    "Заявка",
-    "Excell",
-    "Акт приема",
-    "Акт сдачи",
-  ];
+  const tabs = ["TTN", "CMP", "QR", "Заявка", "Excell", "Акт приема передачи"];
 
   return (
     <div className="flex gap-2 py-4 items-center rounded-lg my-4">
@@ -29,7 +21,6 @@ const TabsNavigation = () => {
             >
               {tab}
             </button>
-            {/* Line separator after each button except the last one and not next to active button */}
             {index < tabs.length - 1 &&
               activeTab !== tab &&
               activeTab !== tabs[index + 1] && (

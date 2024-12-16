@@ -2,7 +2,10 @@
 import Image from "next/image";
 import Link from "next/link";
 
-const Logo: React.FC = () => (
+const Logo: React.FC<{ width: number; height: number }> = ({
+  width,
+  height,
+}) => (
   <div className="mb-10">
     <Link href="/">
       {" "}

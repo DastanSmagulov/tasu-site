@@ -18,22 +18,14 @@ const FilterPanel: React.FC = () => {
   return (
     <div className="bg-white p-4 mb-4 rounded-lg text-[#1D1B23]">
       <div className="flex items-center gap-4 mb-4">
-        <button className="bg-[#09BD3C] text-white p-3 rounded-md flex items-center">
-          <FaSlidersH />
-        </button>
-
         <div className="flex flex-col gap-2">
-          <div className="flex items-center">
-            <input
-              type="text"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Поиск"
-              className="bg-white rounded px-2 py-1 text-sm w-[30vw]"
-            />
-          </div>
-          <span className="pl-2 text-gray-500">{result || "Нет данных"}</span>
-          <hr className="border-t border-gray-300 w-full" />
+          <input
+            type="text"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Поиск"
+            className="bg-white rounded px-4 py-2 text-sm w-[20vw] border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
         </div>
 
         <div className="flex items-center gap-4 ml-10">
@@ -42,14 +34,14 @@ const FilterPanel: React.FC = () => {
               type="checkbox"
               className="form-checkbox appearance-none bg-white border-2 checked:bg-[#09BD3C] checked:border-none checked:before:content-['✔'] checked:before:text-white checked:before:text-sm checked:before:flex checked:before:items-center checked:before:justify-center w-5 h-5 rounded mr-2"
             />
-            <span className="font-medium text-[#1D1B23]">Заказчик</span>
+            <span className="font-medium text-[#1D1B23]">Статус</span>
           </label>
           <label className="flex items-center">
             <input
               type="checkbox"
               className="form-checkbox appearance-none bg-white border-2 checked:bg-[#09BD3C] checked:border-none checked:before:content-['✔'] checked:before:text-white checked:before:text-sm checked:before:flex checked:before:items-center checked:before:justify-center w-5 h-5 rounded mr-2"
             />
-            <span className="font-medium text-[#1D1B23]">Статус</span>
+            <span className="font-medium text-[#1D1B23]">Мои</span>
           </label>
         </div>
       </div>

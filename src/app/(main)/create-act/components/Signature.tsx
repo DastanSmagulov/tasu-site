@@ -54,11 +54,11 @@ const Signature: React.FC<SignatureProps> = ({ onSubmit, onUpload }) => {
           onClick={handleSave}
           className="font-semibold border border-gray-500 px-4 py-2 bg-white hover:bg-gray-100 text-black rounded-lg"
         >
-          Отправить на подпись
+          Отправить
         </button>
         <span className="mt-2 font-semibold">Или</span>
         <label className="border font-semibold border-gray-500 rounded-lg px-4 py-2 bg-white hover:bg-gray-100 text-black cursor-pointer">
-          Загрузить фото
+          Расспечатать
           <input
             type="file"
             accept="image/*"

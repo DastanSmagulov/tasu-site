@@ -379,9 +379,10 @@ const Registration: React.FC = () => {
 
               <button
                 type="submit"
-                className="w-full py-3 bg-[#9a00ff] text-white rounded-lg hover:bg-[#7f00c3] transition"
+                className="w-full bg-[#9a00ff] text-white rounded-lg py-3 font-semibold hover:bg-[#7b00cc]"
+                disabled={loading}
               >
-                {loading ? <span>Загрузка...</span> : "Зарегистрироваться"}
+                {loading ? "Загрузка..." : "Зарегестрироваться →"}
               </button>
             </Form>
           )}

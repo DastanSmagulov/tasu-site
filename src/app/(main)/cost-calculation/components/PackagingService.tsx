@@ -1,96 +1,164 @@
-"use client";
-import React, { useState } from "react";
+// components/PackagingService.tsx
+import { useState } from "react";
 
-interface Service {
-  itemName: string;
+interface PackagingItem {
+  name: string;
   quantity: number;
-  size: string;
+  tariff: string;
   cost: number;
+  selected: boolean;
 }
 
-const PackagingService: React.FC = () => {
-  const [services, setServices] = useState<Service[]>([]);
-  const [itemName, setItemName] = useState("");
-  const [quantity, setQuantity] = useState(1);
-  const [size, setSize] = useState("большой");
-  const [cost, setCost] = useState(500);
+const PackagingService = () => {
+  const [items, setItems] = useState<PackagingItem[]>([
+    {
+      name: "Скотч",
+      quantity: 1,
+      tariff: "Большой",
+      cost: 5000,
+      selected: true,
+    },
+    {
+      name: "Стрэйч",
+      quantity: 2,
+      tariff: "Средний",
+      cost: 5000,
+      selected: true,
+    },
+    {
+      name: "Пупырчатая пленка",
+      quantity: 0,
+      tariff: "Маленький",
+      cost: 5000,
+      selected: false,
+    },
+    {
+      name: "Картонная коробка",
+      quantity: 1,
+      tariff: "Маленький",
+      cost: 5000,
+      selected: true,
+    },
+    {
+      name: "Лист пенопласт",
+      quantity: 1,
+      tariff: "Маленький",
+      cost: 5000,
+      selected: true,
+    },
+    {
+      name: "Стяжная лента",
+      quantity: 1,
+      tariff: "Маленький",
+      cost: 5000,
+      selected: true,
+    },
+  ]);
 
-  const handleAddService = () => {
-    const newService: Service = { itemName, quantity, size, cost };
-    setServices([...services, newService]);
-    setItemName(""); // Clear input fields after adding
-    setQuantity(1);
-    setSize("большой");
-    setCost(500);
+  const handleCheckboxChange = (index: number) => {
+    const updatedItems = [...items];
+    updatedItems[index].selected = !updatedItems[index].selected;
+    setItems(updatedItems);
   };
 
-  const handleDeleteService = (index: number) => {
-    setServices(services.filter((_, i) => i !== index));
+  const handleAddItem = () => {
+    setItems([
+      ...items,
+      {
+        name: "",
+        quantity: 0,
+        tariff: "Маленький",
+        cost: 5000,
+        selected: false,
+      },
+    ]);
+  };
+
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement>,
+    index: number,
+    field: keyof PackagingItem
+  ) => {
+    const updatedItems = [...items];
+    updatedItems[index][field] =
+      field === "quantity" ? parseInt(e.target.value) : e.target.value;
+    setItems(updatedItems);
   };
 
   return (
-    <div className="bg-white p-6 rounded-lg shadow mb-6 text-gray-800">
-      <h2 className="text-xl font-semibold mb-4">Услуга упаковки</h2>
-
-      {/* Input fields for a new service */}
-      <div className="flex items-center gap-4 mb-4">
-        <input
-          type="text"
-          value={itemName}
-          onChange={(e) => setItemName(e.target.value)}
-          placeholder="Услуга по хранению"
-          className="border border-gray-300 rounded px-3 py-2 w-1/2"
-        />
-        <input
-          type="number"
-          value={quantity}
-          onChange={(e) => setQuantity(Number(e.target.value))}
-          className="border border-gray-300 rounded px-3 py-2 w-1/6"
-          placeholder="Кол-во"
-        />
-        <select
-          value={size}
-          onChange={(e) => setSize(e.target.value)}
-          className="border border-gray-300 rounded px-3 py-2 w-1/4"
-        >
-          <option value="большой">большой</option>
-          <option value="средний">средний</option>
-          <option value="маленький">маленький</option>
-        </select>
-        <input
-          type="number"
-          value={cost}
-          onChange={(e) => setCost(Number(e.target.value))}
-          className="border border-gray-300 rounded px-3 py-2 w-1/4"
-          placeholder="Стоимость"
-        />
-      </div>
-
-      {/* Button to add new service */}
-      <button onClick={handleAddService} className="text-blue-500 mb-4">
+    <div className="bg-white p-6 rounded-lg shadow-lg">
+      <h2 className="text-2xl font-semibold mb-4 text-gray-800">
+        Услуга упаковки
+      </h2>
+      <table className="w-full table-auto border-collapse">
+        <thead>
+          <tr className="text-sm font-medium text-gray-700 bg-gray-100">
+            <th className="p-2 w-10 text-center"></th>
+            <th className="p-2">Наименование упаковки</th>
+            <th className="p-2 w-20 text-center">Кол-во</th>
+            <th className="p-2 w-28 text-center">Тариф</th>
+            <th className="p-2 w-28 text-center">Стоимость</th>
+          </tr>
+        </thead>
+        <tbody>
+          {items.map((item, index) => (
+            <tr
+              key={index}
+              className={`${
+                item.selected ? "bg-green-50" : "bg-white"
+              } hover:bg-gray-50 border-t border-b border-gray-200`}
+            >
+              <td className="p-2 text-center">
+                <input
+                  type="checkbox"
+                  checked={item.selected}
+                  onChange={() => handleCheckboxChange(index)}
+                  className="checkbox checkbox-sm"
+                />
+              </td>
+              <td className="p-2">
+                <input
+                  type="text"
+                  value={item.name}
+                  onChange={(e) => handleInputChange(e, index, "name")}
+                  className="input input-bordered w-full"
+                  placeholder="Наименование"
+                />
+              </td>
+              <td className="p-2 text-center">
+                <input
+                  type="number"
+                  value={item.quantity}
+                  onChange={(e) => handleInputChange(e, index, "quantity")}
+                  className="input input-bordered w-full text-center"
+                />
+              </td>
+              <td className="p-2 text-center">
+                <input
+                  type="text"
+                  value={item.tariff}
+                  onChange={(e) => handleInputChange(e, index, "tariff")}
+                  className="input input-bordered w-full text-center"
+                />
+              </td>
+              <td className="p-2 text-center">
+                <input
+                  type="number"
+                  value={item.cost}
+                  onChange={(e) => handleInputChange(e, index, "cost")}
+                  className="input input-bordered w-full text-center"
+                />
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      <button
+        onClick={handleAddItem}
+        className="btn btn-outline mt-4 text-gray-700 border-gray-300 hover:border-gray-500 hover:text-gray-800"
+      >
         Добавить еще
       </button>
-
-      {/* Render the list of added services */}
-      {services.length > 0 && (
-        <div>
-          <h3 className="text-lg font-semibold mb-2">Добавленные услуги:</h3>
-          {services.map((service, index) => (
-            <div key={index} className="flex items-center gap-4 mb-2">
-              <span className="w-1/2">{service.itemName}</span>
-              <span className="w-1/6">{service.quantity}</span>
-              <span className="w-1/4">{service.size}</span>
-              <span className="w-1/4">{service.cost} тенге</span>
-              <button
-                onClick={() => handleDeleteService(index)}
-                className="text-red-500"
-              >
-                Удалить
-              </button>
-            </div>
-          ))}
-        </div>
-      )}
     </div>
   );
 };
