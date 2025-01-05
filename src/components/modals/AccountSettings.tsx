@@ -17,6 +17,7 @@ interface AccountSettingsProps {
 
 const AccountSettings: React.FC<AccountSettingsProps> = ({ setModalOpen }) => {
   const [profileImage, setProfileImage] = useState<File | null>(null);
+  const [data, setData] = useState<{ role?: string }>({});
   const token = Cookies.get("auth_token");
 
   const [initialValues, setInitialValues] = useState({
@@ -50,7 +51,7 @@ const AccountSettings: React.FC<AccountSettingsProps> = ({ setModalOpen }) => {
     try {
       const { data } = await axios.get(`${API_BASE_URL}/get-profile-info/`, {
         headers: {
-          Authorization: `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzM2MDk5NDEyLCJpYXQiOjE3MzYwMTMwMTIsImp0aSI6IjM0Y2Y1Y2ZiMzhmZTQ5YTlhZDljZGZmNDcxMzM0YTFmIiwidXNlcl9pZCI6MSwiZnVsbF9uYW1lIjoiU21hZ3Vsb3YgRGFzdGFuIiwiZW1haWwiOiJzbWFndWxvdmRhc3RhbjA3QGdtYWlsLmNvbSIsInBob25lIjoiODcwMjkxMzQ2NTAiLCJpaW4iOiIwMzAzMjY1NTExNTQiLCJpZF9jYXJkX2ltYWdlIjoiL21lZGlhL3VwbG9hZHMvaWRfY2FyZHMvUmVjdGFuZ2xlXzEyOTA1LnBuZyIsImlzX3N0YWZmIjp0cnVlLCJjcmVhdGVkX2F0IjoxNzM1OTk3Njg2NDc4LCJyb2xlIjp7ImtleSI6Ik1BTkFHRVIiLCJ2YWx1ZSI6Ilx1MDQxY1x1MDQzNVx1MDQzZFx1MDQzNVx1MDQzNFx1MDQzNlx1MDQzNVx1MDQ0MCJ9fQ.L3_SMc8lwfjwZMTfaqCZNZ6vjs_lvsJUi6yjerQEinE`,
+          Authorization: `Bearer ${token}`,
         },
       });
       setInitialValues({
@@ -63,6 +64,7 @@ const AccountSettings: React.FC<AccountSettingsProps> = ({ setModalOpen }) => {
         apartment: data.apartment || "",
         postal_code: data.postal_code || "",
       });
+      setData({ role: data.role });
     } catch (error) {
       console.error("Error fetching profile info", error);
     }
@@ -118,7 +120,7 @@ const AccountSettings: React.FC<AccountSettingsProps> = ({ setModalOpen }) => {
         </button>
 
         <h1 className="text-lg md:text-xl font-semibold mb-6 text-center">
-          Настройки аккаунта
+          Настройки аккаунта {data.role && `(${data.role})`}
         </h1>
 
         <Formik
