@@ -8,6 +8,7 @@ import { Formik, Field, Form, ErrorMessage } from "formik";
 import * as Yup from "yup";
 import Logo from "../components/ui/Logo";
 import { FiEye, FiEyeOff } from "react-icons/fi";
+import Cookies from "js-cookie"; // Import for handling cookies
 
 // Validation schema for login form
 const LoginSchema = Yup.object().shape({
@@ -42,7 +43,48 @@ const Login: React.FC = () => {
       setError("Ошибка входа. Пожалуйста, проверьте свои данные.");
     } else {
       console.log("Login successful:", result);
-      router.push("/");
+
+      // Fetch the session details to extract the JWT
+      const response = await fetch("/api/auth/session");
+      const session = await response.json();
+      // Store the JWT in cookies
+      Cookies.set("auth_token", session.jwt as string, {
+        expires: 1,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "strict",
+      });
+
+      switch (session?.role?.value) {
+        case "Админ":
+          router.push("/admin");
+          break;
+        case "Приемопередатчик":
+          router.push("/transceiver");
+          break;
+        case "Экспедитор":
+          router.push("/forwarder");
+          break;
+        case "Менеджер":
+          router.push("/manager");
+          break;
+        case "Бухгалтер":
+          router.push("/accountant");
+          break;
+        case "Перевозчик":
+          router.push("/carrier");
+          break;
+        case "Курьер":
+          router.push("/courier");
+          break;
+        case "Заказчик":
+          router.push("/customer");
+          break;
+        case "Получатель":
+          router.push("/receiver");
+          break;
+        default:
+          router.push("/dashboard");
+      }
     }
   };
 
@@ -118,7 +160,7 @@ const Login: React.FC = () => {
                     <button
                       type="button"
                       onClick={togglePasswordVisibility}
-                      className="absolute right-4 inset-y-0 text-gray-600"
+                      className="absolute right-4 inset-y-0 bg-transparent hover:bg-transparent text-gray-600"
                     >
                       {showPassword ? <FiEyeOff /> : <FiEye />}
                     </button>

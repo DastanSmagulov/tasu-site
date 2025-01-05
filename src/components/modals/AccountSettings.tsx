@@ -1,16 +1,72 @@
-import React, { useState } from "react";
+"use client";
+import { signOut } from "next-auth/react";
+import React, { useEffect, useState } from "react";
+import axios from "axios";
+import { Formik, Form, Field, ErrorMessage } from "formik";
+import * as Yup from "yup";
+import Cookies from "js-cookie";
+import {
+  XMarkIcon,
+  ArrowRightOnRectangleIcon,
+  ArrowDownTrayIcon,
+} from "@heroicons/react/24/outline";
 
-const AccountSettings: React.FC = () => {
+interface AccountSettingsProps {
+  setModalOpen: (value: boolean) => void;
+}
+
+const AccountSettings: React.FC<AccountSettingsProps> = ({ setModalOpen }) => {
   const [profileImage, setProfileImage] = useState<File | null>(null);
-  const [fullName, setFullName] = useState("");
-  const [firstName, setFirstName] = useState("");
-  const [phoneNumber, setPhoneNumber] = useState("");
-  const [email, setEmail] = useState("");
-  const [country, setCountry] = useState("");
-  const [street, setStreet] = useState("");
-  const [city, setCity] = useState("");
-  const [apartment, setApartment] = useState("");
-  const [postalCode, setPostalCode] = useState("");
+  const token = Cookies.get("auth_token");
+
+  const [initialValues, setInitialValues] = useState({
+    full_name: "",
+    phone: "",
+    email: "",
+    country: "",
+    street: "",
+    city: "",
+    apartment: "",
+    postal_code: "",
+  });
+
+  const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+
+  const validationSchema = Yup.object().shape({
+    full_name: Yup.string()
+      .min(1, "Required")
+      .max(150, "Max 150 characters")
+      .required("Required"),
+    phone: Yup.string().required("Required"),
+    email: Yup.string().email("Invalid email").required("Required"),
+    country: Yup.string().nullable(),
+    street: Yup.string().nullable(),
+    city: Yup.string().nullable(),
+    apartment: Yup.string().nullable(),
+    postal_code: Yup.string().nullable(),
+  });
+
+  const fetchProfileInfo = async () => {
+    try {
+      const { data } = await axios.get(`${API_BASE_URL}/get-profile-info/`, {
+        headers: {
+          Authorization: `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzM2MDk5NDEyLCJpYXQiOjE3MzYwMTMwMTIsImp0aSI6IjM0Y2Y1Y2ZiMzhmZTQ5YTlhZDljZGZmNDcxMzM0YTFmIiwidXNlcl9pZCI6MSwiZnVsbF9uYW1lIjoiU21hZ3Vsb3YgRGFzdGFuIiwiZW1haWwiOiJzbWFndWxvdmRhc3RhbjA3QGdtYWlsLmNvbSIsInBob25lIjoiODcwMjkxMzQ2NTAiLCJpaW4iOiIwMzAzMjY1NTExNTQiLCJpZF9jYXJkX2ltYWdlIjoiL21lZGlhL3VwbG9hZHMvaWRfY2FyZHMvUmVjdGFuZ2xlXzEyOTA1LnBuZyIsImlzX3N0YWZmIjp0cnVlLCJjcmVhdGVkX2F0IjoxNzM1OTk3Njg2NDc4LCJyb2xlIjp7ImtleSI6Ik1BTkFHRVIiLCJ2YWx1ZSI6Ilx1MDQxY1x1MDQzNVx1MDQzZFx1MDQzNVx1MDQzNFx1MDQzNlx1MDQzNVx1MDQ0MCJ9fQ.L3_SMc8lwfjwZMTfaqCZNZ6vjs_lvsJUi6yjerQEinE`,
+        },
+      });
+      setInitialValues({
+        full_name: data.full_name || "",
+        phone: data.phone || "",
+        email: data.email || "",
+        country: data.country || "",
+        street: data.street || "",
+        city: data.city || "",
+        apartment: data.apartment || "",
+        postal_code: data.postal_code || "",
+      });
+    } catch (error) {
+      console.error("Error fetching profile info", error);
+    }
+  };
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -18,182 +74,241 @@ const AccountSettings: React.FC = () => {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    // Handle form submission logic here
-    console.log({
-      profileImage,
-      fullName,
-      firstName,
-      phoneNumber,
-      email,
-      country,
-      street,
-      city,
-      apartment,
-      postalCode,
-    });
+  const handleSubmit = async (values: typeof initialValues) => {
+    try {
+      const formData = new FormData();
+      Object.entries(values).forEach(([key, value]) => {
+        formData.append(key, value || "");
+      });
+      if (profileImage) formData.append("profile_image", profileImage);
+
+      await axios.patch(`${API_BASE_URL}/edit-profile/`, formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      console.log("Profile updated successfully");
+    } catch (error) {
+      console.error("Error updating profile", error);
+    }
   };
+
+  const closeModal = () => {
+    setModalOpen(false);
+  };
+
+  const handleSignOut = () => {
+    signOut({ callbackUrl: "/login" });
+  };
+
+  useEffect(() => {
+    fetchProfileInfo();
+  }, []);
 
   return (
     <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
-      <div className="max-w-3xl mx-auto p-6 bg-white shadow-md rounded-lg">
-        <h1 className="text-2xl font-bold mb-6">
-          Аккаунт {/* Role can be dynamically inserted here */}
+      <div className="w-full max-w-3xl p-6 bg-white shadow-md rounded-lg relative">
+        <button
+          onClick={closeModal}
+          className="absolute top-4 right-4 p-2 rounded-full hover:bg-gray-100 bg-transparent"
+        >
+          <XMarkIcon className="h-6 w-6 text-gray-500" />
+        </button>
+
+        <h1 className="text-lg md:text-xl font-semibold mb-6 text-center">
+          Настройки аккаунта
         </h1>
 
-        <form onSubmit={handleSubmit}>
-          {/* Profile Picture */}
-          <div className="mb-6">
-            <label className="block text-sm font-medium text-gray-700">
-              Картинка профиля
-            </label>
-            <div className="mt-2 flex items-center">
-              <div className="w-20 h-20 rounded-full bg-gray-200 mr-4">
-                {/* {profileImage ? (
-                  <img
-                    src={URL.createObjectURL(profileImage)}
-                    alt="Profile"
-                    className="w-full h-full object-cover rounded-full"
-                  />
-                ) : (
-                  <span className="text-gray-400">No Image</span>
-                )} */}
+        <Formik
+          initialValues={initialValues}
+          validationSchema={validationSchema}
+          onSubmit={handleSubmit}
+          enableReinitialize
+        >
+          {({ isSubmitting }) => (
+            <Form>
+              {/* Profile Picture Section */}
+              <div className="mb-6">
+                <h2 className="text-sm font-medium mb-2">Картинка профиля</h2>
+                <div className="flex items-center space-x-4">
+                  <div className="w-20 h-20 rounded-full bg-gray-200 flex items-center justify-center">
+                    {profileImage ? (
+                      <img
+                        src={URL.createObjectURL(profileImage)}
+                        alt="Profile"
+                        className="w-full h-full object-cover rounded-full"
+                      />
+                    ) : (
+                      <span className="text-gray-400 text-center">
+                        PNG, JPEG до 15 МБ
+                      </span>
+                    )}
+                  </div>
+                  <label className="cursor-pointer text-gray-500 hover:text-blue-500 flex items-center space-x-2">
+                    <ArrowDownTrayIcon className="h-5 w-5" />
+                    <span>Загрузить фотографию</span>
+                    <input
+                      type="file"
+                      accept="image/png, image/jpeg"
+                      onChange={handleImageUpload}
+                      className="hidden"
+                    />
+                  </label>
+                </div>
               </div>
-              <label className="cursor-pointer bg-blue-500 text-white px-4 py-2 rounded-md">
-                Загрузить фотографию
-                <input
-                  type="file"
-                  accept="image/png, image/jpeg"
-                  onChange={handleImageUpload}
-                  className="hidden"
+
+              {/* Full Name */}
+              <div className="mb-4">
+                <label className="text-sm font-medium block mb-2">
+                  Полное имя
+                </label>
+                <Field
+                  name="full_name"
+                  placeholder="Введите имя"
+                  className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
-              </label>
-            </div>
-          </div>
+                <ErrorMessage
+                  name="full_name"
+                  component="div"
+                  className="text-red-500 text-sm mt-1"
+                />
+              </div>
 
-          {/* Full Name */}
-          <div className="mb-6">
-            <label className="block text-sm font-medium text-gray-700">
-              Полное имя
-            </label>
-            <div className="mt-2">
-              <input
-                type="text"
-                value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
-                className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="ФИО"
-              />
-            </div>
-          </div>
+              {/* Phone and Email */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div>
+                  <label className="text-sm font-medium block mb-2">
+                    Номер телефона
+                  </label>
+                  <Field
+                    name="phone"
+                    placeholder="+7"
+                    className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                  <ErrorMessage
+                    name="phone"
+                    component="div"
+                    className="text-red-500 text-sm mt-1"
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-medium block mb-2">
+                    E-mail
+                  </label>
+                  <Field
+                    name="email"
+                    placeholder="@mail"
+                    className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                  <ErrorMessage
+                    name="email"
+                    component="div"
+                    className="text-red-500 text-sm mt-1"
+                  />
+                </div>
+              </div>
 
-          {/* First Name */}
-          <div className="mb-6">
-            <label className="block text-sm font-medium text-gray-700">
-              First name
-            </label>
-            <div className="mt-2">
-              <input
-                type="text"
-                value={firstName}
-                onChange={(e) => setFirstName(e.target.value)}
-                className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="First name"
-              />
-            </div>
-          </div>
+              {/* Address Fields */}
+              <div className="mb-4">
+                <label className="text-sm font-medium block mb-2">Страна</label>
+                <Field
+                  name="country"
+                  placeholder="Введите страну"
+                  className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+                <ErrorMessage
+                  name="country"
+                  component="div"
+                  className="text-red-500 text-sm mt-1"
+                />
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div>
+                  <label className="text-sm font-medium block mb-2">
+                    Улица
+                  </label>
+                  <Field
+                    name="street"
+                    placeholder="Введите улицу"
+                    className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                  <ErrorMessage
+                    name="street"
+                    component="div"
+                    className="text-red-500 text-sm mt-1"
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-medium block mb-2">
+                    Город
+                  </label>
+                  <Field
+                    name="city"
+                    placeholder="Введите город"
+                    className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                  <ErrorMessage
+                    name="city"
+                    component="div"
+                    className="text-red-500 text-sm mt-1"
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                <div>
+                  <label className="text-sm font-medium block mb-2">
+                    Дом/Квартира
+                  </label>
+                  <Field
+                    name="apartment"
+                    placeholder="Введите номер дома/квартиры"
+                    className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                  <ErrorMessage
+                    name="apartment"
+                    component="div"
+                    className="text-red-500 text-sm mt-1"
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-medium block mb-2">
+                    Почтовый индекс
+                  </label>
+                  <Field
+                    name="postal_code"
+                    placeholder="Введите индекс"
+                    className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                  <ErrorMessage
+                    name="postal_code"
+                    component="div"
+                    className="text-red-500 text-sm mt-1"
+                  />
+                </div>
+              </div>
 
-          {/* Contact Information */}
-          <div className="mb-6">
-            <label className="block text-sm font-medium text-gray-700">
-              Контактная информация
-            </label>
-            <div className="mt-2 grid grid-cols-2 gap-4">
-              <input
-                type="text"
-                value={phoneNumber}
-                onChange={(e) => setPhoneNumber(e.target.value)}
-                className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="+7"
-              />
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="@mail"
-              />
-            </div>
-          </div>
-
-          {/* Address */}
-          <div className="mb-6">
-            <label className="block text-sm font-medium text-gray-700">
-              Место жительства
-            </label>
-            <div className="mt-2">
-              <input
-                type="text"
-                value={country}
-                onChange={(e) => setCountry(e.target.value)}
-                className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Страна"
-              />
-            </div>
-            <div className="mt-2">
-              <input
-                type="text"
-                value={street}
-                onChange={(e) => setStreet(e.target.value)}
-                className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Улица"
-              />
-            </div>
-            <div className="mt-2 grid grid-cols-2 gap-4">
-              <input
-                type="text"
-                value={city}
-                onChange={(e) => setCity(e.target.value)}
-                className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Город"
-              />
-              <input
-                type="text"
-                value={apartment}
-                onChange={(e) => setApartment(e.target.value)}
-                className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Дом/Квартира"
-              />
-            </div>
-            <div className="mt-2">
-              <input
-                type="text"
-                value={postalCode}
-                onChange={(e) => setPostalCode(e.target.value)}
-                className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Почтовый индекс"
-              />
-            </div>
-          </div>
-
-          {/* Buttons */}
-          <div className="flex justify-between">
-            <button
-              type="button"
-              className="px-4 py-2 bg-red-500 text-white rounded-md"
-              onClick={() => alert("Выйти из системы")}
-            >
-              Выйти из системы
-            </button>
-            <button
-              type="submit"
-              className="px-4 py-2 bg-blue-500 text-white rounded-md"
-            >
-              Изменить
-            </button>
-          </div>
-        </form>
+              {/* Buttons */}
+              <div className="flex justify-between items-center">
+                <button
+                  type="button"
+                  className="px-4 py-2 text-gray-500 bg-transparent hover:bg-gray-100 border border-gray-500 rounded-lg flex items-center"
+                  onClick={handleSignOut}
+                >
+                  <ArrowRightOnRectangleIcon className="h-5 w-5 mr-2" /> Выйти
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="px-4 py-2 rounded-lg"
+                >
+                  {isSubmitting ? "Сохранение..." : "Сохранить"}
+                </button>
+              </div>
+            </Form>
+          )}
+        </Formik>
       </div>
     </div>
   );

@@ -1,6 +1,10 @@
+"use client";
+
 import { useState } from "react";
 import Image from "next/image";
+import { usePathname } from "next/navigation"; // Use for Next.js App Router
 import { Route } from "../helper/sidebar-routes";
+import { ArrowUpIcon } from "@heroicons/react/outline";
 
 type MenuItemProps = {
   route: Route;
@@ -8,71 +12,62 @@ type MenuItemProps = {
 
 const MenuItem: React.FC<MenuItemProps> = ({ route }) => {
   const [submenuOpen, setSubmenuOpen] = useState(false);
+  const locationRoute = usePathname(); // Get the current route
+
+  const isActive =
+    locationRoute === route.path || // Exact match
+    (locationRoute.startsWith(route.path) &&
+      locationRoute.length === route.path.length);
 
   const toggleSubmenu = () => setSubmenuOpen(!submenuOpen);
 
   return (
-    <li className="flex flex-col space-y-1 max-lg:pr-12">
+    <li
+      className={`flex flex-col ${
+        isActive ? "bg-gray-200 text-gray-900" : "text-[#717579]"
+      } rounded-lg`}
+    >
       <a
         href={route.submenu ? "#" : route.path}
         onClick={route.submenu ? toggleSubmenu : undefined}
-        className="flex items-center space-y-3 space-x-2 text-[#717579] hover:text-gray-900 transition-colors duration-150 relative"
+        className={`flex items-center py-2 transition-colors duration-150 ${
+          isActive ? "bg-gray-200 text-gray-900" : "hover:bg-gray-100"
+        }`}
       >
-        <Image
-          src={`/icons/${route.icon}.svg`}
-          alt={route.icon}
-          width={22}
-          height={22}
-          className="mr-3 mt-3"
-        />
-        <span className="font-medium text-[#717579] text-sm">{route.name}</span>
-
-        {route.count && (
-          <span
-            className={`bg-gray-300 text-[#717579] text-sm font-bold rounded-full px-2 py-0.5`}
-            style={{ marginLeft: "28%" }}
-          >
-            {route.count}
-          </span>
+        {route.icon && (
+          <Image
+            src={`/icons/${route.icon}.svg`}
+            alt={route.icon}
+            width={20}
+            height={20}
+            className="mr-3"
+          />
         )}
-        {route.highlight && (
-          <span
-            className={`bg-red-500 text-white text-sm font-semibold rounded-full px-2 py-0.5 ml-auto max-[1090px]:hidden`}
-            style={{ marginLeft: "15%" }}
-          >
-            Новый
-          </span>
-        )}
-
-        {/* Display arrow if there's a submenu */}
+        <span className="text-sm font-medium">{route.name}</span>
         {route.submenu && (
           <span
-            className={`transform transition-transform text-[9px] ${
+            className={`ml-auto transform transition-transform ${
               submenuOpen ? "rotate-90" : ""
             }`}
-            style={{ marginLeft: "40%" }}
           >
-            ▶
+            <ArrowUpIcon width={13} height={13} />
           </span>
         )}
       </a>
 
-      {/* Show submenu if expanded */}
       {submenuOpen && route.submenu && (
-        <ul className="pl-6 mt-1 space-y-1 text-gray-500">
+        <ul className="ml-8 mt-2 space-y-2 text-sm">
           {route.submenu.map((subitem, index) => (
             <li key={index}>
               <a
                 href={subitem.path}
-                className="flex items-center space-x-2 hover:text-gray-700 transition-colors duration-150"
+                className={`block px-4 py-2 hover:bg-gray-100 rounded ${
+                  locationRoute === subitem.path
+                    ? "bg-gray-200 text-gray-900"
+                    : ""
+                }`}
               >
-                <Image
-                  src={`/icons/${subitem.icon}.svg`}
-                  alt={subitem.icon}
-                  width={22}
-                  height={22}
-                />
-                <span>{subitem.name}</span>
+                {subitem.name}
               </a>
             </li>
           ))}

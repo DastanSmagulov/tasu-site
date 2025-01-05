@@ -41,3 +41,19 @@ label {
 .table-no-side-borders tr:last-child th {
   border-bottom: none;
 }
+
+button {
+  background-color: #fde107;
+  color: #1a1a1a;
+}
+
+button:hover {
+  background-color: #f3da22;
+}
+
+@media screen and (min-device-width: 500px) and (max-device-width: 768px) {
+  .act-flex {
+    display: flex;
+    flex-direction: column;
+  }
+}
