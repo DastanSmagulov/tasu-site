@@ -4,7 +4,7 @@ import { useState } from "react";
 import Image from "next/image";
 import { usePathname } from "next/navigation"; // Use for Next.js App Router
 import { Route } from "../helper/sidebar-routes";
-import { ArrowUpIcon } from "@heroicons/react/solid";
+// import { ArrowUpIcon } from "@heroicons/react/outline";
 
 type MenuItemProps = {
   route: Route;
@@ -50,7 +50,7 @@ const MenuItem: React.FC<MenuItemProps> = ({ route }) => {
               submenuOpen ? "rotate-90" : ""
             }`}
           >
-            <ArrowUpIcon width={13} height={13} />
+            {/* <ArrowUpIcon width={13} height={13} /> */}
           </span>
         )}
       </a>
