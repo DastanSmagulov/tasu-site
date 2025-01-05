@@ -12,6 +12,7 @@
     "@heroicons/react": "^2.2.0",
     "axios": "^1.7.7",
     "chart.js": "^4.4.7",
+    "daisyui": "^4.12.23",
     "dotenv": "^16.4.7",
     "formidable": "^3.5.2",
     "formik": "^2.4.6",
