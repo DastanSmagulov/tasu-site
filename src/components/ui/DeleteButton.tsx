@@ -1,5 +1,5 @@
 import { FC } from "react";
-import { TrashIcon } from "@heroicons/react/outline";
+import { TrashIcon } from "@heroicons/react/24/solid";
 
 interface DeleteButtonProps {
   onClick: () => void;

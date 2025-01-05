@@ -4,7 +4,7 @@ import { useState } from "react";
 import Image from "next/image";
 import { usePathname } from "next/navigation"; // Use for Next.js App Router
 import { Route } from "../helper/sidebar-routes";
-import { ArrowUpIcon } from "@heroicons/react/outline";
+import { ArrowUpIcon } from "@heroicons/react/solid";
 
 type MenuItemProps = {
   route: Route;

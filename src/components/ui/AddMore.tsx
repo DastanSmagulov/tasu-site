@@ -1,5 +1,5 @@
 import { FC } from "react";
-import { PlusIcon } from "@heroicons/react/outline";
+import { PlusIcon } from "@heroicons/react/24/solid";
 
 interface AddMoreProps {
   onClick: () => void;

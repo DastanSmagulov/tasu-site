@@ -9,7 +9,7 @@ import {
   XMarkIcon,
   ArrowRightOnRectangleIcon,
   ArrowDownTrayIcon,
-} from "@heroicons/react/24/outline";
+} from "@heroicons/react/24/solid";
 
 interface AccountSettingsProps {
   setModalOpen: (value: boolean) => void;

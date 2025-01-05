@@ -5,7 +5,6 @@ import { useSession } from "next-auth/react";
 import Logo from "../components/ui/Logo";
 import MenuGroup from "../components/MenuGroup";
 import Footer from "./Footer";
-import routes from "../helper/sidebar-routes";
 import { getRoutesForRole } from "@/helper/utils";
 import { HiOutlineMenu, HiOutlineX } from "react-icons/hi";
 
