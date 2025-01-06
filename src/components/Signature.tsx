@@ -1,5 +1,5 @@
 import React, { useRef, useState } from "react";
-import SignatureCanvas from "react-signature-canvas";
+// import SignatureCanvas from "react-signature-canvas";
 
 interface SignatureProps {
   onSubmit: (signatureDataUrl: string) => void;
@@ -7,13 +7,13 @@ interface SignatureProps {
 }
 
 const Signature: React.FC<SignatureProps> = ({ onSubmit, onUpload }) => {
-  const signaturePadRef = useRef<SignatureCanvas>(null);
+  // const signaturePadRef = useRef<SignatureCanvas>(null);
   const [penColor, setPenColor] = useState<string>("blue"); // Default pen color
   const [penSize, setPenSize] = useState<number>(2); // Default pen size
 
-  const handleClear = () => {
-    signaturePadRef.current?.clear();
-  };
+  // const handleClear = () => {
+  //   signaturePadRef.current?.clear();
+  // };
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -22,16 +22,16 @@ const Signature: React.FC<SignatureProps> = ({ onSubmit, onUpload }) => {
     }
   };
 
-  const handlePenColorChange = (color: string) => {
-    setPenColor(color);
-    if (signaturePadRef.current) {
-      (signaturePadRef.current as any).penColor = color;
-    }
-  };
+  // const handlePenColorChange = (color: string) => {
+  //   setPenColor(color);
+  //   if (signaturePadRef.current) {
+  //     (signaturePadRef.current as any).penColor = color;
+  //   }
+  // };
 
-  const handlePenSizeChange = (size: number) => {
-    setPenSize(size);
-  };
+  // const handlePenSizeChange = (size: number) => {
+  //   setPenSize(size);
+  // };
 
   return (
     <div className="flex flex-col gap-4">
@@ -39,7 +39,7 @@ const Signature: React.FC<SignatureProps> = ({ onSubmit, onUpload }) => {
         Подпись заказчика
       </h2>
       <div className="border-2 border-gray-800 bg-white p-4 rounded-md mx-auto w-full max-w-lg">
-        <SignatureCanvas
+        {/* <SignatureCanvas
           ref={signaturePadRef}
           penColor={penColor}
           canvasProps={{
@@ -53,7 +53,7 @@ const Signature: React.FC<SignatureProps> = ({ onSubmit, onUpload }) => {
           className="font-medium mt-2 hover:underline bg-transparent hover:bg-transparent"
         >
           Сбросить
-        </button>
+        </button> */}
       </div>
 
       {/* Brush Color and Size Options */}
@@ -61,7 +61,7 @@ const Signature: React.FC<SignatureProps> = ({ onSubmit, onUpload }) => {
         <div className="flex flex-col gap-2 items-center md:items-start">
           <label className="font-semibold">Цвет кисти:</label>
           <div className="flex gap-2">
-            <button
+            {/* <button
               onClick={() => handlePenColorChange("blue")}
               className={`w-6 h-6 rounded-full bg-blue-500 ${
                 penColor === "blue" ? "ring-2 ring-black" : ""
@@ -84,14 +84,14 @@ const Signature: React.FC<SignatureProps> = ({ onSubmit, onUpload }) => {
               className={`w-6 h-6 rounded-full bg-black ${
                 penColor === "black" ? "ring-2 ring-white" : ""
               }`}
-            />
+            /> */}
           </div>
         </div>
 
         <div className="flex flex-col gap-2 items-center md:items-start">
           <label className="font-semibold">Размер кисти:</label>
           <div className="flex gap-2">
-            <button
+            {/* <button
               onClick={() => handlePenSizeChange(2)}
               className={`w-8 h-8 rounded-full bg-gray-300 text-sm flex items-center justify-center ${
                 penSize === 2 ? "ring-2 ring-black" : ""
@@ -122,7 +122,7 @@ const Signature: React.FC<SignatureProps> = ({ onSubmit, onUpload }) => {
               }`}
             >
               8
-            </button>
+            </button> */}
           </div>
         </div>
       </div>
