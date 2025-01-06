@@ -5,7 +5,6 @@ import { usePathname } from "next/navigation";
 import "../../styles/globals.css";
 import Sidebar from "@/containers/Sidebar";
 import Header from "@/containers/Header";
-import TabsNavigation from "@/shared/TabsNavigation";
 
 type LayoutProps = {
   children: React.ReactNode;

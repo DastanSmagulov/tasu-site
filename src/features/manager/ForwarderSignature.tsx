@@ -43,7 +43,7 @@ const ForwarderSignature: React.FC<SignatureProps> = ({
       </h2>
       <div className="border-2 border-gray-800 bg-white pt-1 pb-1 px-3">
         {/* <label className="text-gray-300">Подпись заказчика:</label> */}
-        <SignatureCanvas
+        {/* <SignatureCanvas
           ref={signaturePadRef}
           penColor={penColor}
           canvasProps={{
@@ -51,7 +51,7 @@ const ForwarderSignature: React.FC<SignatureProps> = ({
             height: 200,
             className: "bg-white",
           }}
-        />
+        /> */}
         <label onClick={handleClear} className="text-gray-700">
           Сбросить
         </label>

@@ -1,8 +1,6 @@
 "use client";
 
 import { SessionProvider } from "next-auth/react";
-import type { Metadata } from "next";
-import { Inter } from "next/font/google";
 import { usePathname } from "next/navigation";
 import "../../styles/globals.css";
 import Sidebar from "@/containers/Sidebar";

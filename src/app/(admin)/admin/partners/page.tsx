@@ -1,5 +1,5 @@
 "use client";
-import PartnerCargoCharacteristics from "@/components/PartnersCargoCharacteristics";
+import PartnerCargoCharacteristics from "@/features/admin/PartnersCargoCharacteristics";
 
 const Page = () => {
   return (

@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import Table from "./Table";
+import Table from "../../components/Table";
 
 type PartnerCargoItem = {
   checked: boolean;

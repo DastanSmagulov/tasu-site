@@ -32,18 +32,18 @@ const Table: React.FC<TableProps> = ({
   const [selectedRows, setSelectedRows] = useState<Set<number>>(new Set());
   const [editingRowIndex, setEditingRowIndex] = useState<number | null>(null);
 
-  const toggleRowSelection = (index: number) => {
-    const updatedSelection = new Set(selectedRows);
-    if (updatedSelection.has(index)) {
-      updatedSelection.delete(index);
-    } else {
-      updatedSelection.add(index);
-    }
-    setSelectedRows(updatedSelection);
-    if (onRowSelect) {
-      onRowSelect([...updatedSelection].map((i) => tableData[i]));
-    }
-  };
+  // const toggleRowSelection = (index: number) => {
+  //   const updatedSelection = new Set(selectedRows);
+  //   if (updatedSelection.has(index)) {
+  //     updatedSelection.delete(index);
+  //   } else {
+  //     updatedSelection.add(index);
+  //   }
+  //   setSelectedRows(updatedSelection);
+  //   if (onRowSelect) {
+  //     onRowSelect([...updatedSelection].map((i) => tableData[i]));
+  //   }
+  // };
 
   const handleAddRow = () => {
     const newRow: TableRow = columns.reduce(

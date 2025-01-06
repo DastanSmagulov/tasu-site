@@ -1,6 +1,5 @@
 {
   "compilerOptions": {
-    "target": "ES2015",
     "lib": ["dom", "dom.iterable", "esnext"],
     "allowJs": true,
     "skipLibCheck": true,
@@ -27,7 +26,7 @@
     "**/*.ts",
     "**/*.tsx",
     ".next/types/**/*.ts",
-    "tailwind.config.ts"
+    "src/helper/routes-list.jsx"
   ],
   "exclude": ["node_modules"]
 }
