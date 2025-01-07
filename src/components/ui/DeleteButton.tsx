@@ -1,5 +1,6 @@
 import { FC } from "react";
-import { TrashIcon } from "@heroicons/react/24/solid";
+import TrashIcon from "../../../public/icons/trash.svg";
+import Image from "next/image";
 
 interface DeleteButtonProps {
   onClick: () => void;
@@ -11,7 +12,13 @@ const DeleteButton: FC<DeleteButtonProps> = ({ onClick }) => {
       className="flex items-center text-xs gap-2 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-400"
       onClick={onClick}
     >
-      <TrashIcon className="w-4 h-4" />
+      <Image
+        src={TrashIcon}
+        width={4}
+        height={4}
+        className="mr-1"
+        alt="trash"
+      />{" "}
       Удалить
     </button>
   );

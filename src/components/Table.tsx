@@ -1,3 +1,4 @@
+"use client";
 import React, { useState } from "react";
 import Checkbox from "./ui/CheckBox";
 import DeleteButton from "./ui/DeleteButton";

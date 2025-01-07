@@ -1,8 +1,8 @@
 // src/App.tsx
 "use client";
-import React, { useState } from "react";
-import Checkbox from "@/components/ui/CheckBox";
+import React from "react";
 import Table from "@/components/Table";
+import Checkbox from "@/components/ui/CheckBox";
 
 interface Item {
   name: string;

@@ -2,8 +2,9 @@ import Link from "next/link";
 import React, { useState } from "react";
 import { jsPDF } from "jspdf";
 import JSZip from "jszip";
-// import { TrashIcon } from "@heroicons/react/outline";
+import TrashIcon from "../../public/icons/trash.svg";
 import Checkbox from "@/components/ui/CheckBox";
+import Image from "next/image";
 
 interface TableRow {
   id: string;
@@ -214,7 +215,13 @@ const RequestsTable: React.FC<TableProps> = ({ data, role }) => {
             onClick={handleDeleteSelected}
             className="btn text-white font-bold btn-sm bg-[#EE4040] hover:bg-[#f54d4d] border-none"
           >
-            {/* <TrashIcon className="w-4 h-4 mr-1" /> Удалить */}
+            <Image
+              src={TrashIcon}
+              width={4}
+              height={4}
+              className="mr-1"
+              alt="trash"
+            />{" "}
           </button>
         )}
       </div>

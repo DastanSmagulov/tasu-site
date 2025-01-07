@@ -1,3 +1,4 @@
+"use client";
 export interface CheckboxProps {
   disabled?: boolean;
   defaultChecked?: boolean;
