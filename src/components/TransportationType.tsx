@@ -45,7 +45,7 @@ const TransportationTypes: React.FC = () => {
   return (
     <div className="p-4">
       <h2 className="text-xl font-bold mb-4">Вид перевозки</h2>
-      <div className="flex gap-4">
+      <div className="flex gap-4 max-xl:flex-col">
         {transportOptions.map((option) => (
           <div
             key={option.id}
@@ -59,9 +59,9 @@ const TransportationTypes: React.FC = () => {
             <Image
               src={option.imageUrl}
               alt={option.title}
-              className="w-24 h-24 mb-2"
-              width={24}
-              height={24}
+              className="mb-2"
+              width={80}
+              height={80}
             />
             <h3 className="text-lg font-semibold text-gray-700">
               {option.title}

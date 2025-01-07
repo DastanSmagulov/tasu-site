@@ -30,6 +30,9 @@ const steps = [
   { id: 2, name: "Характер и Вес Груза", component: PackageCharacteristics },
   { id: 3, name: "Фотографии Груза", component: CargoPhoto },
   { id: 4, name: "Данные о Получении Груза", component: InformationPackage },
+  { id: 5, name: "QR Акт", component: QrAct },
+  { id: 6, name: "Доставка", component: Shipping },
+  { id: 7, name: "Соглашение", component: Agreement },
 ];
 
 export default function ActPage() {
@@ -79,7 +82,7 @@ export default function ActPage() {
     );
   };
 
-  const CurrentComponent = steps[currentStep].component;
+  const CurrentComponent = steps[currentStep].component as any;
 
   return (
     <>
@@ -124,13 +127,11 @@ export default function ActPage() {
           <Customer />
           <PackageCharacteristics />
           <CargoPhoto />
-          {actStatus === "готов к отправке" && (
-            <QrAct
-              qrCodeUrl="/images/qr-code.png"
-              actNumber="1234"
-              description="Lorem ipsum dolor sit amet consectetur. Dictum morbi ut lacus ultrices pulvinar lectus adipiscing sit."
-            />
-          )}
+          <QrAct
+            qrCodeUrl="/images/qr-code.png"
+            actNumber="1234"
+            description="Lorem ipsum dolor sit amet consectetur. Dictum morbi ut lacus ultrices pulvinar lectus adipiscing sit."
+          />
         </div>
 
         <div className="flex flex-col md:w-1/2 space-y-4">

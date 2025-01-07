@@ -5,11 +5,8 @@ import axios from "axios";
 import { Formik, Form, Field, ErrorMessage } from "formik";
 import * as Yup from "yup";
 import Cookies from "js-cookie";
-import {
-  XMarkIcon,
-  ArrowRightOnRectangleIcon,
-  ArrowDownTrayIcon,
-} from "@heroicons/react/24/solid";
+import { FaSignOutAlt, FaArrowCircleDown } from "react-icons/fa";
+import { AiOutlineCloseCircle } from "react-icons/ai";
 
 interface AccountSettingsProps {
   setModalOpen: (value: boolean) => void;
@@ -116,7 +113,7 @@ const AccountSettings: React.FC<AccountSettingsProps> = ({ setModalOpen }) => {
           onClick={closeModal}
           className="absolute top-4 right-4 p-2 rounded-full hover:bg-gray-100 bg-transparent"
         >
-          <XMarkIcon className="h-6 w-6 text-gray-500" />
+          <AiOutlineCloseCircle className="h-6 w-6 text-gray-500" />
         </button>
 
         <h1 className="text-lg md:text-xl font-semibold mb-6 text-center">
@@ -149,7 +146,7 @@ const AccountSettings: React.FC<AccountSettingsProps> = ({ setModalOpen }) => {
                     )}
                   </div>
                   <label className="cursor-pointer text-gray-500 hover:text-blue-500 flex items-center space-x-2">
-                    <ArrowDownTrayIcon className="h-5 w-5" />
+                    <FaArrowCircleDown className="h-5 w-5" />
                     <span>Загрузить фотографию</span>
                     <input
                       type="file"
@@ -298,14 +295,14 @@ const AccountSettings: React.FC<AccountSettingsProps> = ({ setModalOpen }) => {
                   className="px-4 py-2 text-gray-500 bg-transparent hover:bg-gray-100 border border-gray-500 rounded-lg flex items-center"
                   onClick={handleSignOut}
                 >
-                  <ArrowRightOnRectangleIcon className="h-5 w-5 mr-2" /> Выйти
+                  <FaSignOutAlt className="h-5 w-5 mr-2" /> Выйти
                 </button>
                 <button
                   type="submit"
+                  className="px-6 py-2 rounded-lg"
                   disabled={isSubmitting}
-                  className="px-4 py-2 rounded-lg"
                 >
-                  {isSubmitting ? "Сохранение..." : "Сохранить"}
+                  Сохранить изменения
                 </button>
               </div>
             </Form>

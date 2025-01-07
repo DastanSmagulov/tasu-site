@@ -36,10 +36,96 @@ type DocumentData = {
 };
 
 export default function ActPage() {
+  const steps = [
+    { id: 1, name: "Данные о Заказчике", component: Customer },
+    {
+      id: 2,
+      name: "Характеристики и вес груза",
+      component: PackageCharacteristics,
+    },
+    {
+      id: 3,
+      name: "Фотографии груза и информация о получении",
+      component: () => (
+        <>
+          <CargoPhoto />
+          <InformationPackage />
+        </>
+      ),
+    },
+    {
+      id: 4,
+      name: "Типы транспорта и информация о водителе",
+      component: () => (
+        <>
+          <TransportationTypes />
+          <DriverInfo />
+        </>
+      ),
+    },
+    {
+      id: 5,
+      name: "Информация о транспортировке и ссылки для менеджера",
+      component: () => (
+        <>
+          <TransportInfo />
+          <ManagerLink
+            title="приема наемником"
+            link="https://tasu.kz/shortlive_reference_607/"
+          />
+          <ManagerLink
+            title="передачи наемником"
+            link="https://tasu.kz/shortlive_reference_148/"
+          />
+        </>
+      ),
+    },
+    {
+      id: 6,
+      name: "Договор и услуги",
+      component: () => (
+        <>
+          <Agreement />
+          <ServicesTable />
+        </>
+      ),
+    },
+    {
+      id: 7,
+      name: "Документы для отправки",
+      component: () => (
+        <>
+          <Shipping />
+          <AccountingEsf />
+          <AccountingAbp />
+        </>
+      ),
+    },
+    { id: 8, name: "QR Код акта", component: QrAct },
+    {
+      id: 9,
+      name: "Подтверждение успешной отправки",
+      component: CreateSuccessAct,
+    },
+  ];
+
+  const [currentStep, setCurrentStep] = useState(0);
   const { data: session, status } = useSession();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const actStatus: string = "готов к отправке";
   const role: string = "manager";
+
+  const handleNext = () => {
+    if (currentStep < steps.length - 1) {
+      setCurrentStep(currentStep + 1);
+    }
+  };
+
+  const handlePrevious = () => {
+    if (currentStep > 0) {
+      setCurrentStep(currentStep - 1);
+    }
+  };
 
   if (status === "loading") {
     return <div>Loading...</div>;
@@ -64,10 +150,64 @@ export default function ActPage() {
     setIsModalOpen(true);
   };
 
+  const ProgressBar = ({ step }: { step: number }) => {
+    const percentage = Math.round(((step + 1) / steps.length) * 100);
+    return (
+      <div className="w-full flex flex-col items-center">
+        <div className="w-full bg-gray-200 rounded-full h-2.5 relative">
+          <div
+            className="bg-yellow-400 h-2.5 rounded-full"
+            style={{ width: `${percentage}%` }}
+          ></div>
+        </div>
+        <p className="text-sm mt-2">
+          Шаг {step + 1} из {steps.length} ({percentage}%)
+        </p>
+      </div>
+    );
+  };
+
+  const CurrentComponent = steps[currentStep].component as any;
+
   return (
     <>
-      <div className="flex gap-4 mt-4 w-full">
-        <div className="flex flex-col w-1/2 space-y-4">
+      <div className="block min-[500px]:hidden p-4 max-w-md bg-yellow-50 min-h-screen">
+        <h1 className="text-xl font-semibold text-center mb-4">ПриемСдатчик</h1>
+        <ProgressBar step={currentStep} />
+
+        <div className="my-4">
+          <CurrentComponent />
+        </div>
+
+        <div className="flex justify-between mt-4">
+          {currentStep > 0 && (
+            <button
+              onClick={handlePrevious}
+              className="font-semibold px-4 py-2 bg-white border border-gray-500 text-black rounded-lg hover:bg-gray-100"
+            >
+              Назад
+            </button>
+          )}
+
+          {currentStep < steps.length - 1 ? (
+            <button
+              onClick={handleNext}
+              className="font-semibold px-4 py-2 bg-yellow-400 text-black rounded-lg hover:bg-yellow-500"
+            >
+              Далее
+            </button>
+          ) : (
+            <button
+              onClick={handleSend}
+              className="font-semibold px-4 py-2 bg-yellow-400 text-black rounded-lg hover:bg-yellow-500"
+            >
+              Отправить
+            </button>
+          )}
+        </div>
+      </div>
+      <div className="hidden min-[500px]:flex act-flex gap-4 mt-4 w-full">
+        <div className="flex flex-col lg:w-1/2 space-y-4">
           <Customer />
           <PackageCharacteristics />
           <CargoPhoto />
@@ -86,7 +226,7 @@ export default function ActPage() {
           </div>
           <Agreement />
         </div>
-        <div className="flex flex-col w-1/2 space-y-4">
+        <div className="flex flex-col lg:w-1/2 space-y-4">
           <Shipping />
           <InformationPackage />
           <Agreement />

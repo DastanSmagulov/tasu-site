@@ -215,8 +215,8 @@ const Table: React.FC<TableProps> = ({ data, role }) => {
           >
             <Image
               src={TrashIcon}
-              width={4}
-              height={4}
+              width={10}
+              height={10}
               className="mr-1"
               alt="trash"
             />{" "}
