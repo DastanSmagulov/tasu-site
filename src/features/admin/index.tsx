@@ -1,13 +1,14 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import TabsNavigation from "@/shared/TabsNavigation";
-import { useRouter } from "next/navigation";
-import FilterPanel from "@/shared/FilterPanel";
-import Table from "@/shared/Table";
-import Pagination from "@/shared/Pagination";
+import { useSession } from "next-auth/react";
+import { useState } from "react";
+import Table from "@/components/Table";
+import Insurance from "@/components/Insurance";
+import InterCity from "@/components/InterCity";
+
 ("./globals.css");
 
+// Define the data type
 type DocumentData = {
   id: string;
   date: string;
@@ -21,159 +22,187 @@ type DocumentData = {
   amount: string;
 };
 
-const AdminPage = () => {
-  const data = [
-    {
-      id: "#000101",
-      customer: "Иванов Иван",
-      date: "03 20 2021",
-      place: "2 места",
-      weight: "15 кг",
-      volume: "1.2 м³",
-      status: "заявка сформирована",
-      statusColor: "bg-blue-300 text-blue-800",
-      view: "-",
-      amount: "-",
-    },
-    {
-      id: "#000102",
-      customer: "Петрова Анна",
-      date: "05 15 2021",
-      place: "1 место",
-      weight: "10 кг",
-      volume: "0.8 м³",
-      status: "оплата подтверждена",
-      statusColor: "bg-purple-200 text-purple-800",
-      view: "-",
-      amount: "-",
-    },
-    {
-      id: "#000103",
-      customer: "Сидоров Алексей",
-      date: "07 01 2021",
-      place: "3 места",
-      weight: "25 кг",
-      volume: "2.0 м³",
-      status: "акт сформирован",
-      statusColor: "bg-blue-200 text-blue-800",
-      view: "-",
-      amount: "-",
-    },
-    {
-      id: "#000104",
-      customer: "Кузнецова Мария",
-      date: "09 10 2021",
-      place: "1 место",
-      weight: "8 кг",
-      volume: "0.5 м³",
-      status: "доставка завершена",
-      statusColor: "bg-green-200 text-green-800",
-      view: "-",
-      amount: "-",
-    },
-    {
-      id: "#000105",
-      customer: "Коновалов Сергей",
-      date: "11 18 2021",
-      place: "2 места",
-      weight: "12 кг",
-      volume: "1.1 м³",
-      status: "заявка сформирована",
-      statusColor: "bg-blue-300 text-blue-800",
-      view: "-",
-      amount: "-",
-    },
-    {
-      id: "#000106",
-      customer: "Федоров Дмитрий",
-      date: "12 25 2021",
-      place: "1 место",
-      weight: "5 кг",
-      volume: "0.4 м³",
-      status: "оплата подтверждена",
-      statusColor: "bg-purple-200 text-purple-800",
-      view: "-",
-      amount: "-",
-    },
-    {
-      id: "#000107",
-      customer: "Смирнова Ольга",
-      date: "02 14 2022",
-      place: "2 места",
-      weight: "18 кг",
-      volume: "1.5 м³",
-      status: "акт сформирован",
-      statusColor: "bg-blue-200 text-blue-800",
-      view: "-",
-      amount: "-",
-    },
-    {
-      id: "#000108",
-      customer: "Васильев Александр",
-      date: "03 30 2022",
-      place: "3 места",
-      weight: "22 кг",
-      volume: "2.3 м³",
-      status: "доставка завершена",
-      statusColor: "bg-green-200 text-green-800",
-      view: "-",
-      amount: "-",
-    },
-    {
-      id: "#000109",
-      customer: "Егоров Алексей",
-      date: "05 21 2022",
-      place: "1 место",
-      weight: "7 кг",
-      volume: "0.7 м³",
-      status: "отправлен на склад",
-      statusColor: "bg-purple-200 text-purple-800",
-      view: "-",
-      amount: "-",
-    },
-    {
-      id: "#000110",
-      customer: "Павлова Ирина",
-      date: "06 10 2022",
-      place: "2 места",
-      weight: "14 кг",
-      volume: "1.3 м³",
-      status: "заявка сформирована",
-      statusColor: "bg-blue-300 text-blue-800",
-      view: "-",
-      amount: "-",
-    },
+export default function AdminPage() {
+  const { data: session, status } = useSession();
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  if (status === "loading") {
+    return <div>Loading...</div>;
+  }
+
+  const handleSignatureSubmit = (signatureDataUrl: string) => {
+    console.log("Signature submitted:", signatureDataUrl);
+  };
+
+  const handlePhotoUpload = (file: File) => {
+    console.log("Photo uploaded:", file);
+  };
+
+  const handleFormSubmit = () => {
+    alert("Форма отправлена");
+  };
+
+  const handlePrint = () => {
+    window.print();
+  };
+
+  const handleSend = () => {
+    setIsModalOpen(true);
+  };
+
+  const cityColumns = [
+    { label: "Город отправление", key: "type" },
+    { label: "Город получение", key: "info1" },
+    { label: "Тариф", key: "info2" },
   ];
 
-  const [currentPage, setCurrentPage] = useState(1);
-  const router = useRouter();
+  const cityData = [
+    { type: "Астана", info1: "Алматы", info2: "5000" },
+    { type: "Астана", info1: "Оскемен", info2: "8000" },
+    { type: "Астана", info1: "Шымкент", info2: "3000" },
+  ];
 
-  //   if (status === "loading") {
-  //     return <div>Loading...</div>;
-  //   }
-
-  const totalPages = 4;
-
-  const onPageChange = (page: number) => {
-    console.log("Change to page:", page);
-    setCurrentPage(page);
+  const handleRowSelect = (selectedRows: any[]) => {
+    console.log("Selected Rows:", selectedRows);
   };
 
   return (
-    <div>
-      <TabsNavigation role="admin" />
-      <FilterPanel />
-      <Table data={data} role="admin" />
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center">
-        <h1>Показано 10 из 160 данных</h1>
-        <Pagination
-          currentPage={currentPage}
-          totalPages={totalPages}
-          onPageChange={onPageChange}
-        />
+    <>
+      <div className="flex mt-4 w-full">
+        <div className="flex flex-col gap-10 mb-10">
+          <InterCity />
+          <Table
+            text=""
+            columns={cityColumns}
+            data={cityData}
+            onRowSelect={handleRowSelect}
+            width="full"
+          />
+          <Insurance />
+          <Table
+            text="Услуги перевозки"
+            columns={[
+              { label: "Наименование", key: "service" },
+              { label: "Шт.", key: "quantity" },
+              { label: "Вес", key: "weight" },
+              { label: "Цена", key: "price" },
+            ]}
+            data={[
+              {
+                service: "Разг-погр работы",
+                quantity: "1",
+                weight: "",
+                price: "5000",
+              },
+              {
+                service: "Забор с места",
+                quantity: "2",
+                weight: "",
+                price: "5000",
+              },
+              {
+                service: "Перевозка пленка",
+                quantity: "1",
+                weight: "",
+                price: "5000",
+              },
+            ]}
+            onRowSelect={handleRowSelect}
+            width="full"
+          />
+          <Table
+            text="Услуги перевозки"
+            columns={[
+              { label: "Наименование", key: "service" },
+              { label: "Вес", key: "weight" },
+              { label: "Цена", key: "price" },
+            ]}
+            data={[
+              {
+                service: "Разг-погр работы",
+                weight: "",
+                price: "5000",
+              },
+              {
+                service: "Забор с места",
+                weight: "",
+                price: "5000",
+              },
+              {
+                service: "Перевозка пленка",
+                weight: "",
+                price: "5000",
+              },
+            ]}
+            onRowSelect={handleRowSelect}
+            width="full"
+          />
+          <Table
+            text="Складские услуги"
+            columns={[
+              { label: "Наименование", key: "service" },
+              { label: "Тип", key: "type" },
+              { label: "Цена", key: "price" },
+            ]}
+            data={[
+              {
+                service: "Хранение",
+                type: "по месту",
+                price: "5000",
+              },
+              {
+                service: "Р/П",
+                type: "россыль",
+                price: "8000",
+              },
+              {
+                service: "Хранение",
+                type: "по месту",
+                price: "5000",
+              },
+            ]}
+            onRowSelect={handleRowSelect}
+            width="full"
+          />
+          <Table
+            text="Услуга упаковки"
+            columns={[
+              { label: "Наименование", key: "service" },
+              { label: "Тариф Маленький", key: "tarif_small" },
+              { label: "Тариф Средний", key: "tarif_medium" },
+              { label: "Цена", key: "price" },
+            ]}
+            data={[
+              {
+                service: "Разг-погр работы",
+                tarif_small: "",
+                tarif_medium: "",
+                price: "5000",
+              },
+              {
+                service: "Забор с места",
+                tarif_small: "2",
+                tarif_medium: "",
+                price: "5000",
+              },
+              {
+                service: "Перевозка с пленка",
+                tarif_small: "1",
+                tarif_medium: "",
+                price: "5000",
+              },
+              {
+                service: "Разг-погр работы",
+                tarif_small: "",
+                tarif_medium: "",
+                price: "5000",
+              },
+            ]}
+            onRowSelect={handleRowSelect}
+            width="full"
+          />
+        </div>
       </div>
-    </div>
+    </>
   );
-};
-
-export default AdminPage;
+}

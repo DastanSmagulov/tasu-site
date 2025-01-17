@@ -13,7 +13,7 @@ type LayoutProps = {
 const Layout: React.FC<LayoutProps> = ({ children }) => {
   const pathname = usePathname();
 
-  let headerText = "Акт передачи документов";
+  let headerText = "Тарифы";
   if (pathname === "/admin/create-act") {
     headerText = "Создать акт";
   } else if (pathname === "/admin/tariff") {

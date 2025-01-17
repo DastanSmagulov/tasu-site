@@ -56,7 +56,7 @@ const ExpensesPage: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col bg-gray-50 pb-10 w-1/2">
+    <div className="flex flex-col bg-gray-50 pb-10">
       <h1>Наименование</h1>
       <div className="flex gap-2 my-4">
         <Checkbox id="2" />
@@ -84,6 +84,19 @@ const ExpensesPage: React.FC = () => {
           data={dataCustomer}
           onRowSelect={handleRowSelect}
         />
+      </div>
+      <div className="flex flex-wrap justify-end gap-4 mt-8 text-[#000000]">
+        {/* Create Card Button */}
+        <button className="font-semibold border border-gray-500 px-4 py-2 bg-white hover:bg-gray-100 text-black rounded-lg">
+          Создать карточку
+        </button>
+
+        {/* Send Button */}
+        <button
+          className="font-semibold px-4 py-2 rounded-lg"
+        >
+          Выслать
+        </button>
       </div>
     </div>
   );

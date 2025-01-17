@@ -1,5 +1,5 @@
 import React, { useRef, useState } from "react";
-import SignatureCanvas from "react-signature-canvas";
+import SignaturePadWrapper from "react-signature-pad-wrapper";
 
 interface SignatureProps {
   onSubmit: (signatureDataUrl: string) => void;
@@ -10,9 +10,17 @@ const ForwarderSignature: React.FC<SignatureProps> = ({
   onSubmit,
   onUpload,
 }) => {
-  const signaturePadRef = useRef<SignatureCanvas>(null);
-  const [penColor, setPenColor] = useState<string>("blue"); // Default pen color
-  const [penSize, setPenSize] = useState<number>(2); // Default pen size
+  const signaturePadRef = useRef<SignaturePadWrapper>(null);
+  const [penColor, setPenColor] = useState<string>("blue");
+  const [penSize, setPenSize] = useState<number>(2);
+
+  const updateSignaturePadOptions = () => {
+    const signaturePad = signaturePadRef.current?.instance; // Access the instance
+    if (signaturePad) {
+      signaturePad.penColor = penColor; // Update pen color
+      signaturePad.minWidth = penSize; // Update pen size
+    }
+  };
 
   const handleClear = () => {
     signaturePadRef.current?.clear();
@@ -25,105 +33,86 @@ const ForwarderSignature: React.FC<SignatureProps> = ({
     }
   };
 
+  const handleSave = () => {
+    const signatureDataUrl = signaturePadRef.current?.toDataURL();
+    if (signatureDataUrl) {
+      onSubmit(signatureDataUrl);
+    }
+  };
+
   const handlePenColorChange = (color: string) => {
     setPenColor(color);
-    if (signaturePadRef.current) {
-      (signaturePadRef.current as any).penColor = color;
-    }
+    updateSignaturePadOptions();
   };
 
   const handlePenSizeChange = (size: number) => {
     setPenSize(size);
+    updateSignaturePadOptions();
   };
 
   return (
     <div className="flex flex-col gap-4">
-      <h2 className="text-lg font-semibold mb-6 text-[#1D1B23]">
-        Подпись Экспедитора
+      <h2 className="text-lg font-semibold text-center md:text-left mb-6 text-[#1D1B23]">
+        Подпись экспедитора
       </h2>
-      <div className="border-2 border-gray-800 bg-white pt-1 pb-1 px-3">
-        {/* <label className="text-gray-300">Подпись заказчика:</label> */}
-        {/* <SignatureCanvas
+      <div className="border-2 border-gray-800 bg-white rounded-md w-full max-w-lg">
+        <SignaturePadWrapper
           ref={signaturePadRef}
-          penColor={penColor}
-          canvasProps={{
-            width: 500,
-            height: 200,
-            className: "bg-white",
+          options={{
+            penColor,
+            backgroundColor: "rgba(255,255,255,1)",
           }}
-        /> */}
-        <label onClick={handleClear} className="text-gray-700">
-          Сбросить
-        </label>
+          canvasProps={{
+            className: "bg-white w-full h-auto",
+          }}
+        />
+        <div className="flex justify-between mt-2">
+          <button
+            onClick={handleClear}
+            className="font-medium hover:underline m-4 bg-transparent hover:bg-transparent"
+          >
+            Сбросить
+          </button>
+          <button
+            onClick={handleSave}
+            className="font-medium hover:underline m-4 bg-transparent hover:bg-transparent"
+          >
+            Сохранить
+          </button>
+        </div>
       </div>
 
       {/* Brush Color and Size Options */}
-      <div className="flex items-center gap-4 mt-4 text-[#000000]">
-        <div className="flex items-center gap-2">
+      <div className="flex flex-col gap-6 mt-4 text-[#000000] md:flex-row md:justify-between">
+        <div className="flex flex-col gap-2 items-center md:items-start">
           <label className="font-semibold">Цвет кисти:</label>
-          <div className="flex gap-1">
-            <button
-              onClick={() => handlePenColorChange("blue")}
-              className={`w-6 h-6 rounded-full bg-blue-500 ${
-                penColor === "blue" ? "border-2 border-black" : ""
-              }`}
-            />
-            <button
-              onClick={() => handlePenColorChange("red")}
-              className={`w-6 h-6 rounded-full bg-red-500 ${
-                penColor === "red" ? "border-2 border-black" : ""
-              }`}
-            />
-            <button
-              onClick={() => handlePenColorChange("green")}
-              className={`w-6 h-6 rounded-full bg-green-500 ${
-                penColor === "green" ? "border-2 border-black" : ""
-              }`}
-            />
-            <button
-              onClick={() => handlePenColorChange("black")}
-              className={`w-6 h-6 rounded-full bg-black ${
-                penColor === "black" ? "border-2 border-white" : ""
-              }`}
-            />
+          <div className="flex gap-2">
+            {["blue", "red", "green", "black"].map((color) => (
+              <button
+                key={color}
+                onClick={() => handlePenColorChange(color)}
+                className={`w-6 h-6 rounded-full bg-${color}-500 ${
+                  penColor === color ? "ring-2 ring-black" : ""
+                }`}
+              />
+            ))}
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-col gap-2 items-center md:items-start">
           <label className="font-semibold">Размер кисти:</label>
-          <div className="flex gap-1">
-            <button
-              onClick={() => handlePenSizeChange(2)}
-              className={`w-6 h-6 rounded-full bg-gray-300 text-xs flex items-center justify-center ${
-                penSize === 2 ? "border-2 border-black" : ""
-              }`}
-            >
-              2
-            </button>
-            <button
-              onClick={() => handlePenSizeChange(4)}
-              className={`w-6 h-6 rounded-full bg-gray-300 text-xs flex items-center justify-center ${
-                penSize === 4 ? "border-2 border-black" : ""
-              }`}
-            >
-              4
-            </button>
-            <button
-              onClick={() => handlePenSizeChange(6)}
-              className={`w-6 h-6 rounded-full bg-gray-300 text-xs flex items-center justify-center ${
-                penSize === 6 ? "border-2 border-black" : ""
-              }`}
-            >
-              6
-            </button>
-            <button
-              onClick={() => handlePenSizeChange(8)}
-              className={`w-6 h-6 rounded-full bg-gray-300 text-xs flex items-center justify-center ${
-                penSize === 8 ? "border-2 border-black" : ""
-              }`}
-            >
-              8
-            </button>
+          <div className="flex gap-2">
+            {[2, 4, 6, 8].map((size) => (
+              <button
+                key={size}
+                onClick={() => handlePenSizeChange(size)}
+                className={`w-8 h-8 rounded-full bg-gray-300 text-sm flex items-center justify-center ${
+                  penSize === size ? "ring-2 ring-black" : ""
+                }`}
+              >
+                {size}
+              </button>
+            ))}
           </div>
         </div>
       </div>

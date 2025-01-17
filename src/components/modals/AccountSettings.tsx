@@ -145,7 +145,7 @@ const AccountSettings: React.FC<AccountSettingsProps> = ({ setModalOpen }) => {
                       </span>
                     )}
                   </div>
-                  <label className="cursor-pointer text-gray-500 hover:text-blue-500 flex items-center space-x-2">
+                  <label className="cursor-pointer text-gray-500 flex items-center space-x-2">
                     <FaArrowCircleDown className="h-5 w-5" />
                     <span>Загрузить фотографию</span>
                     <input

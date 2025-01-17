@@ -131,7 +131,7 @@ export default function CreateActPage() {
           ) : (
             <button
               onClick={handleSend}
-              className="font-semibold px-4 py-2 bg-yellow-400 text-black rounded-lg hover:bg-yellow-500"
+              className="font-semibold px-4 py-2 bg-yellow-400 text-black rounded-lg"
             >
               Отправить
             </button>

@@ -35,7 +35,7 @@ const SavedPage = () => {
   ];
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen mt-8">
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {savedCalculations.map((calculation, index) => (
           <div
@@ -59,9 +59,7 @@ const SavedPage = () => {
               </div>
               <div>
                 {" "}
-                <button className="bg-yellow-400 text-white py-2 px-4 rounded-md hover:bg-yellow-500">
-                  Открыть расчет
-                </button>
+                <button className="py-2 px-4 rounded-md">Открыть расчет</button>
               </div>
             </div>
           </div>

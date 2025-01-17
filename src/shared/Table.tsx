@@ -2,9 +2,9 @@ import Link from "next/link";
 import React, { useState } from "react";
 import { jsPDF } from "jspdf";
 import JSZip from "jszip";
+import Image from "next/image";
 import TrashIcon from "../../public/icons/trash.svg";
 import Checkbox from "@/components/ui/CheckBox";
-import Image from "next/image";
 
 interface TableRow {
   id: string;
@@ -26,8 +26,36 @@ interface TableProps {
 
 const Table: React.FC<TableProps> = ({ data, role }) => {
   const [selectedRows, setSelectedRows] = useState<Set<string>>(new Set());
+  const [sortConfig, setSortConfig] = useState<{
+    key: keyof TableRow;
+    direction: string;
+  } | null>(null);
 
-  // Toggle selection for a specific row
+  // Sorting function
+  const sortedData = React.useMemo(() => {
+    if (!sortConfig) return data;
+    const sorted = [...data].sort((a, b) => {
+      if (a[sortConfig.key] < b[sortConfig.key]) {
+        return sortConfig.direction === "ascending" ? -1 : 1;
+      }
+      if (a[sortConfig.key] > b[sortConfig.key]) {
+        return sortConfig.direction === "ascending" ? 1 : -1;
+      }
+      return 0;
+    });
+    return sorted;
+  }, [data, sortConfig]);
+
+  const handleSort = (key: keyof TableRow) => {
+    setSortConfig((prevConfig) => {
+      if (prevConfig?.key === key && prevConfig.direction === "ascending") {
+        return { key, direction: "descending" };
+      }
+      return { key, direction: "ascending" };
+    });
+  };
+
+  // Toggle row selection
   const toggleSelection = (id: string) => {
     setSelectedRows((prevSelected) => {
       const updatedSelected = new Set(prevSelected);
@@ -40,106 +68,19 @@ const Table: React.FC<TableProps> = ({ data, role }) => {
     });
   };
 
-  // Handle selecting all rows
+  // Toggle all rows selection
   const toggleSelectAll = () => {
     if (selectedRows.size === data.length) {
-      setSelectedRows(new Set()); // Deselect all
+      setSelectedRows(new Set());
     } else {
-      setSelectedRows(new Set(data.map((row) => row.id))); // Select all
+      setSelectedRows(new Set(data.map((row) => row.id)));
     }
-  };
-
-  // Create and add a PDF to the ZIP archive
-  const generatePDF = (row: TableRow, zip: JSZip) => {
-    const doc = new jsPDF();
-    doc.text(`Order ID: ${row.id}`, 10, 10);
-    doc.text(`Customer: ${row.customer}`, 10, 20);
-    doc.text(`Date: ${row.date}`, 10, 30);
-    doc.text(`Place: ${row.place}`, 10, 40);
-    doc.text(`Weight: ${row.weight}`, 10, 50);
-    doc.text(`Volume: ${row.volume}`, 10, 60);
-    doc.text(`Status: ${row.status}`, 10, 70);
-    doc.text(`Amount: ${row.amount}`, 10, 80);
-
-    const pdfBlob = doc.output("blob");
-    zip.file(`${row.id}.pdf`, pdfBlob); // Add the PDF to the ZIP archive
-  };
-
-  // Handle downloading ZIP
-  const handleDownloadZip = () => {
-    const zip = new JSZip();
-
-    // Generate PDF for each selected row and add it to the ZIP
-    selectedRows.forEach((id) => {
-      const row = data.find((row) => row.id === id);
-      if (row) {
-        generatePDF(row, zip);
-      }
-    });
-
-    // Generate the ZIP and trigger download
-    zip.generateAsync({ type: "blob" }).then((content) => {
-      const link = document.createElement("a");
-      link.href = URL.createObjectURL(content);
-      link.download = "documents.zip"; // Default name for the ZIP file
-      link.click();
-    });
-  };
-
-  // Handle sending the document via WhatsApp
-  const handleSendWhatsApp = () => {
-    selectedRows.forEach((id) => {
-      const row = data.find((row) => row.id === id);
-      if (row) {
-        const message = `Sending document for order ${id} to ${row.customer}`;
-        const phone = "87029134650"; // Placeholder number for demo
-        const whatsappURL = `https://wa.me/${phone}?text=${encodeURIComponent(
-          message
-        )}`;
-        window.open(whatsappURL, "_blank");
-      }
-    });
-  };
-
-  const handlePrintDocuments = () => {
-    // Loop through all selected rows
-    selectedRows.forEach((id) => {
-      const row = data.find((row) => row.id === id);
-      if (row) {
-        const doc = new jsPDF();
-        doc.text(`Order ID: ${row.id}`, 10, 10);
-        doc.text(`Customer: ${row.customer}`, 10, 20);
-        doc.text(`Date: ${row.date}`, 10, 30);
-        doc.text(`Place: ${row.place}`, 10, 40);
-        doc.text(`Weight: ${row.weight}`, 10, 50);
-        doc.text(`Volume: ${row.volume}`, 10, 60);
-        doc.text(`Status: ${row.status}`, 10, 70);
-        doc.text(`Amount: ${row.amount}`, 10, 80);
-
-        const pdfBlob = doc.output("blob");
-        const pdfUrl = URL.createObjectURL(pdfBlob);
-
-        const printWindow = window.open(pdfUrl, "_blank");
-        if (printWindow) {
-          printWindow.print();
-        }
-      }
-    });
-  };
-
-  // Handle deleting selected rows
-  const handleDeleteSelected = () => {
-    const updatedData = data.filter((row) => !selectedRows.has(row.id));
-    setSelectedRows(new Set()); // Clear selected rows
-    // Update the data state (assuming data is managed in a parent component)
-    // You can pass a callback to update the parent component's state
-    console.log("Updated Data:", updatedData);
   };
 
   return (
     <div className="mt-8">
       <div className="overflow-x-auto">
-        <table className="table-auto w-full rounded-lg shadow-md table-no-side-borders">
+        <table className="table-auto w-full rounded-lg shadow-md">
           <thead>
             <tr className="bg-white text-gray-700 font-semibold text-sm">
               <th className="p-3 pl-10">
@@ -149,23 +90,38 @@ const Table: React.FC<TableProps> = ({ data, role }) => {
                   onChange={toggleSelectAll}
                 />
               </th>
-              {/* <th className="p-3 pl-10">
-                <Checkbox id="number" />
-              </th> */}
-              <th className="p-3 text-left">Номер</th>
-              <th className="p-3 text-left">Заказчик</th>
-              <th className="p-3 text-left">Дата</th>
-              <th className="p-3 text-left">Мест</th>
-              <th className="p-3 text-left">Вес</th>
-              <th className="p-3 text-left">Куб</th>
-              <th className="p-3 text-left">Статус</th>
-              <th className="p-3 text-left">Вид</th>
-              <th className="p-3 text-left">Сумма</th>
+              {[
+                { label: "Номер", key: "id" },
+                { label: "Заказчик", key: "customer" },
+                { label: "Дата", key: "date" },
+                { label: "Мест", key: "place" },
+                { label: "Вес", key: "weight" },
+                { label: "Куб", key: "volume" },
+                { label: "Статус", key: "status" },
+                { label: "Вид", key: "view" },
+                { label: "Сумма", key: "amount" },
+              ].map((col) => (
+                <th
+                  key={col.key}
+                  className="p-3 text-left cursor-pointer"
+                  onClick={() => handleSort(col.key as keyof TableRow)}
+                >
+                  {col.label}
+                  <span className="ml-1 text-xs">
+                    {sortConfig?.key === col.key
+                      ? sortConfig.direction === "ascending"
+                        ? "↑" // Up arrow for ascending
+                        : "↓" // Down arrow for descending
+                      : "↑↓"}{" "}
+                    {/* Default arrow */}
+                  </span>
+                </th>
+              ))}
               <th className="p-3"></th>
             </tr>
           </thead>
           <tbody className="bg-white">
-            {data?.map((row) => (
+            {sortedData.map((row) => (
               <tr key={row.id} className="text-sm text-gray-800">
                 <td className="p-3 pl-10 border border-gray-300">
                   <Checkbox
@@ -175,7 +131,7 @@ const Table: React.FC<TableProps> = ({ data, role }) => {
                   />
                 </td>
                 <td className="p-3 border border-gray-300">
-                  <Link href={`${role}/act/${row.id.slice(1)}`}>{row.id}</Link>
+                  <Link href={`/${role}/act/${row.id.slice(1)}`}>{row.id}</Link>
                 </td>
                 <td className="p-3 border border-gray-300">{row.customer}</td>
                 <td className="p-3 border border-gray-300">{row.date}</td>
@@ -198,7 +154,7 @@ const Table: React.FC<TableProps> = ({ data, role }) => {
                   {row.amount || "-"}
                 </td>
                 <td className="p-3 text-center border border-gray-300">
-                  <button className="text-gray-400 bg-transparent hover:bg-transparent hover:text-gray-600 bg:text-[#F2F2F2]">
+                  <button className="text-gray-400 bg-transparent hover:bg-transparent hover:text-gray-600">
                     •••
                   </button>
                 </td>
@@ -209,18 +165,8 @@ const Table: React.FC<TableProps> = ({ data, role }) => {
       </div>
       <div className="flex gap-4 mt-4">
         {selectedRows.size > 0 && (
-          <button
-            onClick={handleDeleteSelected}
-            className="btn text-white font-bold btn-sm bg-[#EE4040] hover:bg-[#f54d4d] border-none"
-          >
-            <Image
-              src={TrashIcon}
-              width={10}
-              height={10}
-              className="mr-1"
-              alt="trash"
-            />{" "}
-            Удалить
+          <button className="btn text-white font-bold btn-sm bg-[#EE4040] hover:bg-[#f54d4d] border-none">
+            <Image src={TrashIcon} width={10} height={10} alt="trash" /> Удалить
           </button>
         )}
       </div>

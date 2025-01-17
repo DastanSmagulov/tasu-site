@@ -98,7 +98,7 @@ const routes: Route[] = [
     roles: ["forwarder"],
   },
   {
-    path: "/admin/tariff",
+    path: "/admin",
     name: "Тарифы",
     icon: "tariff",
     // count: 14,

@@ -75,38 +75,43 @@ const StatisticsComponent = () => {
     ],
   };
 
+  const stats = [
+    { title: "Общий доход", value: "46 млн ₸", trend: "↓ 16%", color: "red" },
+    {
+      title: "Общая выручка",
+      value: "3 млн ₸",
+      trend: "↑ 16%",
+      color: "green",
+    },
+    {
+      title: "Количество рейсов",
+      value: "124 рейсов",
+      trend: "↑ 16%",
+      color: "green",
+    },
+    {
+      title: "Количество пользователей",
+      value: "1,643",
+      trend: "↑ 16%",
+      color: "green",
+    },
+  ];
+
+  const pieLegend = [
+    { label: "Акт сформирован", value: "32 000", color: "#4F9EFF" },
+    { label: "В пути", value: "28 000", color: "#FFB347" },
+    { label: "Готов к отправке", value: "9 000", color: "#D891EF" },
+    { label: "Не готов", value: "14 000", color: "#FF6961" },
+    { label: "Доставлен", value: "17 000", color: "#77DD77" },
+  ];
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
       {/* Left Column */}
       <div className="space-y-6">
         {/* Summary Stats */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {[
-            {
-              title: "Общий доход",
-              value: "46 млн ₸",
-              trend: "↓ 16%",
-              color: "red",
-            },
-            {
-              title: "Общая выручка",
-              value: "3 млн ₸",
-              trend: "↑ 16%",
-              color: "green",
-            },
-            {
-              title: "Количество рейсов",
-              value: "124 рейсов",
-              trend: "↑ 16%",
-              color: "green",
-            },
-            {
-              title: "Количество пользователей",
-              value: "1,643",
-              trend: "↑ 16%",
-              color: "green",
-            },
-          ].map((item, index) => (
+          {stats.map((item, index) => (
             <div
               key={index}
               className="p-4 bg-white rounded-lg shadow-md flex flex-col justify-between"
@@ -152,34 +157,32 @@ const StatisticsComponent = () => {
           <h3 className="font-semibold text-lg text-gray-700 mb-4">
             Действующие Заказы
           </h3>
-          <Pie
-            data={pieData}
-            options={{
-              responsive: true,
-              plugins: {
-                tooltip: {
-                  backgroundColor: "#4F9EFF",
-                  titleColor: "#FFF",
+          <div className="relative h-72">
+            <Pie
+              data={pieData}
+              options={{
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                  tooltip: {
+                    backgroundColor: "#4F9EFF",
+                    titleColor: "#FFF",
+                  },
                 },
-              },
-            }}
-          />
+              }}
+            />
+          </div>
         </div>
+
         {/* Legend */}
         <div className="p-4 bg-white rounded-lg shadow-md space-y-2">
-          {[
-            { label: "Акт сформирован", value: "32 000", color: "#4F9EFF" },
-            { label: "В пути", value: "28 000", color: "#FFB347" },
-            { label: "Готов к отправке", value: "9 000", color: "#D891EF" },
-            { label: "Не готов", value: "14 000", color: "#FF6961" },
-            { label: "Доставлен", value: "17 000", color: "#77DD77" },
-          ].map((item, index) => (
+          {pieLegend.map((item, index) => (
             <div key={index} className="flex items-center">
               <span
                 className="w-3 h-3 rounded-full mr-2"
                 style={{ backgroundColor: item.color }}
               ></span>
-              <span className="text-sm text-gray-600">{item.label}: </span>
+              <span className="text-sm text-gray-600">{item.label}:</span>
               <span className="ml-1 text-gray-800 font-medium">
                 {item.value}
               </span>

@@ -4,6 +4,7 @@ import React, { useState } from "react";
 
 const FilterPanel: React.FC = () => {
   const [query, setQuery] = useState("");
+  const [showStatusDropdown, setShowStatusDropdown] = useState(false);
 
   return (
     <div className="bg-white p-4 mb-4 rounded-lg text-[#1D1B23] shadow-md">
@@ -20,10 +21,45 @@ const FilterPanel: React.FC = () => {
 
         {/* Filters */}
         <div className="flex flex-wrap items-center gap-6">
-          <div className="flex items-center gap-2">
-            <Checkbox />
-            <span className="text-sm font-medium">Статус</span>
+          <div className="relative">
+            {/* Dropdown Toggle */}
+            <button
+              className="flex items-center gap-1 text-sm font-medium text-gray-700 hover:text-gray-900 bg-transparent hover:bg-transparent"
+              onClick={() => setShowStatusDropdown(!showStatusDropdown)}
+            >
+              Статус
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className={`h-4 w-4 transition-transform ${
+                  showStatusDropdown ? "rotate-180" : ""
+                }`}
+                viewBox="0 0 20 20"
+                fill="currentColor"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                  clipRule="evenodd"
+                />
+              </svg>
+            </button>
+
+            {/* Dropdown Menu */}
+            {showStatusDropdown && (
+              <ul className="absolute z-10 mt-1 bg-white border border-gray-200 rounded-md shadow-md w-40 text-sm">
+                <li className="px-4 py-2 hover:bg-gray-100 cursor-pointer">
+                  Все
+                </li>
+                <li className="px-4 py-2 hover:bg-gray-100 cursor-pointer">
+                  Активный
+                </li>
+                <li className="px-4 py-2 hover:bg-gray-100 cursor-pointer">
+                  Завершенный
+                </li>
+              </ul>
+            )}
           </div>
+
           <div className="flex items-center gap-2">
             <Checkbox />
             <span className="text-sm font-medium">Мои</span>

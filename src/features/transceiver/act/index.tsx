@@ -104,7 +104,7 @@ export default function ActPage() {
           {currentStep < steps.length - 1 ? (
             <button
               onClick={handleNext}
-              className="font-semibold px-4 py-2 bg-yellow-400 text-black rounded-lg hover:bg-yellow-500"
+              className="font-semibold px-4 py-2 text-black rounded-lg"
             >
               Далее
             </button>

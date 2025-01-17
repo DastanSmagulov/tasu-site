@@ -133,15 +133,13 @@ const PackageInfo: React.FC = () => {
             <button className="bg-gray-200 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-300">
               Очистить
             </button>
-            <button className="text-white py-2 px-4 rounded-lg">
-              Подтвердить
-            </button>
+            <button className="py-2 px-4 rounded-lg">Подтвердить</button>
           </div>
         </section>
       </div>
 
       {/* Final Submit Button */}
-      <button className="text-white py-3 px-6 rounded-lg w-full max-w-lg mt-6">
+      <button className="py-3 px-6 rounded-lg w-full max-w-lg mt-6">
         Товар передан Клиенту
       </button>
     </div>

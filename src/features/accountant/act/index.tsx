@@ -71,7 +71,7 @@ export default function ActPage() {
             </h2>
             <button
               onClick={openExpenses}
-              className="font-semibold px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg"
+              className="font-semibold px-4 py-2 rounded-lg"
             >
               Указать из таблицы
             </button>
@@ -117,9 +117,9 @@ export default function ActPage() {
         {/* Send Button */}
         <button
           onClick={handleSend}
-          className="font-semibold px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg"
+          className="font-semibold px-4 py-2 rounded-lg"
         >
-          Отправить
+          Выслать
         </button>
       </div>
       {isModalOpen && <CreateSuccessAct />}

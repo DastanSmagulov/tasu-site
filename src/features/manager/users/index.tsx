@@ -170,21 +170,21 @@ export default function UsersPage() {
     <>
       <div className="flex flex-col gap-10 mt-4 w-full">
         <Table
-          width="1/2"
+          width="full"
           text="Сотрудники"
           columns={employeesColumns}
           data={employeesData}
           onRowSelect={handleRowSelect}
         />
         <Table
-          width="1/2"
+          width="full"
           text="База клиентов"
           columns={clientsColumns}
           data={clientsData}
           onRowSelect={handleRowSelect}
         />
         <Table
-          width="1/2"
+          width="full"
           text="Заказчики"
           columns={customersColumns}
           data={customersData}
