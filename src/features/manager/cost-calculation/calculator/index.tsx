@@ -13,7 +13,6 @@ import TableTotal from "@/components/TableTotal";
 
 ("./globals.css");
 
-// Define the data type
 type DocumentData = {
   id: string;
   date: string;
@@ -31,19 +30,10 @@ export default function CalculatorPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
 
-  // useEffect(() => {
-  //   if (status === "unauthenticated") {
-  //     router.push("/login");
-  //   }
-  // }, [status, router]);
-
   if (status === "loading") {
     return <div>Loading...</div>;
   }
 
-  // if (!session) {
-  //   return null;
-  // }
   const handleSignatureSubmit = (signatureDataUrl: string) => {
     console.log("Signature submitted:", signatureDataUrl);
   };
@@ -51,10 +41,12 @@ export default function CalculatorPage() {
   const handlePhotoUpload = (file: File) => {
     console.log("Photo uploaded:", file);
   };
+
   return (
-    <>
-      <div className="flex gap-4 mt-4 w-full">
-        <div className="flex flex-col w-1/2 space-y-4">
+    <div className="container mx-auto py-6">
+      <div className="flex flex-col lg:flex-row gap-6">
+        {/* Left Section */}
+        <div className="flex flex-col w-full lg:w-1/2 space-y-4">
           <CalculationDescription />
           <DeliveryCity />
           <Insurance />
@@ -79,14 +71,8 @@ export default function CalculatorPage() {
                 cost: "1000",
                 work: "4000",
               },
-              {
-                service: "2342342",
-                quantity: "21343241",
-                cost: "1000",
-                work: "4000",
-              },
             ]}
-          />{" "}
+          />
           <TableTotal
             title="Услуги Упаковки"
             columns={[
@@ -108,28 +94,12 @@ export default function CalculatorPage() {
                 cost: "Большой",
                 work: "4000",
               },
-              {
-                service: "Скотч",
-                quantity: "1",
-                cost: "Большой",
-                work: "4000",
-              },
-              {
-                service: "Скотч",
-                quantity: "1",
-                cost: "Большой",
-                work: "4000",
-              },
-              {
-                service: "Скотч",
-                quantity: "1",
-                cost: "Большой",
-                work: "4000",
-              },
             ]}
-          />{" "}
+          />
         </div>
-        <div className="flex flex-col w-1/2 space-y-4">
+
+        {/* Right Section */}
+        <div className="flex flex-col w-full lg:w-1/2 space-y-4">
           <WarehouseServices />
           <TableTotal
             title="Доп услуги"
@@ -146,22 +116,10 @@ export default function CalculatorPage() {
                 service: "Скотч",
                 cost: "500",
               },
-              {
-                service: "Скотч",
-                cost: "500",
-              },
-              {
-                service: "Скотч",
-                cost: "500",
-              },
-              {
-                service: "Скотч",
-                cost: "500",
-              },
             ]}
-          />{" "}
+          />
         </div>
       </div>
-    </>
+    </div>
   );
 }

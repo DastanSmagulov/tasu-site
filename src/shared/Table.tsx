@@ -86,7 +86,7 @@ const Table: React.FC<TableProps> = ({ data, role }) => {
               <th className="p-3 pl-10">
                 <Checkbox
                   id="select-all"
-                  defaultChecked={selectedRows.size === data.length}
+                  checked={selectedRows.size === data.length}
                   onChange={toggleSelectAll}
                 />
               </th>
@@ -126,7 +126,7 @@ const Table: React.FC<TableProps> = ({ data, role }) => {
                 <td className="p-3 pl-10 border border-gray-300">
                   <Checkbox
                     id={`checkbox-${row.id}`}
-                    defaultChecked={selectedRows.has(row.id)}
+                    checked={selectedRows.has(row.id)}
                     onChange={() => toggleSelection(row.id)}
                   />
                 </td>

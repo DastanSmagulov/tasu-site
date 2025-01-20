@@ -36,18 +36,24 @@ const DeliveryQRCard: React.FC = () => {
   };
 
   return (
-    <>
-      <div className="mb-8 flex justify-center">
+    <div className="flex flex-col items-center min-h-screen bg-gray-50 p-4">
+      {/* Logo */}
+      <div className="mb-8">
         <Logo width={172} height={56} />
       </div>
-      <div className="max-w-md mx-auto p-6 bg-white shadow-lg rounded-lg text-center">
-        {/* Logo Section */}
+
+      {/* Card Container */}
+      <div className="w-full max-w-md bg-white p-6 shadow-lg rounded-lg text-center">
         {/* Input Field */}
         <div className="mb-6">
-          <label className="block text-sm font-medium text-gray-600 mb-2">
-            ФИО
+          <label
+            htmlFor="client-name"
+            className="block text-sm font-medium text-gray-600 mb-2"
+          >
+            ФИО Клиента
           </label>
           <input
+            id="client-name"
             type="text"
             placeholder="Введите ФИО клиента"
             className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500"
@@ -56,18 +62,18 @@ const DeliveryQRCard: React.FC = () => {
           />
         </div>
 
-        {/* Action Button */}
+        {/* Generate QR Button */}
         <button
           onClick={handleGenerateQR}
-          className="w-full text-white font-semibold py-3 rounded-lg transition"
+          className="w-full font-semibold py-3 rounded-lg transition"
         >
           Товар передан Клиенту
         </button>
 
         {/* Agreement Text */}
         <p className="text-xs text-gray-500 mt-4">
-          Данным соглашением нажатием кнопки внизу вы соглашаетесь передать
-          курьеру товар в течение ____ времени
+          Нажимая кнопку, вы соглашаетесь передать курьеру товар в течение
+          указанного времени.
         </p>
 
         {/* QR Code Section */}
@@ -80,17 +86,17 @@ const DeliveryQRCard: React.FC = () => {
               <QRCode id="qr-code" value={qrValue} size={200} />
             </div>
 
-            {/* Download Button */}
+            {/* Download QR Button */}
             <button
               onClick={handleDownloadQR}
-              className="mt-4 text-white font-semibold py-2 px-6 rounded-lg transition"
+              className="mt-4 font-semibold py-2 px-6 rounded-lg transition"
             >
               Скачать QR-код
             </button>
           </div>
         )}
       </div>
-    </>
+    </div>
   );
 };
 

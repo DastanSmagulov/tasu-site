@@ -81,7 +81,7 @@ export default function ActPage() {
 
   return (
     <>
-      <div className="block min-[500px]:hidden p-4 max-w-md bg-yellow-50 min-h-screen">
+      <div className="block min-[500px]:hidden p-4 max-w-md min-h-screen">
         <h1 className="text-xl font-semibold text-center mb-4">ПриемСдатчик</h1>
         <ProgressBar step={currentStep} />
 

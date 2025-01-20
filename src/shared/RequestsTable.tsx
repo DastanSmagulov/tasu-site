@@ -170,7 +170,7 @@ const RequestsTable: React.FC<TableProps> = ({ data, role }) => {
                 <td className="p-3 pl-10 border border-gray-300">
                   <Checkbox
                     id={`checkbox-${row.id}`}
-                    defaultChecked={selectedRows.has(row.id)}
+                    checked={selectedRows.has(row.id)}
                     onChange={() => toggleSelection(row.id)}
                   />
                 </td>
@@ -222,6 +222,7 @@ const RequestsTable: React.FC<TableProps> = ({ data, role }) => {
               className="mr-1"
               alt="trash"
             />{" "}
+            Удалить
           </button>
         )}
       </div>
