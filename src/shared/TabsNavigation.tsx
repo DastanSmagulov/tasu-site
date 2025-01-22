@@ -9,7 +9,6 @@ const TabsNavigation: React.FC<TabsNavigationProps> = ({ role }) => {
   const [activeTab, setActiveTab] = useState("Акт приема передачи");
 
   let tabs = [
-    { name: "TTN", icon: <FaDownload /> },
     { name: "CMP", icon: <FaDownload /> },
     { name: "QR", icon: <FaQrcode /> },
     { name: "Заявка", icon: <FaDownload /> },
