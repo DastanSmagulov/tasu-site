@@ -12,9 +12,14 @@ interface AccountSettingsProps {
   setModalOpen: (value: boolean) => void;
 }
 
+interface ProfileData {
+  role?: string;
+  id_card_image?: string;
+}
+
 const AccountSettings: React.FC<AccountSettingsProps> = ({ setModalOpen }) => {
-  const [profileImage, setProfileImage] = useState<File | null>(null);
-  const [data, setData] = useState<{ role?: string }>({});
+  const [profileImage, setProfileImage] = useState<string | null | File>(null);
+  const [data, setData] = useState<ProfileData>({});
   const token = Cookies.get("auth_token");
 
   const [initialValues, setInitialValues] = useState({
@@ -27,6 +32,14 @@ const AccountSettings: React.FC<AccountSettingsProps> = ({ setModalOpen }) => {
     apartment: "",
     postal_code: "",
   });
+
+  useEffect(() => {
+    return () => {
+      if (profileImage && typeof profileImage !== "string") {
+        URL.revokeObjectURL(profileImage as unknown as string);
+      }
+    };
+  }, [profileImage]);
 
   const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
@@ -62,6 +75,7 @@ const AccountSettings: React.FC<AccountSettingsProps> = ({ setModalOpen }) => {
         postal_code: data.postal_code || "",
       });
       setData({ role: data.role });
+      setProfileImage(data.id_card_image);
     } catch (error) {
       console.error("Error fetching profile info", error);
     }
@@ -87,6 +101,7 @@ const AccountSettings: React.FC<AccountSettingsProps> = ({ setModalOpen }) => {
           Authorization: `Bearer ${token}`,
         },
       });
+      closeModal();
 
       console.log("Profile updated successfully");
     } catch (error) {
@@ -105,6 +120,8 @@ const AccountSettings: React.FC<AccountSettingsProps> = ({ setModalOpen }) => {
   useEffect(() => {
     fetchProfileInfo();
   }, []);
+
+  console.log(profileImage);
 
   return (
     <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
@@ -135,7 +152,11 @@ const AccountSettings: React.FC<AccountSettingsProps> = ({ setModalOpen }) => {
                   <div className="w-20 h-20 rounded-full bg-gray-200 flex items-center justify-center">
                     {profileImage ? (
                       <img
-                        src={URL.createObjectURL(profileImage)}
+                        src={
+                          typeof profileImage === "string"
+                            ? profileImage // Display fetched URL
+                            : URL.createObjectURL(profileImage) // Display uploaded file preview
+                        }
                         alt="Profile"
                         className="w-full h-full object-cover rounded-full"
                       />
@@ -166,7 +187,7 @@ const AccountSettings: React.FC<AccountSettingsProps> = ({ setModalOpen }) => {
                 <Field
                   name="full_name"
                   placeholder="Введите имя"
-                  className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 text-black py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
                 <ErrorMessage
                   name="full_name"
@@ -184,7 +205,7 @@ const AccountSettings: React.FC<AccountSettingsProps> = ({ setModalOpen }) => {
                   <Field
                     name="phone"
                     placeholder="+7"
-                    className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full text-black px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                   <ErrorMessage
                     name="phone"
@@ -199,7 +220,7 @@ const AccountSettings: React.FC<AccountSettingsProps> = ({ setModalOpen }) => {
                   <Field
                     name="email"
                     placeholder="@mail"
-                    className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full text-black px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                   <ErrorMessage
                     name="email"
@@ -215,7 +236,7 @@ const AccountSettings: React.FC<AccountSettingsProps> = ({ setModalOpen }) => {
                 <Field
                   name="country"
                   placeholder="Введите страну"
-                  className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full text-black px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
                 <ErrorMessage
                   name="country"
@@ -231,7 +252,7 @@ const AccountSettings: React.FC<AccountSettingsProps> = ({ setModalOpen }) => {
                   <Field
                     name="street"
                     placeholder="Введите улицу"
-                    className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full text-black px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                   <ErrorMessage
                     name="street"
@@ -246,7 +267,7 @@ const AccountSettings: React.FC<AccountSettingsProps> = ({ setModalOpen }) => {
                   <Field
                     name="city"
                     placeholder="Введите город"
-                    className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full text-black px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                   <ErrorMessage
                     name="city"
@@ -263,7 +284,7 @@ const AccountSettings: React.FC<AccountSettingsProps> = ({ setModalOpen }) => {
                   <Field
                     name="apartment"
                     placeholder="Введите номер дома/квартиры"
-                    className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full text-black px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                   <ErrorMessage
                     name="apartment"
@@ -278,7 +299,7 @@ const AccountSettings: React.FC<AccountSettingsProps> = ({ setModalOpen }) => {
                   <Field
                     name="postal_code"
                     placeholder="Введите индекс"
-                    className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full text-black px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                   <ErrorMessage
                     name="postal_code"
@@ -289,7 +310,7 @@ const AccountSettings: React.FC<AccountSettingsProps> = ({ setModalOpen }) => {
               </div>
 
               {/* Buttons */}
-              <div className="flex justify-between items-center">
+              <div className="flex justify-between items-center sm:flex-row flex-col gap-4 sm:gap-0">
                 <button
                   type="button"
                   className="px-4 py-2 text-gray-500 bg-transparent hover:bg-gray-100 border border-gray-500 rounded-lg flex items-center"
@@ -299,7 +320,7 @@ const AccountSettings: React.FC<AccountSettingsProps> = ({ setModalOpen }) => {
                 </button>
                 <button
                   type="submit"
-                  className="px-6 py-2 rounded-lg"
+                  className="px-4 py-2 rounded-lg flex items-center"
                   disabled={isSubmitting}
                 >
                   Сохранить изменения

@@ -36,7 +36,7 @@ const DeliveryQRCard: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col items-center min-h-screen bg-gray-50 p-4">
+    <div className="flex flex-col items-center min-h-screen bg-gray-50 px-4">
       {/* Logo */}
       <div className="mb-8">
         <Logo width={172} height={56} />
@@ -75,27 +75,25 @@ const DeliveryQRCard: React.FC = () => {
           Нажимая кнопку, вы соглашаетесь передать курьеру товар в течение
           указанного времени.
         </p>
-
-        {/* QR Code Section */}
-        {qrValue && (
-          <div className="mt-8">
-            <h2 className="text-lg font-semibold text-gray-700 mb-4">
-              QR-код Акта № 12345
-            </h2>
-            <div className="inline-block p-4 bg-white rounded-lg shadow-md">
-              <QRCode id="qr-code" value={qrValue} size={200} />
-            </div>
-
-            {/* Download QR Button */}
-            <button
-              onClick={handleDownloadQR}
-              className="mt-4 font-semibold py-2 px-6 rounded-lg transition"
-            >
-              Скачать QR-код
-            </button>
-          </div>
-        )}
       </div>
+      {/* QR Code Section */}
+      {qrValue && (
+        <div className="mt-8 flex flex-col items-center justify-center mb-8">
+          <h2 className="text-lg font-semibold text-gray-700 mb-4">
+            QR-код Акта № 12345
+          </h2>
+          <div className="inline-block p-4 rounded-lg shadow-md">
+            <QRCode id="qr-code" value={qrValue} size={200} />
+          </div>
+          {/* Download QR Button */}
+          <button
+            onClick={handleDownloadQR}
+            className="mt-4 font-semibold py-2 px-6 rounded-lg transition"
+          >
+            Скачать QR-код
+          </button>
+        </div>
+      )}
     </div>
   );
 };

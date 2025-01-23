@@ -1,6 +1,8 @@
 "use client";
 import Checkbox from "@/components/ui/CheckBox";
 import React, { useState } from "react";
+import Search from "../../public/icons/search.svg";
+import Image from "next/image";
 
 const FilterPanel: React.FC = () => {
   const [query, setQuery] = useState("");
@@ -11,13 +13,18 @@ const FilterPanel: React.FC = () => {
       {/* First Row */}
       <div className="flex flex-wrap items-center gap-4 mb-4">
         {/* Search Bar */}
-        <input
-          type="text"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="Поиск"
-          className="bg-white rounded px-4 py-2 text-sm w-full md:w-[20vw] border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
-        />
+        <div className="relative w-full md:w-[20vw]">
+          <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+            <Image src={Search} alt="search" width={15} height={15} />
+          </span>
+          <input
+            type="text"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Поиск"
+            className="bg-white rounded px-10 py-2 text-sm w-full border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
 
         {/* Filters */}
         <div className="flex flex-wrap items-center gap-6">

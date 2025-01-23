@@ -45,7 +45,7 @@ const TransportationTypes: React.FC = () => {
   return (
     <div className="p-4">
       <h2 className="text-xl font-bold mb-4">Вид перевозки</h2>
-      <div className="flex gap-4 max-xl:flex-col">
+      <div className="flex gap-4 max-2xl:flex-col">
         {transportOptions.map((option) => (
           <div
             key={option.id}

@@ -161,7 +161,7 @@ export default function CreateActPage() {
         <h1 className="text-xl font-semibold text-center mb-4">ПриемСдатчик</h1>
         <ProgressBar step={currentStep} />
 
-        <div className="my-4">
+        <div className="my-4 overflow-x-hidden flex flex-col gap-3">
           <CurrentComponent />
         </div>
 

@@ -7,9 +7,9 @@ const Shipping = () => {
   const [selectedPayer, setSelectedPayer] = useState("sender"); // Radio button state
 
   return (
-    <div className="bg-white p-6 rounded-lg shadow-md">
+    <div className="bg-white p-6 rounded-lg shadow-md relative">
       {/* Section Header */}
-      <h2 className="text-lg font-semibold mb-4">Перевозка</h2>
+      <h2 className="text-lg font-semibold mb-4 text-[#1D1B23]">Перевозка</h2>
 
       {/* Grid Layout */}
       <div className="grid grid-cols-3 gap-4 items-center">
@@ -20,29 +20,39 @@ const Shipping = () => {
             value={senderName}
             onChange={(e) => setSenderName(e.target.value)}
             placeholder="Укажите ФИО"
-            className="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-[#09BD3C]"
+            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#09BD3C]"
           />
         </div>
 
         {/* Sender Dropdown */}
         <div className="col-span-1">
-          <select className="w-full border border-gray-300 rounded-md p-2 bg-white">
+          <select className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#09BD3C]">
             <option>Отправитель</option>
           </select>
         </div>
 
-        {/* Radio Button */}
+        {/* Radio Button for Sender */}
         <div className="col-span-1 flex items-center justify-end">
-          <label className="inline-flex items-center">
+          <label className="inline-flex items-center cursor-pointer">
             <input
               type="radio"
               name="payer"
               value="sender"
               checked={selectedPayer === "sender"}
               onChange={() => setSelectedPayer("sender")}
-              className="form-radio text-yellow-400"
+              className="hidden"
             />
-            <span className="ml-2"> </span>
+            <span
+              className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                selectedPayer === "sender"
+                  ? "border-customYellow"
+                  : "border-gray-400"
+              }`}
+            >
+              {selectedPayer === "sender" && (
+                <span className="w-2.5 h-2.5 rounded-full bg-customYellow" />
+              )}
+            </span>
           </label>
         </div>
 
@@ -53,35 +63,45 @@ const Shipping = () => {
             value={recipientName}
             onChange={(e) => setRecipientName(e.target.value)}
             placeholder="Укажите ФИО"
-            className="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-[#09BD3C]"
+            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#09BD3C]"
           />
         </div>
 
         {/* Recipient Dropdown */}
         <div className="col-span-1">
-          <select className="w-full border border-gray-300 rounded-md p-2 bg-white">
+          <select className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#09BD3C]">
             <option>Получатель</option>
           </select>
         </div>
 
-        {/* Second Radio Button */}
+        {/* Radio Button for Recipient */}
         <div className="col-span-1 flex items-center justify-end">
-          <label className="inline-flex items-center">
+          <label className="inline-flex items-center cursor-pointer">
             <input
               type="radio"
               name="payer"
               value="recipient"
               checked={selectedPayer === "recipient"}
               onChange={() => setSelectedPayer("recipient")}
-              className="form-radio text-gray-400"
+              className="hidden"
             />
-            <span className="ml-2"> </span>
+            <span
+              className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                selectedPayer === "recipient"
+                  ? "border-customYellow"
+                  : "border-gray-400"
+              }`}
+            >
+              {selectedPayer === "recipient" && (
+                <span className="w-2.5 h-2.5 rounded-full bg-customYellow" />
+              )}
+            </span>
           </label>
         </div>
       </div>
 
       {/* Right-aligned Label */}
-      <div className="text-sm text-gray-500 text-right mt-2">
+      <div className="absolute top-0 right-0 mt-4 mr-6 text-sm text-gray-500">
         Выберите плательщика
       </div>
     </div>

@@ -26,7 +26,7 @@ export async function middleware(req: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  const roleKey = "courier";
+  const roleKey = "admin";
   // const roleKey = token.role?.key.toLowerCase();
   const pathname = req.nextUrl.pathname;
 
@@ -58,12 +58,12 @@ export async function middleware(req: NextRequest) {
 export const config = {
   matcher: [
     "/",
-    // "/admin/:path*",
-    // "/manager/:path*",
-    // "/courier/:path*",
-    // "/forwarder/:path*",
-    // "/transceiver/:path*",
-    // "/accountant/:path*",
+    "/admin/:path*",
+    "/manager/:path*",
+    "/courier/:path*",
+    "/forwarder/:path*",
+    "/transceiver/:path*",
+    "/accountant/:path*",
     "/unauthorized",
   ],
 };

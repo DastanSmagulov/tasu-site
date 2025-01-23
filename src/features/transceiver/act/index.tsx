@@ -7,6 +7,7 @@ import PackageCharacteristics from "@/components/PackageCharacteristics";
 import CargoPhoto from "@/components/CargoPhoto";
 import InformationPackage from "@/components/PackageInformation";
 import CreateSuccessAct from "@/components/modals/CreateSuccessAct";
+import Shipping from "@/components/Shipping";
 
 type DocumentData = {
   id: string;
@@ -25,14 +26,14 @@ const steps = [
   { id: 1, name: "Данные о Заказчике", component: Customer },
   { id: 2, name: "Характер и Вес Груза", component: PackageCharacteristics },
   { id: 3, name: "Фотографии Груза", component: CargoPhoto },
-  { id: 4, name: "Данные о Получении Груза", component: InformationPackage },
+  { id: 4, name: "Перевозка", component: Shipping },
+  { id: 5, name: "Данные о Получении Груза", component: InformationPackage },
 ];
 
 export default function ActPage() {
   const { data: session, status } = useSession();
   const [currentStep, setCurrentStep] = useState(0);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isStorageChecked, setIsStorageChecked] = useState(false);
   const [actStatus, setActStatus] = useState("акт сформирован");
 
   if (status === "loading") {
@@ -123,6 +124,7 @@ export default function ActPage() {
           <CargoPhoto />
         </div>
         <div className="flex flex-col md:w-1/2 space-y-4">
+          <Shipping />
           <InformationPackage />
         </div>
       </div>
@@ -201,7 +203,7 @@ export default function ActPage() {
         </div>
       </div>
 
-      {isModalOpen && <CreateSuccessAct />}
+      {isModalOpen && <CreateSuccessAct setIsModalOpen={setIsModalOpen} />}
     </>
   );
 }

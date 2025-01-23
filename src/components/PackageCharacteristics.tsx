@@ -1,10 +1,10 @@
 import React, { useState } from "react";
 
 const PackageCharacteristics: React.FC = () => {
-  const [cargoCost, setCargoCost] = useState(""); // State for cargo cost
-  const [senderCity, setSenderCity] = useState(""); // State for sender city
-  const [receiverCity, setReceiverCity] = useState(""); // State for receiver city
-  const [additionalInfo, setAdditionalInfo] = useState(""); // State for additional info
+  const [cargoCost, setCargoCost] = useState("");
+  const [senderCity, setSenderCity] = useState("");
+  const [receiverCity, setReceiverCity] = useState("");
+  const [additionalInfo, setAdditionalInfo] = useState("");
   const [packages, setPackages] = useState([
     {
       id: 1,
@@ -120,7 +120,7 @@ const PackageCharacteristics: React.FC = () => {
               №{index + 1} Груз
             </h3>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4">
               {/* Places */}
               <div className="flex items-center gap-2">
                 <label className="text-sm font-medium text-[#1D1B23]">

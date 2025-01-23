@@ -102,11 +102,6 @@ export default function ActPage() {
       ),
     },
     { id: 8, name: "QR Код акта", component: QrAct },
-    {
-      id: 9,
-      name: "Подтверждение успешной отправки",
-      component: CreateSuccessAct,
-    },
   ];
 
   const [currentStep, setCurrentStep] = useState(0);
@@ -175,7 +170,7 @@ export default function ActPage() {
         <h1 className="text-xl font-semibold text-center mb-4">ПриемСдатчик</h1>
         <ProgressBar step={currentStep} />
 
-        <div className="my-4">
+        <div className="my-4 overflow-x-hidden flex flex-col gap-3">
           <CurrentComponent />
         </div>
 
@@ -327,7 +322,7 @@ export default function ActPage() {
           </button>
         </div>
       </div>
-      {isModalOpen && <CreateSuccessAct />}
+      {isModalOpen && <CreateSuccessAct setIsModalOpen={setIsModalOpen} />}
     </>
   );
 }

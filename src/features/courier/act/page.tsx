@@ -212,7 +212,7 @@ export default function ActPage() {
           </button>
         </div>
       </div>
-      {isModalOpen && <CreateSuccessAct />}
+      {isModalOpen && <CreateSuccessAct setIsModalOpen={setIsModalOpen} />}
     </>
   );
 }
