@@ -47,6 +47,7 @@ const Login: React.FC = () => {
       // Fetch the session details to extract the JWT
       const response = await fetch("/api/auth/session");
       const session = await response.json();
+      console.log("session", session);
       // Store the JWT in cookies
       Cookies.set("auth_token", session.jwt as string, {
         expires: 1,
