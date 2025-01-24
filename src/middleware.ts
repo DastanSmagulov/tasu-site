@@ -57,12 +57,12 @@ export async function middleware(req: NextRequest) {
 export const config = {
   matcher: [
     "/",
-    // "/admin/:path*",
-    // "/manager/:path*",
-    // "/courier/:path*",
-    // "/forwarder/:path*",
-    // "/transceiver/:path*",
-    // "/accountant/:path*",
+    "/admin/:path*",
+    "/manager/:path*",
+    "/courier/:path*",
+    "/forwarder/:path*",
+    "/transceiver/:path*",
+    "/accountant/:path*",
     "/unauthorized",
   ],
 };
