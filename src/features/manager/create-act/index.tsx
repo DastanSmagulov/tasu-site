@@ -101,6 +101,59 @@ export default function CreateActPage() {
   const [actStatus, setActStatus] = useState("акт сформирован");
   const role: string = "manager";
 
+  const createAct = async () => {
+    const payload = {
+      customer: 1,
+      sender_city: 3,
+      receiver_city: 4,
+      additional_info: "string",
+      cargo: [
+        {
+          characteristics: "1",
+          slots: "3",
+          weight: "3",
+          dimensions: {
+            length: "3",
+            width: "3",
+            height: "3",
+            amount: "34",
+          },
+        },
+      ],
+      transportation: {
+        sender: 1,
+        receiver: 2,
+        sender_is_payer: true,
+      },
+      customer_signature: "string",
+      consignment: {
+        customer: 2,
+        acceptor: 1,
+      },
+      images: [{}],
+    };
+
+    try {
+      const response = await fetch("/acts/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        console.log("Act created successfully:", data);
+        setIsModalOpen(true);
+      } else {
+        console.error("Error creating act:", response.statusText);
+      }
+    } catch (error) {
+      console.error("Network error:", error);
+    }
+  };
+
   const handleNext = () => {
     if (currentStep < steps.length - 1) {
       setCurrentStep(currentStep + 1);
@@ -116,17 +169,6 @@ export default function CreateActPage() {
   if (status === "loading") {
     return <div>Loading...</div>;
   }
-  const handleSignatureSubmit = (signatureDataUrl: string) => {
-    console.log("Signature submitted:", signatureDataUrl);
-  };
-
-  const handlePhotoUpload = (file: File) => {
-    console.log("Photo uploaded:", file);
-  };
-
-  const handleFormSubmit = () => {
-    alert("Форма отправлена");
-  };
 
   const handlePrint = () => {
     window.print();

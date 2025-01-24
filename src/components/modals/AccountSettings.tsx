@@ -71,7 +71,7 @@ const AccountSettings: React.FC<AccountSettingsProps> = ({ setModalOpen }) => {
         country: data.country || "",
         street: data.street || "",
         city: data.city || "",
-        apartment: data.apartment || "",
+        apartment: data.building_number || "",
         postal_code: data.postal_code || "",
       });
       setData({ role: data.role });

@@ -22,64 +22,7 @@ type DocumentData = {
 };
 
 const AccountantPage = () => {
-  const data = [
-    {
-      id: "#000107",
-      customer: "Смирнова Ольга",
-      date: "02 14 2022",
-      place: "2 места",
-      weight: "18 кг",
-      volume: "1.5 м³",
-      status: "не готов к отправке",
-      statusColor: "bg-blue-200 text-blue-800",
-      view: "-",
-      amount: "-",
-    },
-    {
-      id: "#000108",
-      customer: "Васильев Александр",
-      date: "03 30 2022",
-      place: "3 места",
-      weight: "22 кг",
-      volume: "2.3 м³",
-      status: "готов к отправке",
-      statusColor: "bg-green-200 text-green-800",
-      view: "-",
-      amount: "-",
-    },
-    {
-      id: "#000109",
-      customer: "Егоров Алексей",
-      date: "05 21 2022",
-      place: "1 место",
-      weight: "7 кг",
-      volume: "0.7 м³",
-      status: "не готов к отправке",
-      statusColor: "bg-purple-200 text-purple-800",
-      view: "-",
-      amount: "-",
-    },
-    {
-      id: "#000110",
-      customer: "Павлова Ирина",
-      date: "06 10 2022",
-      place: "2 места",
-      weight: "14 кг",
-      volume: "1.3 м³",
-      status: "готов к отправке",
-      statusColor: "bg-blue-300 text-blue-800",
-      view: "-",
-      amount: "-",
-    },
-  ];
-
   const [currentPage, setCurrentPage] = useState(1);
-  const router = useRouter();
-
-  //   if (status === "loading") {
-  //     return <div>Loading...</div>;
-  //   }
-
   const totalPages = 4;
 
   const onPageChange = (page: number) => {
@@ -91,7 +34,7 @@ const AccountantPage = () => {
     <div>
       <TabsNavigation role="courier" />
       <FilterPanel />
-      <Table data={data} role="courier" />
+      <Table />
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center">
         <h1>Показано 10 из 160 данных</h1>
         <Pagination

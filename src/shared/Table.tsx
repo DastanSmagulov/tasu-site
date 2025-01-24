@@ -1,8 +1,8 @@
-import Link from "next/link";
-import React, { useState } from "react";
-import { jsPDF } from "jspdf";
-import JSZip from "jszip";
+import React, { useState, useEffect } from "react";
+import axios from "axios";
+import Cookies from "js-cookie";
 import Image from "next/image";
+import Link from "next/link";
 import TrashIcon from "../../public/icons/trash.svg";
 import Checkbox from "@/components/ui/CheckBox";
 
@@ -19,19 +19,69 @@ interface TableRow {
   amount: string;
 }
 
-interface TableProps {
-  data: TableRow[];
-  role: string;
-}
+const Table: React.FC = () => {
+  const [data, setData] = useState<TableRow[]>([]);
+  const token = Cookies.get("auth_token");
+  const extractRoleFromToken = (token: string | undefined): string => {
+    if (!token) return "guest"; // Fallback role if the token is missing
+    try {
+      // Decode the token payload (manually or using a library like jwt-decode)
+      const base64Url = token.split(".")[1]; // Get the payload part
+      const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
+      const decodedPayload = JSON.parse(atob(base64)); // Decode and parse JSON
+      return decodedPayload.role.key.toLowerCase() || "guest"; // Fallback if role isn't present
+    } catch (error) {
+      console.error("Error decoding token:", error);
+      return "guest"; // Fallback role on error
+    }
+  };
 
-const Table: React.FC<TableProps> = ({ data, role }) => {
+  const [role] = useState(() => extractRoleFromToken(token));
+  const [loading, setLoading] = useState(true);
   const [selectedRows, setSelectedRows] = useState<Set<string>>(new Set());
   const [sortConfig, setSortConfig] = useState<{
     key: keyof TableRow;
     direction: string;
   } | null>(null);
 
-  // Sorting function
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+
+      try {
+        const response = await axios.get(`${API_BASE_URL}/acts/`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        const data = response.data;
+
+        const tableData: TableRow[] = data.results.map((item: any) => ({
+          id: `#${item.id}`,
+          customer: String(item.customer),
+          date: new Date(item.created_at).toLocaleDateString(),
+          place: item.cargo.characteristics,
+          weight: item.cargo.weight,
+          volume: item.cargo.volume,
+          status: item.status,
+          statusColor:
+            item.status === "Создан" ? "bg-green-100 text-green-800" : "",
+          view: "-",
+          amount: item.total_cost,
+        }));
+
+        setData(tableData);
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
   const sortedData = React.useMemo(() => {
     if (!sortConfig) return data;
     const sorted = [...data].sort((a, b) => {
@@ -55,7 +105,6 @@ const Table: React.FC<TableProps> = ({ data, role }) => {
     });
   };
 
-  // Toggle row selection
   const toggleSelection = (id: string) => {
     setSelectedRows((prevSelected) => {
       const updatedSelected = new Set(prevSelected);
@@ -68,7 +117,6 @@ const Table: React.FC<TableProps> = ({ data, role }) => {
     });
   };
 
-  // Toggle all rows selection
   const toggleSelectAll = () => {
     if (selectedRows.size === data.length) {
       setSelectedRows(new Set());
@@ -76,6 +124,10 @@ const Table: React.FC<TableProps> = ({ data, role }) => {
       setSelectedRows(new Set(data.map((row) => row.id)));
     }
   };
+
+  if (loading) {
+    return <p>Loading...</p>;
+  }
 
   return (
     <div className="mt-8">
@@ -110,10 +162,9 @@ const Table: React.FC<TableProps> = ({ data, role }) => {
                   <span className="ml-1 text-xs">
                     {sortConfig?.key === col.key
                       ? sortConfig.direction === "ascending"
-                        ? "↑" // Up arrow for ascending
-                        : "↓" // Down arrow for descending
-                      : "↑↓"}{" "}
-                    {/* Default arrow */}
+                        ? "↑"
+                        : "↓"
+                      : "↑↓"}
                   </span>
                 </th>
               ))}
@@ -131,7 +182,7 @@ const Table: React.FC<TableProps> = ({ data, role }) => {
                   />
                 </td>
                 <td className="p-3 border border-gray-300">
-                  <Link href={`/${role}/act/${row.id.slice(1)}`}>{row.id}</Link>
+                  <Link href={`${role}/act/${row.id.slice(1)}`}>{row.id}</Link>
                 </td>
                 <td className="p-3 border border-gray-300">{row.customer}</td>
                 <td className="p-3 border border-gray-300">{row.date}</td>

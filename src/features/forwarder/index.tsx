@@ -163,7 +163,7 @@ const ForwarderPage = () => {
     <div>
       <TabsNavigation role="forwarder" />
       <FilterPanel />
-      <Table data={data} role="forwarder" />
+      <Table/>
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center">
         <h1>Показано 10 из 160 данных</h1>
         <Pagination
