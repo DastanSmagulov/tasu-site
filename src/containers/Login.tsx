@@ -54,6 +54,8 @@ const Login: React.FC = () => {
         sameSite: "strict",
       });
 
+      console.log(session?.role?.value);
+
       switch (session?.role?.value) {
         case "Админ":
           router.push("/admin");
