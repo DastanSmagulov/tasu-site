@@ -107,7 +107,11 @@ const AccountSettings: React.FC<AccountSettingsProps> = ({ setModalOpen }) => {
       Object.entries(values).forEach(([key, value]) => {
         formData.append(key, value || "");
       });
-      if (profileImage) formData.append("id_card_image", profileImage);
+
+      // Only append id_card_image if it's a new file
+      if (profileImage && typeof profileImage !== "string") {
+        formData.append("id_card_image", profileImage);
+      }
 
       await axios.patch(`${API_BASE_URL}/edit-profile/`, formData, {
         headers: {
@@ -115,8 +119,8 @@ const AccountSettings: React.FC<AccountSettingsProps> = ({ setModalOpen }) => {
           Authorization: `Bearer ${token}`,
         },
       });
-      closeModal();
 
+      closeModal();
       console.log("Profile updated successfully");
     } catch (error) {
       console.error("Error updating profile", error);

@@ -34,6 +34,14 @@ export default function UsersPage() {
   const [roles, setRoles] = useState<Role[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [newEmployee, setNewEmployee] = useState<UserData>({
+    id: 0,
+    full_name: "",
+    email: "",
+    phone: "",
+    role: "",
+  });
+  const [formErrors, setFormErrors] = useState<Partial<UserData>>({});
 
   const employeesColumns = [
     { label: "ФИО", key: "full_name" },
@@ -89,10 +97,23 @@ export default function UsersPage() {
   };
 
   // Add employee
-  const handleAddEmployee = async (newEmployee: UserData) => {
+  const handleAddEmployee = async () => {
+    const errors: Partial<UserData> = {};
+    if (!newEmployee.full_name) errors.full_name = "Full Name is required";
+    if (!newEmployee.email) errors.email = "Email is required";
+    if (!newEmployee.phone) errors.phone = "Phone is required";
+    if (!newEmployee.role) errors.role = "Role is required";
+
+    if (Object.keys(errors).length > 0) {
+      setFormErrors(errors);
+      return;
+    }
+
     try {
       await axiosInstance.post("/admin/users/", newEmployee);
       await fetchEmployees();
+      setNewEmployee({ id: 0, full_name: "", email: "", phone: "", role: "" });
+      setFormErrors({});
     } catch (err) {
       setError("Failed to add employee. Please try again.");
       console.error(err);
@@ -142,88 +163,73 @@ export default function UsersPage() {
           columns={employeesColumns}
           data={employeesData}
           width="full"
-          onAddRow={(newEmployee: UserData) => (
-            <div>
-              <input
-                type="text"
-                placeholder="Full Name"
-                className="border p-2 rounded"
-                onChange={(e) => (newEmployee.full_name = e.target.value)}
-              />
-              <input
-                type="email"
-                placeholder="Email"
-                className="border p-2 rounded"
-                onChange={(e) => (newEmployee.email = e.target.value)}
-              />
-              <input
-                type="text"
-                placeholder="Phone"
-                className="border p-2 rounded"
-                onChange={(e) => (newEmployee.phone = e.target.value)}
-              />
-              <select
-                className="border p-2 rounded"
-                onChange={(e) => (newEmployee.role = e.target.value)}
-              >
-                <option value="">Select Role</option>
-                {roles.map((role) => (
-                  <option key={role.key} value={role.key}>
-                    {role.value}
-                  </option>
-                ))}
-              </select>
-              <button
-                className="bg-blue-500 text-white p-2 rounded"
-                onClick={() => handleAddEmployee(newEmployee)}
-              >
-                Add Employee
-              </button>
-            </div>
-          )}
         />
+        <div className="flex flex-col gap-2">
+          <input
+            type="text"
+            placeholder="Full Name"
+            className="border p-2 rounded"
+            value={newEmployee.full_name}
+            onChange={(e) =>
+              setNewEmployee({ ...newEmployee, full_name: e.target.value })
+            }
+          />
+          {formErrors.full_name && (
+            <span className="text-red-500">{formErrors.full_name}</span>
+          )}
+          <input
+            type="email"
+            placeholder="Email"
+            className="border p-2 rounded"
+            value={newEmployee.email}
+            onChange={(e) =>
+              setNewEmployee({ ...newEmployee, email: e.target.value })
+            }
+          />
+          {formErrors.email && (
+            <span className="text-red-500">{formErrors.email}</span>
+          )}
+          <input
+            type="text"
+            placeholder="Phone"
+            className="border p-2 rounded"
+            value={newEmployee.phone}
+            onChange={(e) =>
+              setNewEmployee({ ...newEmployee, phone: e.target.value })
+            }
+          />
+          {formErrors.phone && (
+            <span className="text-red-500">{formErrors.phone}</span>
+          )}
+          <select
+            className="border p-2 rounded"
+            value={newEmployee.role}
+            onChange={(e) =>
+              setNewEmployee({ ...newEmployee, role: e.target.value })
+            }
+          >
+            <option value="">Select Role</option>
+            {roles.map((role) => (
+              <option key={role.key} value={role.key}>
+                {role.value}
+              </option>
+            ))}
+          </select>
+          {formErrors.role && (
+            <span className="text-red-500">{formErrors.role}</span>
+          )}
+          <button
+            className="bg-blue-500 text-white p-2 rounded"
+            onClick={handleAddEmployee}
+          >
+            Add Employee
+          </button>
+        </div>
         <Table
           text="Клиенты"
           columns={clientsColumns}
           data={clientsData}
           width="full"
-          onAddRow={(newClient: ClientData) => (
-            <div>
-              <input
-                type="text"
-                placeholder="Full Name"
-                className="border p-2 rounded"
-                onChange={(e) => (newClient.full_name = e.target.value)}
-              />
-              <input
-                type="text"
-                placeholder="Phone"
-                className="border p-2 rounded"
-                onChange={(e) => (newClient.phone = e.target.value)}
-              />
-              <input
-                type="text"
-                placeholder="Address"
-                className="border p-2 rounded"
-                onChange={(e) => (newClient.client_address = e.target.value)}
-              />
-              <input
-                type="text"
-                placeholder="Requisites"
-                className="border p-2 rounded"
-                onChange={(e) => (newClient.account_details = e.target.value)}
-              />
-              <button
-                className="bg-blue-500 text-white p-2 rounded"
-                onClick={() => handleAddClient(newClient)}
-              >
-                Add Client
-              </button>
-            </div>
-          )}
-          // onEditRow={(id: number, updatedClient: ClientData) =>
-          //   handleEditClient(id, updatedClient)
-          // }
         />
       </div>
     </>

@@ -404,7 +404,7 @@ const FlightsPage = () => {
           data={cityTableData}
           onRowSelect={handleRowSelect}
           onAddRow={handleAddCityTransportation}
-          // onUpdateRow={handleUpdateCityTransportation}
+          onEditRow={handleUpdateCityTransportation}
           onDeleteRows={(selectedRows) => {
             const ids = Array.from(selectedRows).map(
               (index) => cityTableData[index].id
