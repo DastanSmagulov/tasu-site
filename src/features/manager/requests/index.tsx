@@ -167,11 +167,14 @@ const RequestsPage = () => {
       <RequestsTable data={data} role="manager" />
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center">
         <h1>Показано 10 из 160 данных</h1>
-        <Pagination
+        {/* <Pagination
           currentPage={currentPage}
-          totalPages={totalPages}
+          totalCount={totalCount}
+          next={nextPage}
+          previous={previousPage}
           onPageChange={onPageChange}
-        />
+          pageSize={totalCount}
+        /> */}
       </div>
     </div>
   );

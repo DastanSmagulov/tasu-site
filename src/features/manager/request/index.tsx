@@ -1,7 +1,7 @@
 "use client";
 
 import { useSession } from "next-auth/react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Customer from "@/components/Customer";
 import CreateSuccessAct from "@/components/modals/CreateSuccessAct";
 import Forwarder from "../Forwarder";
@@ -11,6 +11,9 @@ import ServiceCosts from "../ServiceCosts";
 import Signature from "@/components/Signature";
 import ForwarderSignature from "../ForwarderSignature";
 import TermsAndConditions from "../TermsAndConditions";
+import { Act } from "@/helper/types";
+import { useParams } from "next/navigation";
+import { axiosInstance } from "@/helper/utils";
 
 ("./globals.css");
 
@@ -31,8 +34,21 @@ type DocumentData = {
 export default function RequestPage() {
   const { data: session, status } = useSession();
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const actStatus: string = "готов к отправке";
-  const role: string = "manager";
+  const [actData, setActData] = useState<Act | null>(null); // Store fetched data
+  const params = useParams();
+
+  useEffect(() => {
+    const fetchActData = async () => {
+      try {
+        const response = await axiosInstance.get(`/acts/${params.id}/`);
+        setActData(response.data); // Set the fetched data
+      } catch (error) {
+        console.error("Error fetching act data:", error);
+      }
+    };
+
+    fetchActData();
+  }, [params.id]);
 
   if (status === "loading") {
     return <div>Loading...</div>;
@@ -67,7 +83,7 @@ export default function RequestPage() {
       <div className="flex flex-col lg:flex-row gap-4 mt-4 w-full">
         {/* Left Section */}
         <div className="flex flex-col lg:w-1/2 space-y-4">
-          <Customer />
+          <Customer data={actData} />
           <CargoData />
           <RouteConditions />
           <ServiceCosts />

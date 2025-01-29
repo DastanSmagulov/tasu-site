@@ -1,7 +1,7 @@
 "use client";
 
 import { useSession } from "next-auth/react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Customer from "@/components/Customer";
 import PackageCharacteristics from "@/components/PackageCharacteristics";
 import CargoPhoto from "@/components/CargoPhoto";
@@ -18,6 +18,9 @@ import CreateSuccessAct from "@/components/modals/CreateSuccessAct";
 import AccountingEsf from "@/features/accountant/AccountingEsf";
 import AccountingAbp from "@/features/accountant/AccountingAbp";
 import TableTotal from "@/components/TableTotal";
+import { Act } from "@/helper/types";
+import { useParams } from "next/navigation";
+import { axiosInstance } from "@/helper/utils";
 
 ("./globals.css");
 
@@ -99,7 +102,21 @@ export default function CreateActPage() {
   const { data: session, status } = useSession();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [actStatus, setActStatus] = useState("акт сформирован");
-  const role: string = "manager";
+  const [actData, setActData] = useState<Act | null>(null); // Store fetched data
+  const params = useParams();
+
+  useEffect(() => {
+    const fetchActData = async () => {
+      try {
+        const response = await axiosInstance.get(`/acts/${params.id}/`);
+        setActData(response.data); // Set the fetched data
+      } catch (error) {
+        console.error("Error fetching act data:", error);
+      }
+    };
+
+    fetchActData();
+  }, [params.id]);
 
   const createAct = async () => {
     const payload = {
@@ -204,7 +221,7 @@ export default function CreateActPage() {
         <ProgressBar step={currentStep} />
 
         <div className="my-4 overflow-x-hidden flex flex-col gap-3">
-          <CurrentComponent />
+          <CurrentComponent data={actData} />
         </div>
 
         <div className="flex justify-between mt-4">
@@ -236,7 +253,7 @@ export default function CreateActPage() {
       </div>
       <div className="hidden min-[500px]:flex act-flex gap-4 mt-4 w-full">
         <div className="flex flex-col lg:w-1/2 space-y-4">
-          <Customer />
+          <Customer data={actData} />
           <PackageCharacteristics />
           <CargoPhoto />
           <TransportationTypes />

@@ -42,7 +42,7 @@ const RequestsTable: React.FC<TableProps> = ({ data, role }) => {
 
   // Handle selecting all rows
   const toggleSelectAll = () => {
-    if (selectedRows.size === data.length) {
+    if (selectedRows.size === data?.length) {
       setSelectedRows(new Set()); // Deselect all
     } else {
       setSelectedRows(new Set(data.map((row) => row.id))); // Select all
@@ -145,7 +145,7 @@ const RequestsTable: React.FC<TableProps> = ({ data, role }) => {
               <th className="p-3 pl-10">
                 <Checkbox
                   id="select-all"
-                  defaultChecked={selectedRows.size === data.length}
+                  defaultChecked={selectedRows.size === data?.length}
                   onChange={toggleSelectAll}
                 />
               </th>

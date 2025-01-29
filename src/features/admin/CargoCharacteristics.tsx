@@ -1,41 +1,111 @@
 "use client";
-import React from "react";
+
+import React, { useEffect, useState } from "react";
 import Table from "../../components/Table";
+import { axiosInstance } from "@/helper/utils";
 
 type CargoItem = {
-  checked: boolean;
-  name: string;
-  text1: string;
-  text2?: string;
+  id?: number;
+  name_kz: string;
+  name_ru: string;
+  name_en: string;
 };
 
 const CargoCharacteristics = () => {
+  const [cargoData, setCargoData] = useState<CargoItem[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+
   const columns = [
-    { label: "Характер груза", key: "type" },
-    { label: "???", key: "info1" },
-    { label: "???", key: "info2" },
+    { label: "Название (RU)", key: "name_ru" },
+    { label: "Название (KZ)", key: "name_kz" },
+    { label: "Название (EN)", key: "name_en" },
   ];
 
-  const data = [
-    { type: "Стекло", info1: "", info2: "Text" },
-    { type: "Запчасть", info1: "", info2: "Text" },
-    { type: "Вата", info1: "", info2: "Text" },
-    { type: "Металл", info1: "", info2: "Text" },
-    { type: "Картон", info1: "", info2: "Text" },
-  ];
+  // Fetch cargo data
+  const fetchCargoData = async () => {
+    try {
+      setLoading(true);
+      const response = await axiosInstance.get("/admin/characteristics/");
+      const sortedData = response.data.results.sort(
+        (a: CargoItem, b: CargoItem) => a.id! - b.id!
+      );
+      setCargoData(sortedData);
+    } catch (err) {
+      setError("Failed to fetch cargo data. Please try again.");
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Add new cargo characteristic
+  const handleAddCargo = async (newCargo: CargoItem) => {
+    try {
+      await axiosInstance.post("/admin/characteristics/", newCargo);
+      fetchCargoData();
+    } catch (err) {
+      setError("Failed to add cargo characteristic. Please try again.");
+      console.error(err);
+    }
+  };
+
+  // Update cargo characteristic
+  const handleUpdateCargo = async (
+    id: number,
+    updatedCargo: Partial<CargoItem>
+  ) => {
+    try {
+      await axiosInstance.patch(`/admin/characteristics/${id}/`, updatedCargo);
+      fetchCargoData();
+    } catch (err) {
+      setError("Failed to update cargo characteristic. Please try again.");
+      console.error(err);
+    }
+  };
+
+  // Delete cargo characteristics in bulk
+  const handleDeleteCargo = async (ids: number[]) => {
+    try {
+      await axiosInstance.delete("/admin/characteristics/bulk-delete/", {
+        data: { ids },
+      });
+      fetchCargoData();
+    } catch (err) {
+      setError("Failed to delete cargo characteristics. Please try again.");
+      console.error(err);
+    }
+  };
 
   const handleRowSelect = (selectedRows: any[]) => {
     console.log("Selected Rows:", selectedRows);
   };
 
+  useEffect(() => {
+    fetchCargoData();
+  }, []);
+
+  if (loading) {
+    return <div>Loading...</div>;
+  }
+
   return (
     <div className="bg-gray-50 min-h-screen w-full">
+      {error && <div className="text-red-500">{error}</div>}
       <Table
         text="Характер груза"
         columns={columns}
-        data={data}
+        data={cargoData}
         onRowSelect={handleRowSelect}
-        width="1/2"
+        width="2/3"
+        onAddRow={handleAddCargo}
+        onDeleteRows={(selectedRows) => {
+          const ids = Array.from(selectedRows).map((index) =>
+            Number(cargoData[index].id)
+          );
+          handleDeleteCargo(ids);
+        }}
+        onEditRow={(id, updatedData) => handleUpdateCargo(id, updatedData)}
       />
     </div>
   );

@@ -25,10 +25,39 @@ interface Train {
   info2: string;
 }
 
+interface CityTransportation {
+  id: number;
+  sender_city: {
+    id: number;
+    country: string;
+    name_ru: string;
+    name_kz: string;
+    name_en: string;
+  };
+  receiver_city: {
+    id: number;
+    country: string;
+    name_ru: string;
+    name_kz: string;
+    name_en: string;
+  };
+  price: string;
+}
+
+interface City {
+  id: number;
+  country: string;
+  name_ru: string;
+  name_kz: string;
+  name_en: string;
+}
+
 const FlightsPage = () => {
   const [dataCars, setDataCars] = useState<Car[]>([]);
   const [dataFlights, setDataFlights] = useState<Flight[]>([]);
   const [dataTrains, setDataTrains] = useState<Train[]>([]);
+  const [dataCities, setDataCities] = useState<CityTransportation[]>([]);
+  const [cities, setCities] = useState<City[]>([]);
   const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
   const token = Cookies.get("auth_token");
 
@@ -38,6 +67,15 @@ const FlightsPage = () => {
       Authorization: `Bearer ${token}`,
     },
   });
+
+  const transformPlane = (data: any) => {
+    const { id, type, info1 } = data;
+    return {
+      id,
+      flight_number: type,
+      airline: info1,
+    };
+  };
 
   // Fetch cars from the API
   const fetchCars = async () => {
@@ -87,6 +125,40 @@ const FlightsPage = () => {
       );
     } catch (error) {
       console.error("Error fetching trains:", error);
+    }
+  };
+
+  // Fetch city transportations from the API
+  const fetchCities = async () => {
+    try {
+      const response = await axiosInstance.get(`/admin/city-transportations/`);
+      setDataCities(response.data.results);
+    } catch (error) {
+      console.error("Error fetching city transportations:", error);
+    }
+  };
+
+  // Fetch list of cities for dropdowns
+  const fetchCityList = async () => {
+    try {
+      const response = await axiosInstance.get(`/admin/cities/`);
+      setCities(response.data.results);
+    } catch (error) {
+      console.error("Error fetching cities:", error);
+    }
+  };
+
+  // Add a city transportation to the API
+  const addCityTransportation = async (data: {
+    sender_city: string;
+    receiver_city: string;
+    price: string;
+  }) => {
+    try {
+      await axiosInstance.post(`/admin/city-transportations/`, data);
+      await fetchCities(); // Refresh the city transportations data
+    } catch (error) {
+      console.error("Error adding city transportation:", error);
     }
   };
 
@@ -144,8 +216,11 @@ const FlightsPage = () => {
 
   const updateFlight = async (id: number, updatedData: Partial<Flight>) => {
     try {
-      await axiosInstance.patch(`/admin/planes/${id}/`, updatedData);
-      await fetchFlights(); // Refresh the flights data
+      await axiosInstance.patch(
+        `/admin/planes/${id}/`,
+        transformPlane(updatedData)
+      );
+      await fetchFlights();
     } catch (error) {
       console.error("Error updating flight:", error);
     }
@@ -225,44 +300,118 @@ const FlightsPage = () => {
     addTrain(newTrain);
   };
 
+  // Update a city transportation in the API
+  const updateCityTransportation = async (
+    id: number,
+    updatedData: {
+      sender_city: string;
+      receiver_city: string;
+      price: string;
+    }
+  ) => {
+    try {
+      await axiosInstance.patch(
+        `/admin/city-transportations/${id}/`,
+        updatedData
+      );
+      await fetchCities(); // Refresh the city transportations data
+    } catch (error) {
+      console.error("Error updating city transportation:", error);
+    }
+  };
+
+  // Bulk delete city transportations from the API
+  const deleteCityTransportations = async (ids: number[]) => {
+    try {
+      await axiosInstance.delete(`/admin/city-transportations/bulk-delete/`, {
+        data: { ids },
+      });
+      await fetchCities(); // Refresh the city transportations data
+    } catch (error) {
+      console.error("Error deleting city transportations:", error);
+    }
+  };
+
+  // Handle adding a new city transportation
+  const handleAddCityTransportation = (newRow: any) => {
+    const newCityTransportation = {
+      sender_city: newRow.sender_city,
+      receiver_city: newRow.receiver_city,
+      price: newRow.price,
+    };
+    addCityTransportation(newCityTransportation);
+  };
+
+  // Handle updating a city transportation
+  const handleUpdateCityTransportation = (id: number, updatedRow: any) => {
+    const updatedCityTransportation = {
+      sender_city: updatedRow.sender_city,
+      receiver_city: updatedRow.receiver_city,
+      price: updatedRow.price,
+    };
+    updateCityTransportation(id, updatedCityTransportation);
+  };
+
+  // Handle deleting city transportations
+  const handleDeleteCityTransportations = (ids: number[]) => {
+    deleteCityTransportations(ids);
+  };
+
   useEffect(() => {
     fetchCars();
     fetchFlights();
     fetchTrains();
+    fetchCities();
+    fetchCityList(); // Fetch the list of cities
   }, []);
+
+  // Transform city data for the table
+  const cityTableData = dataCities.map((city) => ({
+    id: city.id,
+    sender_city:
+      cities.find((c) => c.id === city.sender_city.id)?.name_ru || "",
+    receiver_city:
+      cities.find((c) => c.id === city.receiver_city.id)?.name_ru || "",
+    price: city.price,
+  }));
 
   return (
     <div className="flex flex-col gap-10">
       <div className="flex gap-10">
         <Table
-          text="Города отправление"
+          text="Города отправления и получения"
           columns={[
-            { label: "No", key: "type" },
-            { label: "Наименование", key: "info1" },
+            {
+              label: "Город отправления",
+              key: "sender_city",
+              type: "dropdown",
+              options: cities.map((city) => ({
+                value: city.id + "",
+                label: city.name_ru,
+              })),
+            },
+            {
+              label: "Город получения",
+              key: "receiver_city",
+              type: "dropdown",
+              options: cities.map((city) => ({
+                value: city.id + "",
+                label: city.name_ru,
+              })),
+            },
+            { label: "Цена", key: "price", type: "text" },
           ]}
-          data={[
-            { type: "1.", info1: "Астана" },
-            { type: "1.", info1: "Астана" },
-            { type: "1.", info1: "Астана" },
-            { type: "1.", info1: "Астана" },
-          ]}
+          data={cityTableData}
           onRowSelect={handleRowSelect}
-          width="3/12"
-        />
-        <Table
-          text="Города получения"
-          columns={[
-            { label: "No", key: "type" },
-            { label: "Наименование", key: "info1" },
-          ]}
-          data={[
-            { type: "1.", info1: "Астана" },
-            { type: "1.", info1: "Астана" },
-            { type: "1.", info1: "Астана" },
-            { type: "1.", info1: "Астана" },
-          ]}
-          onRowSelect={handleRowSelect}
-          width="3/12"
+          onAddRow={handleAddCityTransportation}
+          // onUpdateRow={handleUpdateCityTransportation}
+          onDeleteRows={(selectedRows) => {
+            const ids = Array.from(selectedRows).map(
+              (index) => cityTableData[index].id
+            );
+            handleDeleteCityTransportations(ids);
+          }}
+          width="full"
         />
       </div>
       <Table

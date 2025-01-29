@@ -29,7 +29,7 @@ const AccountSettings: React.FC<AccountSettingsProps> = ({ setModalOpen }) => {
     country: "",
     street: "",
     city: "",
-    apartment: "",
+    building_number: "",
     postal_code: "",
   });
 
@@ -53,7 +53,7 @@ const AccountSettings: React.FC<AccountSettingsProps> = ({ setModalOpen }) => {
     country: Yup.string().nullable(),
     street: Yup.string().nullable(),
     city: Yup.string().nullable(),
-    apartment: Yup.string().nullable(),
+    buildin_number: Yup.string().nullable(),
     postal_code: Yup.string().nullable(),
   });
 
@@ -71,7 +71,7 @@ const AccountSettings: React.FC<AccountSettingsProps> = ({ setModalOpen }) => {
         country: data.country || "",
         street: data.street || "",
         city: data.city || "",
-        apartment: data.building_number || "",
+        building_number: data.building_number || "",
         postal_code: data.postal_code || "",
       });
       setData({ role: data.role });
@@ -83,7 +83,21 @@ const AccountSettings: React.FC<AccountSettingsProps> = ({ setModalOpen }) => {
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      setProfileImage(e.target.files[0]);
+      const file = e.target.files[0];
+
+      // Validate file type
+      if (!file.type.startsWith("image/")) {
+        alert("Please upload a valid image file (PNG, JPEG).");
+        return;
+      }
+
+      // Validate file size (15 MB limit)
+      if (file.size > 15 * 1024 * 1024) {
+        alert("File size must be less than 15 MB.");
+        return;
+      }
+
+      setProfileImage(file);
     }
   };
 
@@ -93,7 +107,7 @@ const AccountSettings: React.FC<AccountSettingsProps> = ({ setModalOpen }) => {
       Object.entries(values).forEach(([key, value]) => {
         formData.append(key, value || "");
       });
-      if (profileImage) formData.append("profile_image", profileImage);
+      if (profileImage) formData.append("id_card_image", profileImage);
 
       await axios.patch(`${API_BASE_URL}/edit-profile/`, formData, {
         headers: {
@@ -282,12 +296,12 @@ const AccountSettings: React.FC<AccountSettingsProps> = ({ setModalOpen }) => {
                     Дом/Квартира
                   </label>
                   <Field
-                    name="apartment"
+                    name="building_number"
                     placeholder="Введите номер дома/квартиры"
                     className="w-full text-black px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                   <ErrorMessage
-                    name="apartment"
+                    name="building_number"
                     component="div"
                     className="text-red-500 text-sm mt-1"
                   />

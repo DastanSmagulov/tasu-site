@@ -42,8 +42,6 @@ const Login: React.FC = () => {
     if (result?.error) {
       setError("Ошибка входа. Пожалуйста, проверьте свои данные.");
     } else {
-      console.log("Login successful:", result);
-
       // Fetch the session details to extract the JWT
       const response = await fetch("/api/auth/session");
       const session = await response.json();
@@ -55,7 +53,11 @@ const Login: React.FC = () => {
         sameSite: "strict",
       });
 
-      console.log(session?.role?.value);
+      Cookies.set("role", session.role.key.toLowerCase() as string, {
+        expires: 3,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "strict",
+      });
 
       switch (session?.role?.value) {
         case "Админ":

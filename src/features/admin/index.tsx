@@ -1,208 +1,89 @@
 "use client";
 
-import { useSession } from "next-auth/react";
-import { useState } from "react";
-import Table from "@/components/Table";
-import Insurance from "@/components/Insurance";
-import InterCity from "@/components/InterCity";
+import { useEffect, useState } from "react";
+import { TableRow } from "@/helper/types";
+import { axiosInstance } from "@/helper/utils";
+import TabsNavigation from "@/shared/TabsNavigation";
+import FilterPanel from "@/shared/FilterPanel";
+import Pagination from "@/shared/Pagination";
+import Table from "@/shared/Table";
 
 ("./globals.css");
 
-// Define the data type
-type DocumentData = {
-  id: string;
-  date: string;
-  status: string;
-  customer: string;
-  place: string;
-  weight: string;
-  volume: string;
-  statusColor: string;
-  view: string;
-  amount: string;
-};
-
 export default function AdminPage() {
-  const { data: session, status } = useSession();
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [data, setData] = useState<TableRow[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+  const [nextPage, setNextPage] = useState<string | null>(null);
+  const [previousPage, setPreviousPage] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [filters, setFilters] = useState({
+    search: "",
+    consignment__cargo_status: "",
+    sender_city: "",
+    receiver_city: "",
+    created_at: "",
+    closed_at: "",
+    ordering: "",
+  });
 
-  if (status === "loading") {
-    return <div>Loading...</div>;
-  }
-
-  const handleSignatureSubmit = (signatureDataUrl: string) => {
-    console.log("Signature submitted:", signatureDataUrl);
+  const onPageChange = (page: number) => {
+    setCurrentPage(page);
   };
 
-  const handlePhotoUpload = (file: File) => {
-    console.log("Photo uploaded:", file);
+  const fetchActsData = async () => {
+    setLoading(true);
+    try {
+      const queryParams = new URLSearchParams();
+
+      // Append filters to the query params
+      Object.entries(filters).forEach(([key, value]) => {
+        if (value) queryParams.append(key, value);
+      });
+      queryParams.append("page", currentPage.toString());
+
+      const url = `/acts/?${queryParams.toString()}`;
+
+      // Fetch filtered acts
+      const actsResponse = await axiosInstance.get(url);
+      const actsData = actsResponse.data.results;
+
+      // Update pagination state
+      setTotalCount(actsResponse.data.count);
+      setNextPage(actsResponse.data.next);
+      setPreviousPage(actsResponse.data.previous);
+
+      // Process data...
+      setData(actsData);
+    } catch (error) {
+      console.error("Error fetching data:", error);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleFormSubmit = () => {
-    alert("Форма отправлена");
-  };
-
-  const handlePrint = () => {
-    window.print();
-  };
-
-  const handleSend = () => {
-    setIsModalOpen(true);
-  };
-
-  const cityColumns = [
-    { label: "Город отправление", key: "type" },
-    { label: "Город получение", key: "info1" },
-    { label: "Тариф", key: "info2" },
-  ];
-
-  const cityData = [
-    { type: "Астана", info1: "Алматы", info2: "5000" },
-    { type: "Астана", info1: "Оскемен", info2: "8000" },
-    { type: "Астана", info1: "Шымкент", info2: "3000" },
-  ];
-
-  const handleRowSelect = (selectedRows: any[]) => {
-    console.log("Selected Rows:", selectedRows);
-  };
+  useEffect(() => {
+    fetchActsData();
+  }, [filters, currentPage]);
 
   return (
-    <>
-      <div className="flex mt-4 w-full">
-        <div className="flex flex-col gap-10 mb-10">
-          <InterCity />
-          <Table
-            text=""
-            columns={cityColumns}
-            data={cityData}
-            onRowSelect={handleRowSelect}
-            width="full"
-          />
-          <Insurance />
-          <Table
-            text="Услуги перевозки"
-            columns={[
-              { label: "Наименование", key: "service" },
-              { label: "Шт.", key: "quantity" },
-              { label: "Вес", key: "weight" },
-              { label: "Цена", key: "price" },
-            ]}
-            data={[
-              {
-                service: "Разг-погр работы",
-                quantity: "1",
-                weight: "",
-                price: "5000",
-              },
-              {
-                service: "Забор с места",
-                quantity: "2",
-                weight: "",
-                price: "5000",
-              },
-              {
-                service: "Перевозка пленка",
-                quantity: "1",
-                weight: "",
-                price: "5000",
-              },
-            ]}
-            onRowSelect={handleRowSelect}
-            width="full"
-          />
-          <Table
-            text="Услуги перевозки"
-            columns={[
-              { label: "Наименование", key: "service" },
-              { label: "Вес", key: "weight" },
-              { label: "Цена", key: "price" },
-            ]}
-            data={[
-              {
-                service: "Разг-погр работы",
-                weight: "",
-                price: "5000",
-              },
-              {
-                service: "Забор с места",
-                weight: "",
-                price: "5000",
-              },
-              {
-                service: "Перевозка пленка",
-                weight: "",
-                price: "5000",
-              },
-            ]}
-            onRowSelect={handleRowSelect}
-            width="full"
-          />
-          <Table
-            text="Складские услуги"
-            columns={[
-              { label: "Наименование", key: "service" },
-              { label: "Тип", key: "type" },
-              { label: "Цена", key: "price" },
-            ]}
-            data={[
-              {
-                service: "Хранение",
-                type: "по месту",
-                price: "5000",
-              },
-              {
-                service: "Р/П",
-                type: "россыль",
-                price: "8000",
-              },
-              {
-                service: "Хранение",
-                type: "по месту",
-                price: "5000",
-              },
-            ]}
-            onRowSelect={handleRowSelect}
-            width="full"
-          />
-          <Table
-            text="Услуга упаковки"
-            columns={[
-              { label: "Наименование", key: "service" },
-              { label: "Тариф Маленький", key: "tarif_small" },
-              { label: "Тариф Средний", key: "tarif_medium" },
-              { label: "Цена", key: "price" },
-            ]}
-            data={[
-              {
-                service: "Разг-погр работы",
-                tarif_small: "",
-                tarif_medium: "",
-                price: "5000",
-              },
-              {
-                service: "Забор с места",
-                tarif_small: "2",
-                tarif_medium: "",
-                price: "5000",
-              },
-              {
-                service: "Перевозка с пленка",
-                tarif_small: "1",
-                tarif_medium: "",
-                price: "5000",
-              },
-              {
-                service: "Разг-погр работы",
-                tarif_small: "",
-                tarif_medium: "",
-                price: "5000",
-              },
-            ]}
-            onRowSelect={handleRowSelect}
-            width="full"
-          />
-        </div>
+    <div>
+      <TabsNavigation role="admin" />
+      <FilterPanel />
+      <Table data={data} fetchActsData={fetchActsData} loading={loading} />
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center">
+        <h1>
+          Показано {data?.length} из {totalCount * 10} данных
+        </h1>
+        <Pagination
+          currentPage={currentPage}
+          totalCount={totalCount}
+          next={nextPage}
+          previous={previousPage}
+          onPageChange={onPageChange}
+          pageSize={totalCount}
+        />
       </div>
-    </>
+    </div>
   );
 }

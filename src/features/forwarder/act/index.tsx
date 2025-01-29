@@ -1,12 +1,16 @@
 "use client";
 
 import { useSession } from "next-auth/react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Customer from "@/components/Customer";
 import PackageCharacteristics from "@/components/PackageCharacteristics";
 import CargoPhoto from "@/components/CargoPhoto";
 import InformationPackage from "@/components/PackageInformation";
 import CreateSuccessAct from "@/components/modals/CreateSuccessAct";
+import { Act } from "@/helper/types";
+import { useParams } from "next/navigation";
+import { axiosInstance } from "@/helper/utils";
+
 
 // Define the data type
 type DocumentData = {
@@ -35,6 +39,21 @@ export default function ActPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isStorageChecked, setIsStorageChecked] = useState(false);
   const [actStatus, setActStatus] = useState("акт сформирован");
+  const [actData, setActData] = useState<Act | null>(null); // Store fetched data
+  const params = useParams();
+
+  useEffect(() => {
+    const fetchActData = async () => {
+      try {
+        const response = await axiosInstance.get(`/acts/${params.id}/`);
+        setActData(response.data); // Set the fetched data
+      } catch (error) {
+        console.error("Error fetching act data:", error);
+      }
+    };
+
+    fetchActData();
+  }, [params.id]);
 
   if (status === "loading") {
     return <div>Loading...</div>;
@@ -86,7 +105,7 @@ export default function ActPage() {
         <ProgressBar step={currentStep} />
 
         <div className="my-4">
-          <CurrentComponent />
+          <CurrentComponent data={actData} />
         </div>
 
         <div className="flex justify-between mt-4">
@@ -119,7 +138,7 @@ export default function ActPage() {
 
       <div className="hidden min-[500px]:flex act-flex gap-4 mt-4 w-full">
         <div className="flex flex-col md:w-1/2 space-y-4">
-          <Customer />
+          <Customer data={actData} />
           <PackageCharacteristics />
           <CargoPhoto />
         </div>

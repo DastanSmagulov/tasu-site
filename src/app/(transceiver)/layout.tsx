@@ -1,11 +1,12 @@
 "use client";
 
-import React from "react";
 import { SessionProvider } from "next-auth/react";
-import { usePathname } from "next/navigation";
-import "../../styles/globals.css";
+import { usePathname, useRouter } from "next/navigation";
 import Sidebar from "@/containers/Sidebar";
 import Header from "@/containers/Header";
+import "../../styles/globals.css";
+import { useEffect } from "react";
+import Cookies from "js-cookie";
 import TabsNavigation from "@/shared/TabsNavigation";
 
 type LayoutProps = {
@@ -13,7 +14,15 @@ type LayoutProps = {
 };
 
 const Layout: React.FC<LayoutProps> = ({ children }) => {
+  const router = useRouter();
   const pathname = usePathname();
+
+  useEffect(() => {
+    const token = Cookies.get("auth_token");
+    if (!token) {
+      router.push("/login");
+    }
+  }, [router]);
 
   let headerText = "Акт передачи документов";
   if (pathname === "/transceiver/create-act") {

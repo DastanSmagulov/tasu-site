@@ -1,31 +1,46 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { FaCog, FaEdit, FaPlus, FaTrash } from "react-icons/fa";
 import Checkbox from "./ui/CheckBox";
+import axios from "axios";
+import { axiosInstance } from "@/helper/utils";
+import { Act } from "@/helper/types";
 
-const Customer: React.FC = () => {
+interface ActDataProps {
+  data: Act | null;
+}
+
+const Customer: React.FC<ActDataProps> = ({ data }) => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
-  const [isPayer, setIsPayer] = useState(false); // State for the checkbox
-  const [fullName, setFullName] = useState(""); // State for the full name input
-  const [phoneNumber, setPhoneNumber] = useState(""); // State for the phone number input
+  const [isPayer, setIsPayer] = useState(true);
+  const [fullName, setFullName] = useState(data?.customer.full_name); // Full name input
+  const [phoneNumber, setPhoneNumber] = useState(data?.customer.phone); // Phone number input
+  const [customers, setCustomers] = useState([]); // Fetched customer options
+  const [selectedCustomer, setSelectedCustomer] = useState(""); // Selected customer
 
   const toggleDropdown = () => {
     setDropdownOpen((prev) => !prev);
   };
 
-  const handleEdit = () => {
-    console.log("Edit action");
+  const fetchCustomers = async () => {
+    try {
+      const response = await axiosInstance.get("/admin/users/search/");
+      console.log(response);
+      setCustomers(response.data.results); // Assuming response.data is an array of customers
+    } catch (error) {
+      console.error("Error fetching customers:", error);
+    }
+  };
+
+  const handleSelectCustomer = (customer: any) => {
+    setSelectedCustomer(customer.fullName);
+    setFullName(customer.full_name);
+    setPhoneNumber(customer.phone || "");
     setDropdownOpen(false);
   };
 
-  const handleAdd = () => {
-    console.log("Add action");
-    setDropdownOpen(false);
-  };
-
-  const handleDelete = () => {
-    console.log("Delete action");
-    setDropdownOpen(false);
-  };
+  useEffect(() => {
+    fetchCustomers();
+  }, []);
 
   return (
     <div className="bg-white p-6 rounded-lg shadow-md flex flex-col">
@@ -39,8 +54,34 @@ const Customer: React.FC = () => {
           >
             Заказчик является плательщиком?
           </label>
-          <Checkbox />{" "}
+          <Checkbox checked={isPayer} onChange={() => setIsPayer(!isPayer)} />
         </div>
+      </div>
+
+      {/* Dropdown for Selecting Customer */}
+      <div className="mb-4 relative">
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          Выберите заказчика
+        </label>
+        <button
+          onClick={toggleDropdown}
+          className="w-full border border-gray-300 rounded-md p-2 text-left focus:outline-none bg-transparent hover:bg-transparent focus:ring-2 focus:ring-[#09BD3C] focus:border-transparent"
+        >
+          {selectedCustomer || "Выберите заказчика"}
+        </button>
+        {dropdownOpen && (
+          <ul className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-40 overflow-auto">
+            {customers.map((customer: any) => (
+              <li
+                key={customer.id}
+                onClick={() => handleSelectCustomer(customer)}
+                className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+              >
+                {customer.full_name}
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
 
       {/* Full Name Input */}
@@ -70,43 +111,6 @@ const Customer: React.FC = () => {
           className="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-[#09BD3C] focus:border-transparent"
         />
       </div>
-
-      {/* Dropdown for Actions */}
-      {/* <div className="relative w-full">
-        <button
-          onClick={toggleDropdown}
-          className="absolute right-2 top-1/2 transform -translate-y-1/2 focus:outline-none"
-        >
-          <FaCog className="fill-gray-400 cursor-pointer" size={22} />
-        </button>
-        {dropdownOpen && (
-          <div className="absolute right-0 mt-2 w-40 bg-white border border-gray-300 rounded-lg shadow-lg z-10">
-            <ul className="py-2">
-              <li
-                onClick={handleEdit}
-                className="flex items-center px-2 py-2 hover:bg-gray-100 cursor-pointer"
-              >
-                <FaEdit className="mr-2 text-gray-600" size={16} />
-                Редактировать
-              </li>
-              <li
-                onClick={handleAdd}
-                className="flex items-center px-2 py-2 hover:bg-gray-100 cursor-pointer"
-              >
-                <FaPlus className="mr-2 text-gray-600" size={16} />
-                Добавить
-              </li>
-              <li
-                onClick={handleDelete}
-                className="flex items-center px-2 py-2 hover:bg-gray-100 cursor-pointer"
-              >
-                <FaTrash className="mr-2 text-gray-600" size={16} />
-                Удалить
-              </li>
-            </ul>
-          </div>
-        )}
-      </div> */}
     </div>
   );
 };

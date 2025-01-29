@@ -1,51 +1,60 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import ArrowLeft from "../../public/icons/arrow-left.svg";
 import ArrowRight from "../../public/icons/arrow-right.svg";
 
 type PaginationProps = {
   currentPage: number;
-  totalPages: number;
+  totalCount: number;
+  pageSize: number;
   onPageChange: (page: number) => void;
+  next: string | null;
+  previous: string | null;
 };
 
 const Pagination: React.FC<PaginationProps> = ({
   currentPage,
-  totalPages,
+  totalCount,
+  pageSize,
   onPageChange,
 }) => {
-  const getPageNumbers = () => {
-    const pageNumbers = [];
-    const maxVisiblePages = 5;
+  const totalPages = Math.ceil(totalCount / pageSize);
+  const [pageNumbers, setPageNumbers] = useState<(number | string)[]>([]);
 
-    if (totalPages <= maxVisiblePages) {
-      for (let i = 1; i <= totalPages; i++) {
-        pageNumbers.push(i);
-      }
-    } else {
-      if (currentPage <= 3) {
-        for (let i = 1; i <= 3; i++) {
-          pageNumbers.push(i);
-        }
-        pageNumbers.push("...");
-        pageNumbers.push(totalPages);
-      } else if (currentPage >= totalPages - 2) {
-        pageNumbers.push(1);
-        pageNumbers.push("...");
-        for (let i = totalPages - 2; i <= totalPages; i++) {
-          pageNumbers.push(i);
+  useEffect(() => {
+    const generatePageNumbers = () => {
+      const pages: (number | string)[] = [];
+      const maxVisiblePages = 5;
+
+      if (totalPages <= maxVisiblePages) {
+        for (let i = 1; i <= totalPages; i++) {
+          pages.push(i);
         }
       } else {
-        pageNumbers.push(1);
-        pageNumbers.push("...");
-        for (let i = currentPage - 1; i <= currentPage + 1; i++) {
-          pageNumbers.push(i);
+        if (currentPage <= 3) {
+          for (let i = 1; i <= 3; i++) pages.push(i);
+          pages.push("...");
+          pages.push(totalPages);
+        } else if (currentPage >= totalPages - 2) {
+          pages.push(1);
+          pages.push("...");
+          for (let i = totalPages - 2; i <= totalPages; i++) pages.push(i);
+        } else {
+          pages.push(1);
+          pages.push("...");
+          for (let i = currentPage - 1; i <= currentPage + 1; i++)
+            pages.push(i);
+          pages.push("...");
+          pages.push(totalPages);
         }
-        pageNumbers.push("...");
-        pageNumbers.push(totalPages);
       }
-    }
-    return pageNumbers;
-  };
+      setPageNumbers(pages);
+    };
+
+    generatePageNumbers();
+  }, [currentPage, totalPages]);
 
   return (
     <div className="flex items-center justify-end mt-4">
@@ -63,7 +72,7 @@ const Pagination: React.FC<PaginationProps> = ({
       </button>
 
       {/* Page Numbers */}
-      {getPageNumbers().map((pageNumber, index) =>
+      {pageNumbers.map((pageNumber, index) =>
         typeof pageNumber === "number" ? (
           <button
             key={index}

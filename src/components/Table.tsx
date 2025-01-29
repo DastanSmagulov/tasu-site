@@ -7,6 +7,8 @@ import AddMore from "./ui/AddMore";
 interface TableColumn {
   label: string;
   key: string;
+  type?: "text" | "dropdown"; // Add type to specify input type
+  options?: { value: string; label: string }[]; // Options for dropdown
 }
 
 interface TableRow {
@@ -17,9 +19,9 @@ interface TableProps {
   columns: TableColumn[];
   data: TableRow[];
   onRowSelect?: (selectedRows: TableRow[]) => void;
-  onAddRow?: (newRow: TableRow) => void;
+  onAddRow?: any;
   onDeleteRows?: (selectedRows: Set<number>) => void;
-  onEditRow?: (id: number, updatedData: Partial<TableRow>) => void; // New prop
+  onEditRow?: (id: number, updatedData: Partial<TableRow>) => void;
   text: string;
   width: string;
 }
@@ -41,20 +43,23 @@ const Table: React.FC<TableProps> = ({
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isAllSelected, setIsAllSelected] = useState<boolean>(false);
 
+  // Sync table data with external data
   useEffect(() => {
     setTableData(data);
   }, [data]);
 
+  // Add a new row
   const handleAddRow = () => {
     const newRow: TableRow = columns.reduce(
       (acc, column) => ({ ...acc, [column.key]: "" }),
       {}
     );
     setTableData((prevData) => [...prevData, newRow]);
-    setEditingRowIndex(tableData.length);
+    setEditingRowIndex(tableData.length); // Set the new row as editable
     setErrorMessage(null);
   };
 
+  // Delete selected rows
   const handleDeleteRows = () => {
     if (onDeleteRows) {
       onDeleteRows(selectedRows);
@@ -62,10 +67,30 @@ const Table: React.FC<TableProps> = ({
     setSelectedRows(new Set());
   };
 
+  // Handle input changes in editable fields
   const handleInputChange = (rowIndex: number, key: string, value: string) => {
     const updatedData = [...tableData];
     updatedData[rowIndex][key] = value;
     setTableData(updatedData);
+  };
+
+  // Transform car data to the correct format
+  const transformCar = (data: TableRow) => {
+    return {
+      license_plate: data.type,
+      brand: data.info1,
+      color: data.info2,
+      model: data.info3,
+    };
+  };
+
+  // Transform train data to the correct format
+  const transformTrain = (data: TableRow) => {
+    return {
+      train_number: data.type,
+      train_route: data.info1,
+      railway_company: data.info2,
+    };
   };
 
   const handleSaveRow = (rowIndex: number) => {
@@ -77,20 +102,40 @@ const Table: React.FC<TableProps> = ({
       return;
     }
 
+    // Transform the row data based on the table type
+    let transformedData: TableRow = row;
+    if (text === "Машина") {
+      transformedData = transformCar(row);
+    } else if (text === "Поезд") {
+      transformedData = transformTrain(row);
+    }
+
+    if (row.id !== undefined) {
+      // Сохранение существующей строки
+      if (onEditRow) {
+        console.log("Editing row:", transformedData); // Для отладки
+        onEditRow(row.id, transformedData);
+      }
+    } else {
+      // Добавление новой строки
+      if (onAddRow) {
+        console.log("Adding row:", transformedData); // Для отладки
+        onAddRow(transformedData);
+      }
+    }
+
+    setTableData((prevData) => {
+      const updatedData = [...prevData];
+      updatedData[rowIndex] = row;
+      return updatedData;
+    });
+
     setEditingRowIndex(null);
     setErrorMessage(null);
-
-    // Trigger onEditRow if editing an existing row
-    if (onEditRow && row.id !== undefined) {
-      onEditRow(row.id, row);
-    }
   };
 
-  const isAddButtonDisabled = tableData.some((row, index) =>
-    columns.some(
-      (column) => row[column.key].trim() === "" && index === editingRowIndex
-    )
-  );
+  // Check if the "Add More" button should be disabled
+  const isAddButtonDisabled = editingRowIndex !== null;
 
   return (
     <div>
@@ -130,6 +175,9 @@ const Table: React.FC<TableProps> = ({
                 {column.label}
               </th>
             ))}
+            <th className="p-2 border border-gray-300 text-left font-semibold">
+              Изменить
+            </th>
           </tr>
         </thead>
         <tbody>
@@ -159,27 +207,64 @@ const Table: React.FC<TableProps> = ({
               {columns.map((column) => (
                 <td key={column.key} className="p-2 border border-gray-300">
                   {editingRowIndex === rowIndex ? (
-                    <input
-                      type="text"
-                      className="w-full px-2 py-1 border border-gray-300 rounded"
-                      value={row[column.key]}
-                      onChange={(e) =>
-                        handleInputChange(rowIndex, column.key, e.target.value)
-                      }
-                      onBlur={() => handleSaveRow(rowIndex)}
-                    />
+                    column.type === "dropdown" ? (
+                      <select
+                        className="w-full px-2 py-1 border border-gray-300 rounded"
+                        value={row[column.key]}
+                        onChange={(e) =>
+                          handleInputChange(
+                            rowIndex,
+                            column.key,
+                            e.target.value
+                          )
+                        }
+                      >
+                        <option value="">Выберите...</option>
+                        {column.options?.map((option) => (
+                          <option key={option.value} value={option.value}>
+                            {option.label}
+                          </option>
+                        ))}
+                      </select>
+                    ) : (
+                      <input
+                        type="text"
+                        className="w-full px-2 py-1 border border-gray-300 rounded"
+                        value={row[column.key]}
+                        onChange={(e) =>
+                          handleInputChange(
+                            rowIndex,
+                            column.key,
+                            e.target.value
+                          )
+                        }
+                      />
+                    )
+                  ) : column.type === "dropdown" ? (
+                    column.options?.find(
+                      (option) => option.value === row[column.key]
+                    )?.label || row[column.key]
                   ) : (
                     row[column.key]
                   )}
                 </td>
               ))}
               <td className="p-2 border border-gray-300 text-center">
-                <button
-                  className="text-blue-500 hover:underline bg-transparent hover:bg-transparent"
-                  onClick={() => setEditingRowIndex(rowIndex)}
-                >
-                  ✏️
-                </button>
+                {editingRowIndex === rowIndex ? (
+                  <button
+                    className="text-green-500 hover:underline bg-transparent hover:bg-transparent"
+                    onClick={() => handleSaveRow(rowIndex)}
+                  >
+                    💾
+                  </button>
+                ) : (
+                  <button
+                    className="hover:bg-slate-400 bg-transparent hover:bg-transparent"
+                    onClick={() => setEditingRowIndex(rowIndex)}
+                  >
+                    ✏️
+                  </button>
+                )}
               </td>
             </tr>
           ))}

@@ -99,6 +99,13 @@ const routes: Route[] = [
   },
   {
     path: "/admin",
+    name: "Акт",
+    icon: "act",
+    // count: 14,
+    roles: ["admin"],
+  },
+  {
+    path: "/admin/tariff",
     name: "Тарифы",
     icon: "tariff",
     // count: 14,
