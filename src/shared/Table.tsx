@@ -97,7 +97,7 @@ const Table = ({ data, loading, fetchActsData }: any) => {
             </tr>
           </thead>
           <tbody className="bg-white">
-            {data.map((act: Act) => {
+            {data.map((act: any) => {
               // Map act fields to table columns:
               const actNumber = act.number || "-";
               const actId = act.id || "-";
