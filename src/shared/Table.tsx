@@ -1,24 +1,18 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import axios from "axios";
 import Image from "next/image";
 import Link from "next/link";
 import TrashIcon from "../../public/icons/trash.svg";
 import Checkbox from "@/components/ui/CheckBox";
 import { axiosInstance, formatDate } from "@/helper/utils";
-import { TableRow } from "@/helper/types";
 import Cookies from "js-cookie";
+import { Act } from "@/helper/types";
 
-interface TableProps {
-  data: TableRow[];
-  loading: boolean;
-  fetchActsData: (arg0?: string) => void;
-}
-
-const Table: React.FC<TableProps> = ({ data, loading, fetchActsData }) => {
-  const [selectedRows, setSelectedRows] = useState<Set<string>>(new Set());
+const Table = ({ data, loading, fetchActsData }: any) => {
+  const [selectedRows, setSelectedRows] = useState(new Set());
   const role = Cookies.get("role");
 
-  const handleDelete = async (ids: string[]) => {
+  const handleDelete = async (ids: unknown[]) => {
     if (ids.length === 0) return;
     try {
       await axiosInstance.delete(`/acts/bulk-delete/`, {
@@ -31,25 +25,45 @@ const Table: React.FC<TableProps> = ({ data, loading, fetchActsData }) => {
     }
   };
 
-  const toggleSelection = (id: string) => {
+  const toggleSelection = (id: number) => {
     setSelectedRows((prevSelected) => {
       const updatedSelected = new Set(prevSelected);
-      updatedSelected.has(id)
-        ? updatedSelected.delete(id)
-        : updatedSelected.add(id);
+      if (updatedSelected.has(id)) {
+        updatedSelected.delete(id);
+      } else {
+        updatedSelected.add(id);
+      }
       return updatedSelected;
     });
   };
 
   const toggleSelectAll = () => {
     setSelectedRows(
-      selectedRows.size === data?.length
+      selectedRows.size === data.length
         ? new Set()
-        : new Set(data.map((row) => row.id))
+        : new Set(data.map((row: any) => row.id))
     );
   };
 
   if (loading) return <p>Loading...</p>;
+
+  // Helper to compute total cargo weight
+  const calculateTotalWeight = (cargo: any) => {
+    if (!cargo || !Array.isArray(cargo)) return 0;
+    return cargo.reduce((sum, item) => sum + (item.weight || 0), 0);
+  };
+
+  // Helper to compute total cargo volume.
+  // Here we assume that each cargo item has a "dimensions" array and we use the first element's "amount".
+  const calculateTotalVolume = (cargo: any) => {
+    if (!cargo || !Array.isArray(cargo)) return 0;
+    return cargo.reduce((sum, item) => {
+      if (item.dimensions && item.dimensions.length > 0) {
+        return sum + (item.dimensions[0].amount || 0);
+      }
+      return sum;
+    }, 0);
+  };
 
   return (
     <div className="mt-8">
@@ -60,7 +74,7 @@ const Table: React.FC<TableProps> = ({ data, loading, fetchActsData }) => {
               <th className="p-3 pl-10">
                 <Checkbox
                   id="select-all"
-                  checked={selectedRows.size === data?.length}
+                  checked={selectedRows.size === data.length}
                   onChange={toggleSelectAll}
                 />
               </th>
@@ -68,7 +82,7 @@ const Table: React.FC<TableProps> = ({ data, loading, fetchActsData }) => {
                 { label: "Номер", key: "id" },
                 { label: "Заказчик", key: "customer" },
                 { label: "Дата", key: "date" },
-                { label: "Мест", key: "place" },
+                { label: "Мест", key: "places" },
                 { label: "Вес", key: "weight" },
                 { label: "Куб", key: "volume" },
                 { label: "Статус", key: "status" },
@@ -83,46 +97,62 @@ const Table: React.FC<TableProps> = ({ data, loading, fetchActsData }) => {
             </tr>
           </thead>
           <tbody className="bg-white">
-            {data?.map((row: TableRow) => (
-              <tr key={row.id} className="text-sm text-gray-800">
-                <td className="p-3 pl-10 border border-gray-300">
-                  <Checkbox
-                    id={`checkbox-${row.id}`}
-                    checked={selectedRows.has(row.id)}
-                    onChange={() => toggleSelection(row.id)}
-                  />
-                </td>
-                <td className="p-3 border border-gray-300">
-                  <Link href={`${role}/act/${row.id}`}>{row.id}</Link>
-                </td>
-                <td className="p-3 border border-gray-300">{row.customer}</td>
-                <td className="p-3 border border-gray-300">
-                  {formatDate(row.created_at)}
-                </td>
-                <td className="p-3 border border-gray-300">
-                  {row.cargo.characteristics}
-                </td>
-                <td className="p-3 font-semibold border border-gray-300">
-                  {row.cargo.weight}
-                </td>
-                <td className="p-3 border border-gray-300">
-                  {row.cargo.volume}
-                </td>
-                <td className="p-3 border border-gray-300">
-                  <span
-                    className={`px-3 py-1 rounded-full text-sm font-medium ${row.statusColor}`}
-                  >
-                    {row.status}
-                  </span>
-                </td>
-                <td className="p-3 text-center border border-gray-300">
-                  {row.view || "-"}
-                </td>
-                <td className="p-3 text-center border border-gray-300">
-                  {row.total_cost || "-"}
-                </td>
-              </tr>
-            ))}
+            {data.map((act: Act) => {
+              // Map act fields to table columns:
+              const actNumber = act.number || "-";
+              const actId = act.id || "-";
+              const customer = act.customer_data?.full_name || "-";
+              // Use receiving_cargo_info.date (or delivery_cargo_info.date) and format it:
+              const date = act.receiving_cargo_info?.date
+                ? formatDate(act.receiving_cargo_info.date)
+                : "-";
+              const places = act.cargo ? act.cargo.length : 0;
+              const weight = calculateTotalWeight(act.cargo);
+              const volume = calculateTotalVolume(act.cargo);
+              // For status, you might have a dedicated field; here we fallback to transportation_type
+              const status = act.status || "-";
+              // For view, we use transportation_type
+              const view = act.transportation_type || "-";
+              // For amount, we use characteristic.cargo_cost
+              const amount = act.characteristic?.cargo_cost || "-";
+
+              return (
+                <tr key={actId} className="text-sm text-gray-800">
+                  <td className="p-3 pl-10 border border-gray-300">
+                    <Checkbox
+                      id={`checkbox-${actId}`}
+                      checked={selectedRows.has(actId)}
+                      onChange={() => toggleSelection(Number(actId))}
+                    />
+                  </td>
+                  <td className="p-3 border border-gray-300">
+                    {role !== "admin" ? (
+                      <Link href={`${role}/act/${actId}`}>{actNumber}</Link>
+                    ) : (
+                      <h2>{actNumber}</h2>
+                    )}
+                  </td>
+                  <td className="p-3 border border-gray-300">{customer}</td>
+                  <td className="p-3 border border-gray-300">{date}</td>
+                  <td className="p-3 border border-gray-300">{places}</td>
+                  <td className="p-3 font-semibold border border-gray-300">
+                    {weight}
+                  </td>
+                  <td className="p-3 border border-gray-300">{volume}</td>
+                  <td className="p-3 border border-gray-300">
+                    <span className="px-3 py-1 rounded-full text-sm font-medium">
+                      {status}
+                    </span>
+                  </td>
+                  <td className="p-3 text-center border border-gray-300">
+                    {view}
+                  </td>
+                  <td className="p-3 text-center border border-gray-300">
+                    {amount}
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>
