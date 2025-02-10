@@ -103,9 +103,12 @@ const Table = ({ data, loading, fetchActsData }: any) => {
               const actId = act.id || "-";
               const customer = act.customer_data?.full_name || "-";
               // Use receiving_cargo_info.date (or delivery_cargo_info.date) and format it:
-              const date = act.receiving_cargo_info?.date
-                ? formatDate(act.receiving_cargo_info.date)
-                : "-";
+              const rawDate = act.receiving_cargo_info?.date;
+
+              const date =
+                rawDate && !isNaN(new Date(rawDate).getTime())
+                  ? formatDate(rawDate)
+                  : "-";
               const places = act.cargo ? act.cargo.length : 0;
               const weight = calculateTotalWeight(act.cargo);
               const volume = calculateTotalVolume(act.cargo);
