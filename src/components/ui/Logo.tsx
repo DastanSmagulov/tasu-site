@@ -7,15 +7,13 @@ const Logo: React.FC<{ width: number; height: number }> = ({
   height,
 }) => (
   <div className="mb-10">
-    <Link href="/">
-      {" "}
-      <Image
-        src="/images/logo.svg"
-        alt="TASU Kazakhstan"
-        width={172}
-        height={56}
-      />
-    </Link>
+    {" "}
+    <Image
+      src="/images/logo.svg"
+      alt="TASU Kazakhstan"
+      width={172}
+      height={56}
+    />
   </div>
 );
 

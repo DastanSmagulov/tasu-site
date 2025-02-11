@@ -24,7 +24,10 @@ export default function StatisticsPage() {
     created_at: "",
     closed_at: "",
     ordering: "",
+    limit: "10",
   });
+
+  const limit = parseInt(filters.limit, 10);
 
   const onPageChange = (page: number) => {
     setCurrentPage(page);
@@ -70,25 +73,25 @@ export default function StatisticsPage() {
       <div className="mb-8">
         <StatisticsComponent />
       </div>
-      <div className="bg-white p-6 rounded-lg shadow-md mb-8">
-        <FilterPanel />
+      {/* <div className="bg-white p-6 rounded-lg shadow-md mb-8">
+        <FilterPanel filters={filters} setFilters={setFilters} />
       </div>
       <div className="bg-white p-6 rounded-lg shadow-md">
         <Table data={data} fetchActsData={fetchActsData} loading={loading} />
       </div>
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center">
         <h1>
-          Показано {data?.length} из {totalCount * 10} данных
+          Показано {data.length} из {totalCount} данных
         </h1>
         <Pagination
           currentPage={currentPage}
           totalCount={totalCount}
+          pageSize={limit}
           next={nextPage}
           previous={previousPage}
           onPageChange={onPageChange}
-          pageSize={totalCount}
         />
-      </div>
+      </div> */}
     </div>
   );
 }

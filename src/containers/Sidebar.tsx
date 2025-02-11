@@ -7,6 +7,7 @@ import MenuGroup from "../components/MenuGroup";
 import Footer from "./Footer";
 import { getRoutesForRole } from "@/helper/utils";
 import { HiOutlineMenu, HiOutlineX } from "react-icons/hi";
+import Link from "next/link";
 
 interface SidebarProps {
   roleValue: string;
@@ -23,7 +24,9 @@ const Sidebar: React.FC<SidebarProps> = ({ roleValue, roleKey }) => {
       {/* Sidebar for larger screens */}
       <div className="hidden lg:flex flex-col justify-between w-64 h-screen fixed shadow-md py-8 px-10 bg-white">
         <div>
-          <Logo width={172} height={56} />
+          <Link href={"/"}>
+            <Logo width={172} height={56} />
+          </Link>
           <div className="space-y-6 mt-6">
             <MenuGroup title={roleValue} items={filteredRoutes} />
           </div>

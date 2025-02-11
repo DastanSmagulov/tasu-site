@@ -1,7 +1,8 @@
 "use client";
-import React, { useState } from "react";
+import { ActDataProps } from "@/helper/types";
+import React, { FC, useState } from "react";
 
-const Shipping = () => {
+const Shipping: FC<ActDataProps> = (data, setData) => {
   const [senderName, setSenderName] = useState(""); // Sender's full name
   const [recipientName, setRecipientName] = useState(""); // Recipient's full name
   const [selectedPayer, setSelectedPayer] = useState("sender"); // Radio button state

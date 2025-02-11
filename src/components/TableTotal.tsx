@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Checkbox from "./ui/CheckBox";
 
 interface TableColumn {
@@ -14,9 +14,16 @@ interface TableProps {
   columns: TableColumn[];
   initialData: TableRow[];
   title: string;
+  // Add a callback to return selected service IDs
+  onSelectionChange?: (selectedIds: number[]) => void;
 }
 
-const TableTotal: React.FC<TableProps> = ({ columns, initialData, title }) => {
+const TableTotal: React.FC<TableProps> = ({
+  columns,
+  initialData,
+  title,
+  onSelectionChange,
+}) => {
   const [tableData, setTableData] = useState<TableRow[]>(initialData);
   const [selectedRows, setSelectedRows] = useState<Set<number>>(new Set());
 
@@ -42,8 +49,19 @@ const TableTotal: React.FC<TableProps> = ({ columns, initialData, title }) => {
     setTableData(updatedData);
   };
 
+  // Whenever the selected rows change, map the row indices to the service IDs.
+  useEffect(() => {
+    if (onSelectionChange) {
+      // Assuming each row has an "id" field.
+      const selectedIds = Array.from(selectedRows)
+        .map((rowIndex) => tableData[rowIndex]?.id)
+        .filter((id) => id !== undefined);
+      onSelectionChange(selectedIds);
+    }
+  }, [selectedRows, tableData, onSelectionChange]);
+
   const calculateTotal = () => {
-    // Assuming the "Стоимость" column key is "cost".
+    // For example, assuming the column key for cost is "cost"
     return tableData.reduce((total, row) => {
       const cost = parseFloat(row["cost"]) || 0;
       return total + cost;

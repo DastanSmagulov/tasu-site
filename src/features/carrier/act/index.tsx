@@ -51,7 +51,9 @@ export default function ActPage() {
       }
     };
 
-    fetchActData();
+    if (params.id) {
+      fetchActData();
+    }
   }, [params.id]);
 
   if (status === "loading") {
@@ -60,13 +62,13 @@ export default function ActPage() {
 
   const handleNext = () => {
     if (currentStep < steps.length - 1) {
-      setCurrentStep(currentStep + 1);
+      setCurrentStep((prev) => prev + 1);
     }
   };
 
   const handlePrevious = () => {
     if (currentStep > 0) {
-      setCurrentStep(currentStep - 1);
+      setCurrentStep((prev) => prev - 1);
     }
   };
 
@@ -74,8 +76,23 @@ export default function ActPage() {
     window.print();
   };
 
-  const handleSend = () => {
-    setIsModalOpen(true);
+  // Updated handleSend: PATCH actData to the backend and then open the modal.
+  const handleSend = async () => {
+    if (!actData) {
+      alert("Нет данных акта для отправки");
+      return;
+    }
+    try {
+      const response = await axiosInstance.patch(
+        `/acts/${params.id}/`,
+        actData
+      );
+      console.log("Patch response:", response.data);
+      setIsModalOpen(true);
+    } catch (error) {
+      console.error("Error sending act data:", error);
+      alert("Ошибка при отправке акта");
+    }
   };
 
   const ProgressBar = ({ step }: { step: number }) => {
@@ -95,18 +112,18 @@ export default function ActPage() {
     );
   };
 
-  const CurrentComponent = steps[currentStep].component;
+  // Pass both data and setData to components so they can update actData
+  const CurrentComponent = steps[currentStep].component as any;
 
   return (
     <>
+      {/* Mobile Layout */}
       <div className="block min-[500px]:hidden p-4 max-w-md">
         <h1 className="text-xl font-semibold text-center mb-4">ПриемСдатчик</h1>
         <ProgressBar step={currentStep} />
-
         <div className="my-4">
-          <CurrentComponent data={actData} />
+          <CurrentComponent data={actData} setData={setActData} />
         </div>
-
         <div className="flex justify-between mt-4">
           {currentStep > 0 && (
             <button
@@ -116,7 +133,6 @@ export default function ActPage() {
               Назад
             </button>
           )}
-
           {currentStep < steps.length - 1 ? (
             <button
               onClick={handleNext}
@@ -135,17 +151,24 @@ export default function ActPage() {
         </div>
       </div>
 
+      {/* Desktop Layout */}
       <div className="hidden min-[500px]:flex act-flex gap-4 mt-4 w-full">
         <div className="flex flex-col md:w-1/2 space-y-4">
-          <Customer data={actData} />
-          <PackageCharacteristics />
-          <CargoPhoto />
+          <Customer data={actData} setData={setActData} />
+          <PackageCharacteristics data={actData} setData={setActData} />
+          <CargoPhoto data={actData} setData={setActData} />
         </div>
         <div className="flex flex-col md:w-1/2 space-y-4">
-          {actStatus == "готов к отправке" && <Shipping />}
-          <InformationPackage />
+          {/* {actStatus === "готов к отправке" && <Shipping />} */}
+          <InformationPackage
+            title="О Получении"
+            data={actData}
+            setData={setActData}
+          />
         </div>
       </div>
+
+      {/* Bottom-Left Section */}
       <div className="flex justify-between min-[1050px]:flex-row flex-col">
         <div className="flex flex-col space-y-4 mt-4">
           <button
@@ -183,7 +206,6 @@ export default function ActPage() {
             </select>
           </div>
         </div>
-
         <div className="flex gap-4 mt-4 text-[#000000] sm:h-10 min-[500px]:flex-row flex-col">
           <button
             onClick={handlePrint}
@@ -205,11 +227,9 @@ export default function ActPage() {
             </svg>
             Распечатать Акт
           </button>
-
           <button className="font-semibold border border-gray-500 px-4 py-2 bg-white hover:bg-gray-100 text-black rounded-lg">
             Сохранить
           </button>
-
           <button
             onClick={handleSend}
             className="font-semibold px-4 py-2 bg-yellow-400 hover:bg-yellow-500 text-black rounded-lg"

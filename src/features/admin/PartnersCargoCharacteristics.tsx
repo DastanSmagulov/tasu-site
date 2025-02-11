@@ -31,7 +31,7 @@ const PartnerCargoCharacteristics = () => {
   };
 
   // Add a new partner
-  const handleAddPartner = async (newPartner: PartnerCargoItem) => {
+  const handleAddPartner = async (newPartner: any) => {
     console.log(newPartner);
     try {
       const response = await axiosInstance.post(`/admin/partners/`, newPartner);

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Checkbox from "./ui/CheckBox";
 
 interface ManagerLinkProps {
   title: string; // Title of the link section
@@ -14,51 +15,30 @@ export default function ManagerLink({ title, link }: ManagerLinkProps) {
   const handleCopy = () => {
     if (generatedLink) {
       navigator.clipboard.writeText(generatedLink);
-      alert("Link copied to clipboard!");
     }
   };
 
-  const handleCreateLink = () => {
-    // Simulate generating a new link
-    setGeneratedLink(
-      `https://tasu.kz/${Math.random().toString(36).substring(7)}`
-    );
-  };
+  // const handleCreateLink = () => {
+  //   // Simulate generating a new link
+  //   setGeneratedLink(
+  //     `https://tasu.kz/${Math.random().toString(36).substring(7)}`
+  //   );
+  // };
 
   return (
     <div className="p-4 space-y-2 border rounded-lg bg-white shadow-sm">
       {/* Checkbox for damaged condition */}
-      <div className="flex items-center gap-2 text-lg font-medium">
-        <span>Нарушено ли состояние упаковки?</span>
-        <label className="flex items-center gap-1">
-          <input
-            type="checkbox"
-            checked={isDamaged}
-            onChange={() => setIsDamaged(true)}
-          />
-          Да
-        </label>
-        <label className="flex items-center gap-1">
-          <input
-            type="checkbox"
-            checked={!isDamaged}
-            onChange={() => setIsDamaged(false)}
-          />
-          Нет
-        </label>
-      </div>
-
       {/* Section for creating and displaying links */}
       <div className="flex items-center gap-4">
         <div className="text-gray-700">
-          Создайте ссылку для <span className="font-bold">{title}</span>
+          Ссылка для <span className="font-bold">{title}</span>
         </div>
-        <button
+        {/* <button
           onClick={handleCreateLink}
           className="bg-yellow-400 hover:bg-yellow-500 px-4 py-1 rounded-lg text-white font-medium"
         >
           Создать
-        </button>
+        </button> */}
       </div>
 
       {/* Display generated link */}

@@ -2,7 +2,7 @@ export interface CheckboxProps {
   disabled?: boolean;
   defaultChecked?: boolean;
   id?: string;
-  checked?: boolean;
+  checked?: boolean | undefined;
   onChange?: (event: React.ChangeEvent<HTMLInputElement>) => void;
 }
 

@@ -10,6 +10,8 @@ import { AiOutlineCloseCircle } from "react-icons/ai";
 
 interface AccountSettingsProps {
   setModalOpen: (value: boolean) => void;
+  profileImage: string | File | null;
+  setProfileImage: (value: string | File) => void;
 }
 
 interface ProfileData {
@@ -17,8 +19,11 @@ interface ProfileData {
   id_card_image?: string;
 }
 
-const AccountSettings: React.FC<AccountSettingsProps> = ({ setModalOpen }) => {
-  const [profileImage, setProfileImage] = useState<string | null | File>(null);
+const AccountSettings: React.FC<AccountSettingsProps> = ({
+  setModalOpen,
+  profileImage,
+  setProfileImage,
+}) => {
   const [data, setData] = useState<ProfileData>({});
   const token = Cookies.get("auth_token");
 

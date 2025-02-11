@@ -273,7 +273,7 @@ const FlightsPage = () => {
     console.log("Selected Rows:", selectedRows);
   };
 
-  const handleAddCar = (newRow: any) => {
+  const handleAddCar = async (newRow: any): Promise<void> => {
     const newCar = {
       license_plate: newRow.type,
       brand: newRow.info1,
@@ -283,7 +283,7 @@ const FlightsPage = () => {
     addCar(newCar);
   };
 
-  const handleAddFlight = (newRow: any) => {
+  const handleAddFlight = async (newRow: any): Promise<void> => {
     const newFlight = {
       flight_number: newRow.type,
       airline: newRow.info1,
@@ -291,7 +291,7 @@ const FlightsPage = () => {
     addFlight(newFlight);
   };
 
-  const handleAddTrain = (newRow: any) => {
+  const handleAddTrain = async (newRow: any): Promise<void> => {
     const newTrain = {
       train_number: newRow.type,
       train_route: newRow.info1,
@@ -333,7 +333,7 @@ const FlightsPage = () => {
   };
 
   // Handle adding a new city transportation
-  const handleAddCityTransportation = (newRow: any) => {
+  const handleAddCityTransportation = async (newRow: any): Promise<void> => {
     const newCityTransportation = {
       sender_city: newRow.sender_city,
       receiver_city: newRow.receiver_city,

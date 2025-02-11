@@ -1,10 +1,11 @@
 "use client";
 import Image from "next/image";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Avatar from "../../public/images/avatar.svg";
 import { FiPlus } from "react-icons/fi";
 import { usePathname, useRouter } from "next/navigation";
 import AccountSettings from "@/components/modals/AccountSettings";
+import { axiosInstance } from "@/helper/utils";
 
 interface HeaderProps {
   text: string;
@@ -15,10 +16,32 @@ const Header: React.FC<HeaderProps> = ({ text, role }) => {
   const pathname = usePathname();
   const [isModalOpen, setModalOpen] = useState(false); // Modal state
   const router = useRouter();
+  const [profileImage, setProfileImage] = useState<string | null | File>(null);
 
   const handleCreateAct = () => {
     router.push(`/${role}/create-act`);
   };
+
+  useEffect(() => {
+    return () => {
+      if (profileImage && typeof profileImage !== "string") {
+        URL.revokeObjectURL(profileImage as unknown as string);
+      }
+    };
+  }, [profileImage]);
+
+  const fetchProfileInfo = async () => {
+    try {
+      const { data } = await axiosInstance.get(`/get-profile-info/`);
+      setProfileImage(data.id_card_image);
+    } catch (error) {
+      console.error("Error fetching profile info", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchProfileInfo();
+  }, []);
 
   const isCreateActPage =
     pathname === `/${role}/create-act` || pathname?.startsWith(`/${role}/act/`);
@@ -31,16 +54,6 @@ const Header: React.FC<HeaderProps> = ({ text, role }) => {
         {/* Left Section */}
         <div className="flex flex-col space-y-2">
           <h1 className="text-lg sm:text-2xl font-semibold">{text}</h1>
-          {isCreateActPage && (
-            <div className="flex flex-wrap items-center gap-2 sm:gap-4">
-              <h2 className="font-semibold text-base sm:text-lg">
-                № 754857345
-              </h2>
-              <span className="px-3 py-1 rounded-full text-sm font-medium bg-green-500 text-white">
-                {status}
-              </span>
-            </div>
-          )}
         </div>
 
         {/* Right Section */}
@@ -48,7 +61,8 @@ const Header: React.FC<HeaderProps> = ({ text, role }) => {
           {text !== "Создать акт" &&
             role !== "accountant" &&
             role !== "courier" &&
-            role !== "carrier" && role !== "admin" && (
+            role !== "carrier" &&
+            role !== "admin" && (
               <button
                 className="flex items-center justify-center w-full sm:w-auto px-6 py-2 text-[#1A1A1A] bg-[#FDE107] rounded-lg hover:bg-[#f1d81d]"
                 onClick={handleCreateAct}
@@ -59,21 +73,35 @@ const Header: React.FC<HeaderProps> = ({ text, role }) => {
             )}
           {role !== "carrier" && (
             <div className="cursor-pointer">
-              <Image
-                src={Avatar}
-                alt="User Avatar"
-                width={48}
-                height={48}
-                className="rounded-full w-12 sm:w-14 h-12 sm:h-14"
-                onClick={() => setModalOpen(true)}
-              />
+              {profileImage ? (
+                <Image
+                  src={
+                    typeof profileImage === "string"
+                      ? profileImage // Display fetched URL
+                      : URL.createObjectURL(profileImage)
+                  }
+                  alt="User Avatar"
+                  width={48}
+                  height={48}
+                  className="rounded-full w-12 sm:w-14 h-12 sm:h-14"
+                  onClick={() => setModalOpen(true)}
+                />
+              ) : (
+                <div className="loading"></div>
+              )}
             </div>
           )}
         </div>
       </header>
 
       {/* Modal for Profile Settings */}
-      {isModalOpen && <AccountSettings setModalOpen={setModalOpen} />}
+      {isModalOpen && (
+        <AccountSettings
+          setProfileImage={setProfileImage}
+          profileImage={profileImage}
+          setModalOpen={setModalOpen}
+        />
+      )}
     </>
   );
 };

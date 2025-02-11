@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from "react";
 import Table from "../../components/Table";
 import { axiosInstance } from "@/helper/utils";
+import { TableRow } from "@/helper/types";
 
 type CargoItem = {
   id?: number;
@@ -40,9 +41,9 @@ const CargoCharacteristics = () => {
   };
 
   // Add new cargo characteristic
-  const handleAddCargo = async (newCargo: CargoItem) => {
+  const handleAddCargo = async (newRow: any) => {
     try {
-      await axiosInstance.post("/admin/characteristics/", newCargo);
+      await axiosInstance.post("/admin/characteristics/", newRow);
       fetchCargoData();
     } catch (err) {
       setError("Failed to add cargo characteristic. Please try again.");

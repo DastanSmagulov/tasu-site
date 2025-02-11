@@ -38,7 +38,10 @@ export default function StatisticsPage() {
     created_at: "",
     closed_at: "",
     ordering: "",
+    limit: "10", // API работает с limit и offset
   });
+
+  const limit = parseInt(filters.limit, 10);
 
   const onPageChange = (page: number) => {
     setCurrentPage(page);
@@ -83,19 +86,20 @@ export default function StatisticsPage() {
     <div>
       {/* <WarehouseActList /> */}
       <StatisticsComponent />
-      <FilterPanel />
+      {/* <FilterPanel filters={filters} setFilters={setFilters} />
       <Table data={data} fetchActsData={fetchActsData} loading={loading} />
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center">
-        <h1>Показано 10 из 160 данных</h1>
+        <h1>
+          Показано {data.length} из {totalCount} данных
+        </h1>
         <Pagination
-          currentPage={currentPage}
           totalCount={totalCount}
-          next={nextPage}
-          previous={previousPage}
-          onPageChange={onPageChange}
-          pageSize={totalCount}
+          pageSize={limit}
+          next={nextPageUrl}
+          previous={prevPageUrl}
+          onPageChange={fetchActsData}
         />
-      </div>
+      </div> */}
     </div>
   );
 }

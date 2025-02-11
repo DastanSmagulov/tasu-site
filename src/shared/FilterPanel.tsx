@@ -1,12 +1,45 @@
 "use client";
+
 import Checkbox from "@/components/ui/CheckBox";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Search from "../../public/icons/search.svg";
 import Image from "next/image";
+import { axiosInstance } from "@/helper/utils";
+import { City } from "@/helper/types";
 
-const FilterPanel: React.FC = () => {
-  const [query, setQuery] = useState("");
+interface FilterPanelProps {
+  filters: any;
+  setFilters: (filters: any) => void;
+}
+
+const FilterPanel: React.FC<FilterPanelProps> = ({ filters, setFilters }) => {
   const [showStatusDropdown, setShowStatusDropdown] = useState(false);
+  const [cities, setCities] = useState<City[]>([]);
+
+  useEffect(() => {
+    // Fetch cities
+    const fetchCities = async () => {
+      try {
+        const response = await axiosInstance.get("/admin/cities/");
+        setCities(response.data.results);
+      } catch (error) {
+        console.error("Ошибка загрузки городов:", error);
+      }
+    };
+
+    fetchCities();
+  }, []);
+
+  // Check if any filter (except "limit") is active
+  const activeFilter = Boolean(
+    filters.search ||
+      filters.consignment__cargo_status ||
+      filters.sender_city ||
+      filters.receiver_city ||
+      filters.created_at ||
+      filters.closed_at ||
+      filters.ordering
+  );
 
   return (
     <div className="bg-white p-4 mb-4 rounded-lg text-[#1D1B23] shadow-md">
@@ -19,8 +52,8 @@ const FilterPanel: React.FC = () => {
           </span>
           <input
             type="text"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
+            value={filters.search}
+            onChange={(e) => setFilters({ ...filters, search: e.target.value })}
             placeholder="Поиск"
             className="bg-white rounded px-10 py-2 text-sm w-full border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
@@ -54,15 +87,20 @@ const FilterPanel: React.FC = () => {
             {/* Dropdown Menu */}
             {showStatusDropdown && (
               <ul className="absolute z-10 mt-1 bg-white border border-gray-200 rounded-md shadow-md w-40 text-sm">
-                <li className="px-4 py-2 hover:bg-gray-100 cursor-pointer">
-                  Все
-                </li>
-                <li className="px-4 py-2 hover:bg-gray-100 cursor-pointer">
-                  Активный
-                </li>
-                <li className="px-4 py-2 hover:bg-gray-100 cursor-pointer">
-                  Завершенный
-                </li>
+                {["", "Активный", "Завершенный"].map((status) => (
+                  <li
+                    key={status}
+                    onClick={() =>
+                      setFilters({
+                        ...filters,
+                        consignment__cargo_status: status,
+                      })
+                    }
+                    className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                  >
+                    {status || "Все"}
+                  </li>
+                ))}
               </ul>
             )}
           </div>
@@ -81,6 +119,8 @@ const FilterPanel: React.FC = () => {
           <label className="font-medium mb-1">Номер</label>
           <input
             type="text"
+            value={filters.number}
+            onChange={(e) => setFilters({ ...filters, number: e.target.value })}
             placeholder="Найти номер"
             className="bg-white border-b border-gray-300 focus:outline-none focus:border-gray-500 px-2 py-1"
           />
@@ -91,6 +131,10 @@ const FilterPanel: React.FC = () => {
           <label className="font-medium mb-1">Дата начало</label>
           <input
             type="date"
+            value={filters.created_at}
+            onChange={(e) =>
+              setFilters({ ...filters, created_at: e.target.value })
+            }
             className="bg-white border-b border-gray-300 focus:outline-none focus:border-gray-500 px-2 py-1"
           />
         </div>
@@ -100,6 +144,10 @@ const FilterPanel: React.FC = () => {
           <label className="font-medium mb-1">Дата окончание</label>
           <input
             type="date"
+            value={filters.closed_at}
+            onChange={(e) =>
+              setFilters({ ...filters, closed_at: e.target.value })
+            }
             className="bg-white border-b border-gray-300 focus:outline-none focus:border-gray-500 px-2 py-1"
           />
         </div>
@@ -107,27 +155,63 @@ const FilterPanel: React.FC = () => {
         {/* Sender City */}
         <div className="flex flex-col">
           <label className="font-medium mb-1">Город отправителя</label>
-          <select className="bg-white border-b border-gray-300 focus:outline-none focus:border-gray-500 px-2 py-1">
-            <option>Указать город</option>
-            {/* Add more options here */}
+          <select
+            value={filters.sender_city}
+            onChange={(e) =>
+              setFilters({ ...filters, sender_city: e.target.value })
+            }
+            className="bg-white border-b border-gray-300 focus:outline-none focus:border-gray-500 px-2 py-1"
+          >
+            <option value="">Указать город</option>
+            {cities?.map((city: City) => (
+              <option key={city.id} value={city.name_ru}>
+                {city.name_ru}
+              </option>
+            ))}
           </select>
         </div>
 
         {/* Receiver City */}
         <div className="flex flex-col">
           <label className="font-medium mb-1">Город получателя</label>
-          <select className="bg-white border-b border-gray-300 focus:outline-none focus:border-gray-500 px-2 py-1">
-            <option>Указать город</option>
-            {/* Add more options here */}
+          <select
+            value={filters.receiver_city}
+            onChange={(e) =>
+              setFilters({ ...filters, receiver_city: e.target.value })
+            }
+            className="bg-white border-b border-gray-300 focus:outline-none focus:border-gray-500 px-2 py-1"
+          >
+            <option value="">Указать город</option>
+            {cities?.map((city: City) => (
+              <option key={city.id} value={city.name_ru}>
+                {city.name_ru}
+              </option>
+            ))}
           </select>
         </div>
 
         {/* Clear Filter Button */}
-        <div className="flex flex-col justify-end">
-          <button className="bg-red-500 text-white font-medium text-sm px-4 py-2 rounded-lg hover:bg-red-600 shadow-md w-full">
-            Очистить фильтр <span className="ml-1">X</span>
-          </button>
-        </div>
+        {activeFilter && (
+          <div className="flex flex-col justify-end">
+            <button
+              onClick={() =>
+                setFilters({
+                  search: "",
+                  consignment__cargo_status: "",
+                  sender_city: "",
+                  receiver_city: "",
+                  created_at: "",
+                  closed_at: "",
+                  ordering: "",
+                  limit: "10",
+                })
+              }
+              className="bg-red-500 text-white font-medium text-sm px-4 py-2 rounded-lg hover:bg-red-600 shadow-md w-full"
+            >
+              Очистить фильтр <span className="ml-1">X</span>
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

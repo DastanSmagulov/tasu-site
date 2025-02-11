@@ -14,20 +14,6 @@ import { Act } from "@/helper/types";
 import { useParams } from "next/navigation";
 import { axiosInstance } from "@/helper/utils";
 
-// Define the data type
-type DocumentData = {
-  id: string;
-  date: string;
-  status: string;
-  customer: string;
-  place: string;
-  weight: string;
-  volume: string;
-  statusColor: string;
-  view: string;
-  amount: string;
-};
-
 const steps = [
   { id: 1, name: "Данные о Заказчике", component: Customer },
   { id: 2, name: "Характер и Вес Груза", component: PackageCharacteristics },
@@ -43,20 +29,21 @@ export default function ActPage() {
   const [currentStep, setCurrentStep] = useState(0);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [actStatus, setActStatus] = useState("акт сформирован");
-  const [actData, setActData] = useState<Act | null>(null); // Store fetched data
+  const [actData, setActData] = useState<Act | null>(null);
   const params = useParams();
 
   useEffect(() => {
     const fetchActData = async () => {
       try {
         const response = await axiosInstance.get(`/acts/${params.id}/`);
-        setActData(response.data); // Set the fetched data
+        setActData(response.data);
       } catch (error) {
         console.error("Error fetching act data:", error);
       }
     };
-
-    fetchActData();
+    if (params.id) {
+      fetchActData();
+    }
   }, [params.id]);
 
   if (status === "loading") {
@@ -65,13 +52,13 @@ export default function ActPage() {
 
   const handleNext = () => {
     if (currentStep < steps.length - 1) {
-      setCurrentStep(currentStep + 1);
+      setCurrentStep((prev) => prev + 1);
     }
   };
 
   const handlePrevious = () => {
     if (currentStep > 0) {
-      setCurrentStep(currentStep - 1);
+      setCurrentStep((prev) => prev - 1);
     }
   };
 
@@ -79,8 +66,23 @@ export default function ActPage() {
     window.print();
   };
 
-  const handleSend = () => {
-    setIsModalOpen(true);
+  // Updated handleSend: PATCH actData then open success modal.
+  const handleSend = async () => {
+    if (!actData) {
+      alert("Нет данных акта для отправки");
+      return;
+    }
+    try {
+      const response = await axiosInstance.patch(
+        `/acts/${params.id}/`,
+        actData
+      );
+      console.log("Patch response:", response.data);
+      setIsModalOpen(true);
+    } catch (error) {
+      console.error("Error sending act data:", error);
+      alert("Ошибка при отправке акта");
+    }
   };
 
   const ProgressBar = ({ step }: { step: number }) => {
@@ -100,16 +102,18 @@ export default function ActPage() {
     );
   };
 
+  // For mobile, pass both data and setData to the step component.
   const CurrentComponent = steps[currentStep].component as any;
 
   return (
     <>
+      {/* Mobile Layout */}
       <div className="block min-[500px]:hidden p-4 max-w-md bg-yellow-50">
         <h1 className="text-xl font-semibold text-center mb-4">ПриемСдатчик</h1>
         <ProgressBar step={currentStep} />
 
         <div className="my-4">
-          <CurrentComponent data={actData} />
+          <CurrentComponent data={actData} setData={setActData} />
         </div>
 
         <div className="flex justify-between mt-4">
@@ -121,7 +125,6 @@ export default function ActPage() {
               Назад
             </button>
           )}
-
           {currentStep < steps.length - 1 ? (
             <button
               onClick={handleNext}
@@ -140,24 +143,34 @@ export default function ActPage() {
         </div>
       </div>
 
+      {/* Desktop Layout */}
       <div className="hidden min-[500px]:flex act-flex gap-4 mt-4 w-full">
         <div className="flex flex-col md:w-1/2 space-y-4">
-          <Customer data={actData} />
-          <PackageCharacteristics />
-          <CargoPhoto />
+          <Customer data={actData} setData={setActData} />
+          <PackageCharacteristics data={actData} setData={setActData} />
+          <CargoPhoto data={actData} setData={setActData} />
           <QrAct
             qrCodeUrl="/images/qr-code.png"
             actNumber="1234"
             description="Lorem ipsum dolor sit amet consectetur. Dictum morbi ut lacus ultrices pulvinar lectus adipiscing sit."
           />
         </div>
-
         <div className="flex flex-col md:w-1/2 space-y-4">
-          {actStatus === "готов к отправке" && <Shipping />}
-          <InformationPackage />
-          <Agreement />
+          <InformationPackage
+            title="О Получении"
+            data={actData}
+            setData={setActData}
+          />
+          <Agreement original={false} data={actData} setData={setActData} />
+          <InformationPackage
+            title="О Выдаче"
+            data={actData}
+            setData={setActData}
+          />
         </div>
       </div>
+
+      {/* Bottom-Left Section */}
       <div className="flex justify-between min-[1050px]:flex-row flex-col">
         <div className="flex flex-col space-y-4 mt-4">
           <button

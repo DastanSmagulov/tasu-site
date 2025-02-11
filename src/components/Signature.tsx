@@ -4,15 +4,20 @@ import SignaturePadWrapper from "react-signature-pad-wrapper";
 interface SignatureProps {
   onSubmit: (signatureDataUrl: string) => void;
   onUpload: (file: File) => void;
+  initialDataUrl?: string | null;
 }
 
-const Signature: React.FC<SignatureProps> = ({ onSubmit, onUpload }) => {
+const Signature: React.FC<SignatureProps> = ({
+  onSubmit,
+  onUpload,
+  initialDataUrl,
+}) => {
   const signaturePadRef = useRef<SignaturePadWrapper>(null);
   const [penColor, setPenColor] = useState<string>("blue");
   const [penSize, setPenSize] = useState<number>(2);
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
   const [submittedSignature, setSubmittedSignature] = useState<string | null>(
-    null
+    initialDataUrl || null
   );
 
   const updateSignaturePadOptions = () => {

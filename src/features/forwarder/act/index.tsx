@@ -11,7 +11,6 @@ import { Act } from "@/helper/types";
 import { useParams } from "next/navigation";
 import { axiosInstance } from "@/helper/utils";
 
-
 // Define the data type
 type DocumentData = {
   id: string;
@@ -37,7 +36,6 @@ export default function ActPage() {
   const { data: session, status } = useSession();
   const [currentStep, setCurrentStep] = useState(0);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isStorageChecked, setIsStorageChecked] = useState(false);
   const [actStatus, setActStatus] = useState("акт сформирован");
   const [actData, setActData] = useState<Act | null>(null); // Store fetched data
   const params = useParams();
@@ -52,7 +50,9 @@ export default function ActPage() {
       }
     };
 
-    fetchActData();
+    if (params.id) {
+      fetchActData();
+    }
   }, [params.id]);
 
   if (status === "loading") {
@@ -75,8 +75,24 @@ export default function ActPage() {
     window.print();
   };
 
-  const handleSend = () => {
-    setIsModalOpen(true);
+  // Updated handleSend with PATCH API call
+  const handleSend = async () => {
+    if (!actData) {
+      alert("Нет данных акта для отправки");
+      return;
+    }
+    try {
+      // Send a PATCH request to update the act data
+      const response = await axiosInstance.patch(
+        `/acts/${params.id}/`,
+        actData
+      );
+      console.log("Patch response:", response.data);
+      setIsModalOpen(true);
+    } catch (error) {
+      console.error("Error sending act data:", error);
+      alert("Ошибка при отправке акта");
+    }
   };
 
   const ProgressBar = ({ step }: { step: number }) => {
@@ -100,12 +116,17 @@ export default function ActPage() {
 
   return (
     <>
+      {/* Mobile Layout */}
       <div className="block min-[500px]:hidden p-4 max-w-md bg-yellow-50">
         <h1 className="text-xl font-semibold text-center mb-4">ПриемСдатчик</h1>
         <ProgressBar step={currentStep} />
 
         <div className="my-4">
-          <CurrentComponent data={actData} />
+          <CurrentComponent
+            title="О Получении"
+            setData={setActData}
+            data={actData}
+          />
         </div>
 
         <div className="flex justify-between mt-4">
@@ -136,14 +157,19 @@ export default function ActPage() {
         </div>
       </div>
 
+      {/* Desktop Layout */}
       <div className="hidden min-[500px]:flex act-flex gap-4 mt-4 w-full">
         <div className="flex flex-col md:w-1/2 space-y-4">
-          <Customer data={actData} />
-          <PackageCharacteristics />
-          <CargoPhoto />
+          <Customer setData={setActData} data={actData} />
+          <PackageCharacteristics setData={setActData} data={actData} />
+          <CargoPhoto setData={setActData} data={actData} />
         </div>
         <div className="flex flex-col md:w-1/2 space-y-4">
-          <InformationPackage />
+          <InformationPackage
+            title="О Получении"
+            setData={setActData}
+            data={actData}
+          />
         </div>
       </div>
 

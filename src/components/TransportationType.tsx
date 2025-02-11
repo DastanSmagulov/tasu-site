@@ -1,45 +1,56 @@
+import { ActDataProps } from "@/helper/types";
+import { axiosInstance } from "@/helper/utils";
 import Image from "next/image";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 
 interface TransportType {
-  id: string;
-  title: string;
-  description: string;
+  key: string;
+  value: string;
   imageUrl: string;
 }
 
-const transportOptions: TransportType[] = [
-  {
-    id: "auto-console",
-    title: "Авто перевозки",
-    description: "Консол",
-    imageUrl: "/images/transportAuto.png",
-  },
-  {
-    id: "auto-separate",
-    title: "Авто перевозки",
-    description: "Отдельно",
-    imageUrl: "/images/transportAuto.png",
-  },
-  {
-    id: "airplane",
-    title: "Самолет",
-    description: "Рейс",
-    imageUrl: "/images/transportPlane.png",
-  },
-  {
-    id: "train",
-    title: "Поезд",
-    description: "Рейс",
-    imageUrl: "/images/transportTrain.png",
-  },
-];
+const TRANSPORT_IMAGES: Record<string, string> = {
+  AUTO_CONSOL: "/images/transportAuto.png",
+  AUTO_SINGLE: "/images/transportAuto.png",
+  AVIATION: "/images/transportPlane.png",
+  RAILWAY: "/images/transportTrain.png",
+};
 
-const TransportationTypes: React.FC = () => {
+const TransportationTypes: React.FC<ActDataProps> = ({ data, setData }) => {
   const [selectedOption, setSelectedOption] = useState<string>("");
+  const [transportOptions, setTransportOptions] = useState<TransportType[]>([]);
 
-  const handleSelect = (id: string) => {
-    setSelectedOption(id);
+  useEffect(() => {
+    const fetchTransportTypes = async () => {
+      try {
+        const response = await axiosInstance.get<
+          { key: string; value: string }[]
+        >("/constants/transport_types/");
+        const options = response.data.map((type) => ({
+          ...type,
+          imageUrl:
+            TRANSPORT_IMAGES[type.key] || "/images/defaultTransport.png",
+        }));
+        setTransportOptions(options);
+      } catch (error) {
+        console.error("Error fetching transport types:", error);
+      }
+    };
+
+    // If parent's data already has a transportation_type, use it.
+    if (data?.transportation_type) {
+      setSelectedOption(data.transportation_type);
+    }
+
+    fetchTransportTypes();
+  }, []);
+
+  const handleSelect = (key: string) => {
+    setSelectedOption(key);
+    setData((prevData: any) => ({
+      ...prevData,
+      transportation_type: key,
+    }));
   };
 
   return (
@@ -48,25 +59,24 @@ const TransportationTypes: React.FC = () => {
       <div className="flex gap-4 max-2xl:flex-col">
         {transportOptions.map((option) => (
           <div
-            key={option.id}
-            onClick={() => handleSelect(option.id)}
+            key={option.key}
+            onClick={() => handleSelect(option.key)}
             className={`cursor-pointer border rounded-lg p-4 flex flex-col items-center transition-all ${
-              selectedOption === option.id
+              selectedOption === option.key
                 ? "border-blue-500 shadow-lg"
                 : "border-gray-300"
             }`}
           >
             <Image
               src={option.imageUrl}
-              alt={option.title}
+              alt={option.value}
               className="mb-2"
               width={80}
               height={80}
             />
             <h3 className="text-lg font-semibold text-gray-700">
-              {option.title}
+              {option.value}
             </h3>
-            <p className="text-gray-500">{option.description}</p>
           </div>
         ))}
       </div>

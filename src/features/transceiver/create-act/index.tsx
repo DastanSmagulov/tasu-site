@@ -7,15 +7,12 @@ import PackageCharacteristics from "@/components/PackageCharacteristics";
 import CargoPhoto from "@/components/CargoPhoto";
 import { useEffect, useState } from "react";
 import InformationPackage from "@/components/PackageInformation";
-import Shipping from "@/components/Shipping";
 import CreateSuccessAct from "@/components/modals/CreateSuccessAct";
 import { Act } from "@/helper/types";
 import { useParams } from "next/navigation";
 import { axiosInstance } from "@/helper/utils";
 
-("./globals.css");
-
-// Define the data type
+// Define the data type for your document (if needed)
 type DocumentData = {
   id: string;
   date: string;
@@ -33,29 +30,95 @@ const steps = [
   { id: 1, name: "Данные о Заказчике", component: Customer },
   { id: 2, name: "Характер и Вес Груза", component: PackageCharacteristics },
   { id: 3, name: "Фотографии Груза", component: CargoPhoto },
-  { id: 4, name: "Данные о Получении Груза", component: InformationPackage },
+  { id: 4, name: "Данные о Получения Груза", component: InformationPackage },
 ];
+
+// Helper function to build FormData from actData
+const buildFormData = (data: Act): FormData => {
+  const formData = new FormData();
+
+  // Define file fields which should be appended directly
+  const fileFields = [
+    "accounting_esf",
+    "accounting_avr",
+    "contract_original_act",
+    "contract_mercenary_and_warehouse",
+  ];
+
+  // Define keys that should be JSON-stringified
+  const jsonKeys = [
+    "customer_data",
+    "characteristic",
+    "cargo",
+    "cargo_images",
+    "driver_data",
+    "vehicle_data",
+    "receiver_data",
+    "receiving_cargo_info",
+    "delivery_cargo_info",
+    "transportation",
+  ];
+
+  Object.keys(data).forEach((key) => {
+    const value = data[key as keyof Act];
+
+    // Rename transportation_services to transportation_service_ids
+    if (key === "transportation_services") {
+      const services = Array.isArray(value) ? value : [];
+      services.forEach((service) =>
+        formData.append("transportation_service_ids", service.toString())
+      );
+      return;
+    }
+
+    if (jsonKeys.includes(key)) {
+      // If the value is missing, default to an empty object.
+      const jsonValue = value === null || value === undefined ? {} : value;
+      formData.append(key, JSON.stringify(jsonValue));
+      return;
+    }
+
+    if (typeof value === "boolean") {
+      formData.append(key, value ? "true" : "false");
+      return;
+    }
+
+    if (value !== undefined && value !== null) {
+      formData.append(key, value.toString());
+    }
+  });
+
+  // Ensure that keys required by your backend exist (e.g., transportation)
+  if (!(data as any).transportation) {
+    formData.append("transportation", JSON.stringify({}));
+  }
+
+  return formData;
+};
 
 export default function CreateActPage() {
   const { data: session, status } = useSession();
+  const router = useRouter();
   const [currentStep, setCurrentStep] = useState(0);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isStorageChecked, setIsStorageChecked] = useState(false);
   const [actStatus, setActStatus] = useState("акт сформирован");
-  const [actData, setActData] = useState<Act | null>(null); // Store fetched data
+  const [actData, setActData] = useState<Act | null>(null); // Store fetched or new act data
   const params = useParams();
 
   useEffect(() => {
-    const fetchActData = async () => {
-      try {
-        const response = await axiosInstance.get(`/acts/${params.id}/`);
-        setActData(response.data); // Set the fetched data
-      } catch (error) {
-        console.error("Error fetching act data:", error);
-      }
-    };
-
-    fetchActData();
+    // If there is an ID, fetch the existing act data (edit mode)
+    if (params.id) {
+      const fetchActData = async () => {
+        try {
+          const response = await axiosInstance.get(`/acts/${params.id}/`);
+          setActData(response.data);
+        } catch (error) {
+          console.error("Error fetching act data:", error);
+        }
+      };
+      fetchActData();
+    }
   }, [params.id]);
 
   if (status === "loading") {
@@ -78,8 +141,23 @@ export default function CreateActPage() {
     window.print();
   };
 
-  const handleSend = () => {
-    setIsModalOpen(true);
+  // Updated handleSend to either POST (create) or PATCH (update)
+  const handleSend = async () => {
+    if (!actData) {
+      alert("Нет данных акта для отправки");
+      return;
+    }
+    try {
+      const formData = buildFormData(actData);
+      let response;
+      response = await axiosInstance.post(`/acts/`, formData);
+      setIsModalOpen(true);
+      // Optionally, redirect after creation/update:
+      // router.push(`/acts/${response.data.id}`);
+    } catch (error) {
+      console.error("Error sending act data:", error);
+      alert("Ошибка при отправке акта");
+    }
   };
 
   const ProgressBar = ({ step }: { step: number }) => {
@@ -103,12 +181,17 @@ export default function CreateActPage() {
 
   return (
     <>
+      {/* Mobile Layout */}
       <div className="block min-[500px]:hidden p-4 max-w-md bg-yellow-50">
         <h1 className="text-xl font-semibold text-center mb-4">ПриемСдатчик</h1>
         <ProgressBar step={currentStep} />
 
         <div className="my-4">
-          <CurrentComponent data={actData} />
+          <CurrentComponent
+            title="О Получении"
+            setData={setActData}
+            data={actData}
+          />
         </div>
 
         <div className="flex justify-between mt-4">
@@ -139,14 +222,19 @@ export default function CreateActPage() {
         </div>
       </div>
 
+      {/* Desktop Layout */}
       <div className="hidden min-[500px]:flex act-flex gap-4 mt-4 w-full">
         <div className="flex flex-col md:w-1/2 space-y-4">
-          <Customer data={actData} />
-          <PackageCharacteristics />
-          <CargoPhoto />
+          <Customer data={actData} setData={setActData} />
+          <PackageCharacteristics data={actData} setData={setActData} />
+          <CargoPhoto data={actData} setData={setActData} />
         </div>
         <div className="flex flex-col md:w-1/2 space-y-4">
-          <InformationPackage />
+          <InformationPackage
+            title="О Получении"
+            data={actData}
+            setData={setActData}
+          />
         </div>
       </div>
 

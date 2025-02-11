@@ -1,197 +1,407 @@
 "use client";
 
 import { useSession } from "next-auth/react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Customer from "@/components/Customer";
+import CustomerReceiver from "@/components/CustomerReceiver";
 import PackageCharacteristics from "@/components/PackageCharacteristics";
 import CargoPhoto from "@/components/CargoPhoto";
 import InformationPackage from "@/components/PackageInformation";
 import QrAct from "@/components/QrAct";
 import Shipping from "@/components/Shipping";
 import Agreement from "@/components/Agreement";
-import ServicesTable from "@/components/ServicesTable";
 import TransportInfo from "@/components/TransportInfo";
 import DriverInfo from "@/components/DriverInfo";
 import ManagerLink from "@/components/ManagerLink";
 import TransportationTypes from "@/components/TransportationType";
 import CreateSuccessAct from "@/components/modals/CreateSuccessAct";
 import AccountingEsf from "@/features/accountant/AccountingEsf";
-import AccountingAbp from "@/features/accountant/AccountingAbp";
-import TableTotal from "@/components/TableTotal";
-import { Act } from "@/helper/types";
+import AccountingAvr from "@/features/accountant/AccountingAvr";
+import TransportationServicesTable from "@/components/TransportationServicesTable";
+import { Act, CargoImage } from "@/helper/types";
 import { useParams } from "next/navigation";
 import { axiosInstance } from "@/helper/utils";
+import Checkbox from "@/components/ui/CheckBox";
+import "../../../styles/globals.css";
 
-("./globals.css");
+interface TransportationQuantityService {
+  id: number;
+  name: string;
+  quantity: string;
+  price: string;
+}
 
-// Define the data type
-type DocumentData = {
-  id: string;
-  date: string;
-  status: string;
-  customer: string;
-  place: string;
-  weight: string;
-  volume: string;
-  statusColor: string;
-  view: string;
-  amount: string;
+// Add status property to actData
+const initialActData: Act = {
+  contract_original_act: null,
+  contract_mercenary_and_warehouse: null,
+  number: "0",
+  accounting_esf: null,
+  accounting_avr: null,
+  cargo_status: "",
+  customer_data: {
+    id: 0,
+    full_name: "",
+    phone: "",
+    signature: "",
+    customer_is_payer: false,
+    role: "",
+  },
+  characteristic: {
+    cargo_cost: 0,
+    sender_city: "",
+    receiver_city: "",
+    additional_info: "",
+  },
+  cargo: [],
+  cargo_images: [],
+  transportation_type: "",
+  driver_data: {
+    full_name: "",
+    id_card_number: "",
+    technical_passport: "",
+  },
+  vehicle_data: {
+    auto_info: "",
+    state_number: "",
+  },
+  packaging_is_damaged: false,
+  receiver_data: {
+    id: 0,
+    full_name: "",
+    phone: "",
+    signature: "",
+    role: "",
+  },
+  receiving_cargo_info: {
+    issued: "",
+    accepted: "",
+    date: "",
+  },
+  transportation_service_ids: [],
+  delivery_cargo_info: {
+    issued: "",
+    accepted: "",
+    date: "",
+  },
+  status: "акт сформирован",
 };
 
 export default function ActPage() {
-  const steps = [
-    { id: 1, name: "Данные о Заказчике", component: Customer },
-    {
-      id: 2,
-      name: "Характеристики и вес груза",
-      component: PackageCharacteristics,
-    },
-    {
-      id: 3,
-      name: "Фотографии груза и информация о получении",
-      component: () => (
-        <>
-          <CargoPhoto />
-          <InformationPackage />
-        </>
-      ),
-    },
-    {
-      id: 4,
-      name: "Типы транспорта и информация о водителе",
-      component: () => (
-        <>
-          <TransportationTypes />
-          <DriverInfo />
-        </>
-      ),
-    },
-    {
-      id: 5,
-      name: "Информация о транспортировке и ссылки для менеджера",
-      component: () => (
-        <>
-          <TransportInfo />
-          <ManagerLink
-            title="приема наемником"
-            link="https://tasu.kz/shortlive_reference_607/"
-          />
-          <ManagerLink
-            title="передачи наемником"
-            link="https://tasu.kz/shortlive_reference_148/"
-          />
-        </>
-      ),
-    },
-    {
-      id: 6,
-      name: "Договор и услуги",
-      component: () => (
-        <>
-          <Agreement />
-          <ServicesTable />
-        </>
-      ),
-    },
-    {
-      id: 7,
-      name: "Документы для отправки",
-      component: () => (
-        <>
-          <Shipping />
-          <AccountingEsf />
-          <AccountingAbp />
-        </>
-      ),
-    },
-    { id: 8, name: "QR Код акта", component: QrAct },
-  ];
-
+  const { data: session, status: sessionStatus } = useSession();
   const [currentStep, setCurrentStep] = useState(0);
-  const { data: session, status } = useSession();
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [actStatus, setActStatus] = useState("акт сформирован");
-  const role: string = "manager";
-  const [actData, setActData] = useState<Act | null>(null); // Store fetched data
+  const [actData, setActData] = useState<Act>(initialActData);
+  const [transportationQuantityServices, setTransportationQuantityServices] =
+    useState<TransportationQuantityService[]>([]);
   const params = useParams();
 
+  // Fetch act data if editing an existing act
   useEffect(() => {
-    const fetchActData = async () => {
-      try {
-        const response = await axiosInstance.get(`/acts/${params.id}/`);
-        setActData(response.data); // Set the fetched data
-      } catch (error) {
-        console.error("Error fetching act data:", error);
+    if (params.id) {
+      const fetchActData = async () => {
+        try {
+          const response = await axiosInstance.get(`/acts/${params.id}/`);
+          console.log("hi", response.data);
+          setActData(response.data);
+        } catch (error) {
+          console.error("Error fetching act data:", error);
+        }
+      };
+      if (params.id) {
+        fetchActData();
       }
-    };
-
-    fetchActData();
+    }
   }, [params.id]);
 
+  // Fetch available transportation services
+  useEffect(() => {
+    const fetchTransportationQuantityServices = async () => {
+      try {
+        const response = await axiosInstance.get(
+          `admin/transportation-services/quantity/`
+        );
+        setTransportationQuantityServices(
+          response.data.results.map(
+            (service: TransportationQuantityService) => ({
+              id: service.id,
+              name: service.name,
+              quantity: service.quantity,
+              price: service.price,
+            })
+          )
+        );
+      } catch (error) {
+        console.error(
+          "Error fetching transportation quantity services:",
+          error
+        );
+      }
+    };
+    fetchTransportationQuantityServices();
+  }, []);
+
+  const buildFormData = (data: Act): FormData => {
+    const formData = new FormData();
+    // Fields that are expected to be files.
+    const fileFields = [
+      "accounting_esf",
+      "accounting_avr",
+      "contract_original_act",
+      "contract_mercenary_and_warehouse",
+    ];
+
+    Object.keys(data).forEach((key) => {
+      const value = data[key as keyof Act];
+
+      // For file fields, only append if there is an actual value.
+      if (fileFields.includes(key)) {
+        if (value) {
+          formData.append(key, value as string | Blob);
+        }
+        return;
+      }
+
+      // Special handling for arrays that need to be sent as multiple fields.
+      if (key === "cargo_images" && Array.isArray(value)) {
+        (value as CargoImage[]).forEach((file: any) => {
+          formData.append("cargo_images[]", file);
+        });
+        return;
+      }
+      if (key === "transportation_service_ids" && Array.isArray(value)) {
+        (value as number[]).forEach((service) => {
+          formData.append("transportation_service_ids", service.toString());
+        });
+        return;
+      }
+
+      // For complex objects (and any arrays not handled above), send as JSON string.
+      if (value && typeof value === "object" && !(value instanceof File)) {
+        formData.append(key, JSON.stringify(value));
+        return;
+      }
+
+      // Convert boolean to "1" for true and "0" for false.
+      if (typeof value === "boolean") {
+        formData.append(key, value ? "1" : "0");
+        return;
+      }
+
+      // Append primitive values if not empty.
+      if (value !== "") {
+        formData.append(key, value as string | Blob);
+      }
+    });
+
+    return formData;
+  };
+
+  // Send act data to the server using PATCH (if editing) or POST (if creating)
+  const handleSend = async () => {
+    try {
+      const formData = buildFormData(actData);
+      console.log("act", actData);
+
+      const response = await axiosInstance.patch(
+        `/acts/${params.id}/`,
+        formData
+      );
+      console.log(response.data);
+      setIsModalOpen(true);
+    } catch (error) {
+      console.error("Error sending act data:", error);
+      alert("Ошибка при отправке акта");
+    }
+  };
+
   const handleNext = () => {
-    if (currentStep < steps.length - 1) {
-      setCurrentStep(currentStep + 1);
+    if (currentStep < stepsMemo.length - 1) {
+      setCurrentStep((prev) => prev + 1);
     }
   };
 
   const handlePrevious = () => {
     if (currentStep > 0) {
-      setCurrentStep(currentStep - 1);
+      setCurrentStep((prev) => prev - 1);
     }
-  };
-
-  if (status === "loading") {
-    return <div>Loading...</div>;
-  }
-  const handleSignatureSubmit = (signatureDataUrl: string) => {
-    console.log("Signature submitted:", signatureDataUrl);
-  };
-
-  const handlePhotoUpload = (file: File) => {
-    console.log("Photo uploaded:", file);
-  };
-
-  const handleFormSubmit = () => {
-    alert("Форма отправлена");
   };
 
   const handlePrint = () => {
     window.print();
   };
 
-  const handleSend = () => {
-    setIsModalOpen(true);
-  };
+  // Memoize steps for both mobile and desktop layouts
+  const stepsMemo = useMemo(
+    () => [
+      {
+        id: 1,
+        name: "Данные о Заказчике",
+        component: (props: {
+          data: Act;
+          setData: React.Dispatch<React.SetStateAction<Act>>;
+        }) => <Customer data={props.data} setData={props.setData} />,
+      },
+      {
+        id: 2,
+        name: "Характеристики и вес груза",
+        component: (props: {
+          data: Act;
+          setData: React.Dispatch<React.SetStateAction<Act>>;
+        }) => (
+          <PackageCharacteristics data={props.data} setData={props.setData} />
+        ),
+      },
+      {
+        id: 3,
+        name: "Фотографии груза и информация о получении",
+        component: (props: {
+          data: Act;
+          setData: React.Dispatch<React.SetStateAction<Act>>;
+        }) => (
+          <>
+            <CargoPhoto data={props.data} setData={props.setData} />
+            <InformationPackage
+              title={"О получении"}
+              data={props.data}
+              setData={props.setData}
+            />
+          </>
+        ),
+      },
+      {
+        id: 4,
+        name: "Типы транспорта и информация о водителе",
+        component: (props: {
+          data: Act;
+          setData: React.Dispatch<React.SetStateAction<Act>>;
+        }) => (
+          <>
+            <TransportationTypes data={props.data} setData={props.setData} />
+            <DriverInfo data={props.data} setData={props.setData} />
+          </>
+        ),
+      },
+      {
+        id: 5,
+        name: "Информация о транспортировке и ссылки для менеджера",
+        component: (props: {
+          data: Act;
+          setData: React.Dispatch<React.SetStateAction<Act>>;
+        }) => (
+          <>
+            <TransportInfo data={props.data} setData={props.setData} />
+            <ManagerLink
+              title="приема наемником"
+              link="https://tasu.kz/shortlive_reference_607/"
+            />
+            <ManagerLink
+              title="передачи наемником"
+              link="https://tasu.kz/shortlive_reference_148/"
+            />
+          </>
+        ),
+      },
+      {
+        id: 6,
+        name: "Договор и услуги",
+        component: (props: {
+          data: Act;
+          setData: React.Dispatch<React.SetStateAction<Act>>;
+        }) => (
+          <>
+            <Agreement
+              original={true}
+              data={props.data}
+              setData={props.setData}
+            />
+            <TransportationServicesTable
+              availableTransportationServices={transportationQuantityServices}
+              data={actData}
+              onChange={(newSelectedIds: number[]) =>
+                setActData((prev) => ({
+                  ...prev,
+                  transportation_service_ids: newSelectedIds,
+                }))
+              }
+            />{" "}
+            <InformationPackage
+              title={"О выдаче"}
+              data={actData}
+              setData={setActData}
+            />
+          </>
+        ),
+      },
+      {
+        id: 7,
+        name: "Документы для отправки",
+        component: (props: {
+          data: Act;
+          setData: React.Dispatch<React.SetStateAction<Act>>;
+        }) => (
+          <>
+            <Shipping data={props.data} setData={props.setData} />
+            <AccountingEsf data={props.data} setData={props.setData} />
+            <AccountingAvr data={props.data} setData={props.setData} />
+          </>
+        ),
+      },
+      {
+        id: 8,
+        name: "QR Код акта",
+        component: () => (
+          <>
+            {actData && actData.status === "готов к отправке" && (
+              <QrAct
+                qrCodeUrl="/images/qr-code.png"
+                actNumber="1234"
+                description="Lorem ipsum dolor sit amet consectetur. Dictum morbi ut lacus ultrices pulvinar lectus adipiscing sit."
+              />
+            )}
+          </>
+        ),
+      },
+      {
+        id: 9,
+        name: "Подтверждение успешной отправки",
+        component: () => <CreateSuccessAct />,
+      },
+    ],
+    [actData]
+  );
 
-  const ProgressBar = ({ step }: { step: number }) => {
-    const percentage = Math.round(((step + 1) / steps.length) * 100);
-    return (
-      <div className="w-full flex flex-col items-center">
-        <div className="w-full bg-gray-200 rounded-full h-2.5 relative">
-          <div
-            className="bg-yellow-400 h-2.5 rounded-full"
-            style={{ width: `${percentage}%` }}
-          ></div>
-        </div>
-        <p className="text-sm mt-2">
-          Шаг {step + 1} из {steps.length} ({percentage}%)
-        </p>
-      </div>
-    );
-  };
+  // Get current step component
+  const CurrentComponent = stepsMemo[currentStep].component as any;
 
-  const CurrentComponent = steps[currentStep].component as any;
+  if (sessionStatus === "loading") {
+    return <div>Loading...</div>;
+  }
 
   return (
     <>
+      {/* Mobile Layout */}
       <div className="block min-[500px]:hidden p-4 max-w-md bg-yellow-50">
         <h1 className="text-xl font-semibold text-center mb-4">ПриемСдатчик</h1>
-        <ProgressBar step={currentStep} />
-
-        <div className="my-4 overflow-x-hidden flex flex-col gap-3">
-          <CurrentComponent data={actData} />
+        <div className="w-full flex flex-col items-center">
+          <div className="w-full bg-gray-200 rounded-full h-2.5 relative">
+            <div
+              className="bg-yellow-400 h-2.5 rounded-full"
+              style={{
+                width: `${Math.round(
+                  ((currentStep + 1) / stepsMemo.length) * 100
+                )}%`,
+              }}
+            ></div>
+          </div>
+          <p className="text-sm mt-2">
+            Шаг {currentStep + 1} из {stepsMemo.length} (
+            {Math.round(((currentStep + 1) / stepsMemo.length) * 100)}%)
+          </p>
         </div>
-
+        <div className="my-4 overflow-x-hidden flex flex-col gap-3">
+          <CurrentComponent data={actData} setData={setActData} />
+        </div>
         <div className="flex justify-between mt-4">
           {currentStep > 0 && (
             <button
@@ -201,8 +411,7 @@ export default function ActPage() {
               Назад
             </button>
           )}
-
-          {currentStep < steps.length - 1 ? (
+          {currentStep < stepsMemo.length - 1 ? (
             <button
               onClick={handleNext}
               className="font-semibold px-4 py-2 bg-yellow-400 text-black rounded-lg hover:bg-yellow-500"
@@ -219,15 +428,39 @@ export default function ActPage() {
           )}
         </div>
       </div>
+
+      {/* Desktop Layout */}
+      <div className="flex flex-wrap items-center gap-2 sm:gap-4">
+        <h2 className="font-semibold text-base sm:text-lg">
+          Номер акта {actData.number}
+        </h2>
+        <span className="px-3 py-1 rounded-full text-sm font-medium bg-green-500 text-white">
+          {actData.cargo_status ? actData.cargo_status : "Status"}
+        </span>
+      </div>
       <div className="hidden min-[500px]:flex act-flex gap-4 mt-4 w-full">
         <div className="flex flex-col lg:w-1/2 space-y-4">
-          <Customer data={actData} />
-          <PackageCharacteristics />
-          <CargoPhoto />
-          <TransportationTypes />
-          <DriverInfo />
-          <TransportInfo />
+          <Customer data={actData} setData={setActData} />
+          <PackageCharacteristics data={actData} setData={setActData} />
+          <CargoPhoto data={actData} setData={setActData} />
+          <TransportationTypes data={actData} setData={setActData} />
+          <DriverInfo data={actData} setData={setActData} />
+          <TransportInfo data={actData} setData={setActData} />
           <div className="space-y-6">
+            <div className="flex items-center gap-2 text-lg font-medium">
+              <label className="flex items-center gap-1 cursor-pointer">
+                <Checkbox
+                  checked={!!actData?.packaging_is_damaged}
+                  onChange={(e) =>
+                    setActData((prev) => ({
+                      ...prev,
+                      packaging_is_damaged: e.target.checked,
+                    }))
+                  }
+                />
+                Нарушено ли состояние упаковки?
+              </label>
+            </div>
             <ManagerLink
               title="приема наемником"
               link="https://tasu.kz/shortlive_reference_607/"
@@ -237,29 +470,34 @@ export default function ActPage() {
               link="https://tasu.kz/shortlive_reference_148/"
             />
           </div>
-          <Agreement />
+          <Agreement original={true} data={actData} setData={setActData} />
         </div>
         <div className="flex flex-col lg:w-1/2 space-y-4">
-          <Shipping />
-          <InformationPackage />
-          <Agreement />
-          <TableTotal
-            title="Услуги"
-            columns={[
-              { label: "Услуга", key: "service" },
-              { label: "Кол-во", key: "quantity" },
-              { label: "Стоимость", key: "cost" },
-            ]}
-            initialData={[
-              { service: "Доставка", quantity: "1", cost: "1000" },
-              { service: "Упаковка", quantity: "2", cost: "2000" },
-              { service: "Страховка", quantity: "1", cost: "1500" },
-            ]}
-          />{" "}
-          <InformationPackage />
-          <AccountingEsf />
-          <AccountingAbp />
-          {actStatus == "готов к отправке" && (
+          <CustomerReceiver data={actData} setData={setActData} />
+          <InformationPackage
+            title={"О получении"}
+            data={actData}
+            setData={setActData}
+          />
+          <Agreement original={false} data={actData} setData={setActData} />
+          <TransportationServicesTable
+            availableTransportationServices={transportationQuantityServices}
+            data={actData}
+            onChange={(newSelectedIds: number[]) =>
+              setActData((prev) => ({
+                ...prev,
+                transportation_service_ids: newSelectedIds,
+              }))
+            }
+          />
+          <InformationPackage
+            title={"О выдаче"}
+            data={actData}
+            setData={setActData}
+          />
+          <AccountingEsf data={actData} setData={setActData} />
+          <AccountingAvr data={actData} setData={setActData} />
+          {actData && actData.status === "готов к отправке" && (
             <QrAct
               qrCodeUrl="/images/qr-code.png"
               actNumber="1234"
@@ -268,6 +506,7 @@ export default function ActPage() {
           )}
         </div>
       </div>
+
       <div className="flex justify-between min-[1050px]:flex-row flex-col">
         <div className="flex flex-col space-y-4 mt-4">
           <button
@@ -295,8 +534,10 @@ export default function ActPage() {
               Статус:
             </label>
             <select
-              value={actStatus}
-              onChange={(e) => setActStatus(e.target.value)}
+              value={actData?.status || ""}
+              onChange={(e) =>
+                setActData((prev) => ({ ...prev, status: e.target.value }))
+              }
               className="border rounded-lg px-2 py-1 bg-white focus:ring-2 focus:ring-yellow-400"
             >
               <option value="акт сформирован">акт сформирован</option>
@@ -340,6 +581,7 @@ export default function ActPage() {
           </button>
         </div>
       </div>
+
       {isModalOpen && <CreateSuccessAct setIsModalOpen={setIsModalOpen} />}
     </>
   );

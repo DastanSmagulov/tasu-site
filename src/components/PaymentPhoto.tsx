@@ -1,8 +1,17 @@
-import AccountantPage from "@/features/accountant";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { ActDataProps } from "@/helper/types"; // Assumes this type is defined as: { data: Act, setData: React.Dispatch<React.SetStateAction<Act>> }
 
-const PaymentPhoto: React.FC = () => {
+const PaymentPhoto: React.FC<ActDataProps> = ({ data, setData }) => {
   const [photos, setPhotos] = useState<File[]>([]);
+
+  // Whenever photos change, update the parent's actData.
+  useEffect(() => {
+    setData((prev: any) => ({
+      ...prev,
+      // Save new photos under a key (e.g., payment_photos).
+      payment_photos: photos,
+    }));
+  }, [photos, setData]);
 
   const handlePhotoUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
@@ -20,7 +29,7 @@ const PaymentPhoto: React.FC = () => {
     <div className="bg-white p-6 rounded-lg shadow-md">
       <h2 className="text-lg font-semibold mb-4 text-[#1D1B23]">Фото оплаты</h2>
 
-      {/* Drag-and-Drop Area */}
+      {/* Drag-and-Drop / File Upload Area */}
       <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 mb-4 text-center">
         <p className="text-gray-500 mb-2">Перетащите сюда</p>
         <p className="text-gray-500 mb-4">или</p>
@@ -36,6 +45,7 @@ const PaymentPhoto: React.FC = () => {
         </label>
       </div>
 
+      {/* Display Uploaded Photos */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {photos.map((photo, index) => (
           <div
@@ -44,7 +54,7 @@ const PaymentPhoto: React.FC = () => {
           >
             <img
               src={URL.createObjectURL(photo)}
-              alt={`Cargo Photo ${index + 1}`}
+              alt={`Payment Photo ${index + 1}`}
               className="object-cover h-full w-full rounded-md"
             />
             <button

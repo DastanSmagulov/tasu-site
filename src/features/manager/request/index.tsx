@@ -41,7 +41,7 @@ export default function RequestPage() {
     const fetchActData = async () => {
       try {
         const response = await axiosInstance.get(`/acts/${params.id}/`);
-        setActData(response.data); // Set the fetched data
+        setActData(response.data);
       } catch (error) {
         console.error("Error fetching act data:", error);
       }
@@ -53,10 +53,6 @@ export default function RequestPage() {
   if (status === "loading") {
     return <div>Loading...</div>;
   }
-
-  const handlePhotoUpload = (file: File) => {
-    console.log("Photo uploaded:", file);
-  };
 
   const handleFormSubmit = () => {
     alert("Форма отправлена");
@@ -83,7 +79,7 @@ export default function RequestPage() {
       <div className="flex flex-col lg:flex-row gap-4 mt-4 w-full">
         {/* Left Section */}
         <div className="flex flex-col lg:w-1/2 space-y-4">
-          <Customer data={actData} />
+          <Customer setData={setActData} data={actData} />
           <CargoData />
           <RouteConditions />
           <ServiceCosts />

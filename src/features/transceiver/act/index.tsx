@@ -10,21 +10,7 @@ import CreateSuccessAct from "@/components/modals/CreateSuccessAct";
 import Shipping from "@/components/Shipping";
 import { useParams } from "next/navigation";
 import { axiosInstance } from "@/helper/utils";
-import axios from "axios";
 import { Act } from "@/helper/types";
-
-type DocumentData = {
-  id: string;
-  date: string;
-  status: string;
-  customer: string;
-  place: string;
-  weight: string;
-  volume: string;
-  statusColor: string;
-  view: string;
-  amount: string;
-};
 
 const steps = [
   { id: 1, name: "Данные о Заказчике", component: Customer },
@@ -34,29 +20,95 @@ const steps = [
   { id: 5, name: "Данные о Получении Груза", component: InformationPackage },
 ];
 
+// Helper function to build FormData from actData
+const buildFormData = (data: Act): FormData => {
+  const formData = new FormData();
+
+  const fileFields = [
+    "accounting_esf",
+    "accounting_avr",
+    "contract_original_act",
+    "contract_mercenary_and_warehouse",
+  ];
+
+  const jsonKeys = [
+    "customer_data",
+    "characteristic",
+    "cargo",
+    "cargo_images",
+    "driver_data",
+    "vehicle_data",
+    "receiver_data",
+    "receiving_cargo_info",
+    "delivery_cargo_info",
+    "transportation",
+  ];
+
+  Object.keys(data).forEach((key) => {
+    const value = data[key as keyof Act];
+
+    // Rename transportation_services to transportation_service_ids
+    if (key === "transportation_services") {
+      const services = Array.isArray(value) ? value : [];
+      services.forEach((service) =>
+        formData.append("transportation_service_ids", service.toString())
+      );
+      return;
+    }
+
+    if (jsonKeys.includes(key)) {
+      const jsonValue = value === null || value === undefined ? {} : value;
+      formData.append(key, JSON.stringify(jsonValue));
+      return;
+    }
+
+    if (typeof value === "boolean") {
+      formData.append(key, value ? "true" : "false");
+      return;
+    }
+
+    if (value !== undefined && value !== null) {
+      formData.append(key, value.toString());
+    }
+  });
+
+  if (!(data as any).transportation) {
+    formData.append("transportation", JSON.stringify({}));
+  }
+
+  return formData;
+};
+
 export default function ActPage() {
   const { data: session, status } = useSession();
   const [currentStep, setCurrentStep] = useState(0);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [actStatus, setActStatus] = useState("акт сформирован");
-  const [actData, setActData] = useState<Act | null>(null); // Store fetched data
+  const [actData, setActData] = useState<Act | null>(null);
   const params = useParams();
 
   useEffect(() => {
     const fetchActData = async () => {
       try {
         const response = await axiosInstance.get(`/acts/${params.id}/`);
-        setActData(response.data); // Set the fetched data
+        setActData(response.data);
       } catch (error) {
         console.error("Error fetching act data:", error);
       }
     };
 
-    fetchActData();
+    if (params.id) {
+      fetchActData();
+    }
   }, [params.id]);
 
   if (status === "loading") {
-    return <div>Loading...</div>;
+    return <div>Loading session...</div>;
+  }
+
+  // Show a loader until actData is fetched
+  if (!actData) {
+    return <div>Loading act data...</div>;
   }
 
   const handleNext = () => {
@@ -75,8 +127,19 @@ export default function ActPage() {
     window.print();
   };
 
-  const handleSend = () => {
-    setIsModalOpen(true);
+  const handleSend = async () => {
+    try {
+      const formData = buildFormData(actData);
+      const response = await axiosInstance.patch(
+        `/acts/${params.id}/`,
+        formData
+      );
+      console.log("Patch response:", response.data);
+      setIsModalOpen(true);
+    } catch (error) {
+      console.error("Error sending act data:", error);
+      alert("Ошибка при отправке акта");
+    }
   };
 
   const ProgressBar = ({ step }: { step: number }) => {
@@ -100,13 +163,17 @@ export default function ActPage() {
 
   return (
     <>
+      {/* Mobile Layout */}
       <div className="block min-[500px]:hidden p-4 max-w-md bg-yellow-50">
         <h1 className="text-xl font-semibold text-center mb-4">ПриемСдатчик</h1>
         <ProgressBar step={currentStep} />
 
         <div className="my-4">
-          {/* Pass actData as a prop */}
-          <CurrentComponent data={actData} />
+          <CurrentComponent
+            title="О получении"
+            setData={setActData}
+            data={actData}
+          />
         </div>
 
         <div className="flex justify-between mt-4">
@@ -118,7 +185,6 @@ export default function ActPage() {
               Назад
             </button>
           )}
-
           {currentStep < steps.length - 1 ? (
             <button
               onClick={handleNext}
@@ -129,7 +195,7 @@ export default function ActPage() {
           ) : (
             <button
               onClick={handleSend}
-              className="font-semibold px-4 py-2 bg-yellow-400 text-black rounded-lg hover:bg-yellow-500"
+              className="font-semibold px-4 py-2 bg-yellow-400 hover:bg-yellow-500 text-black rounded-lg"
             >
               Отправить
             </button>
@@ -137,16 +203,19 @@ export default function ActPage() {
         </div>
       </div>
 
+      {/* Desktop Layout */}
       <div className="hidden min-[500px]:flex act-flex gap-4 mt-4 w-full">
         <div className="flex flex-col md:w-1/2 space-y-4">
-          {/* Pass actData to each component */}
-          <Customer data={actData} />
-          <PackageCharacteristics />
-          <CargoPhoto />
+          <Customer setData={setActData} data={actData} />
+          <PackageCharacteristics setData={setActData} data={actData} />
+          <CargoPhoto setData={setActData} data={actData} />
         </div>
         <div className="flex flex-col md:w-1/2 space-y-4">
-          <Shipping />
-          <InformationPackage />
+          <InformationPackage
+            title="О получении"
+            setData={setActData}
+            data={actData}
+          />
         </div>
       </div>
 

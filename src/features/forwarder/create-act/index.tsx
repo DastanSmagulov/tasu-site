@@ -12,8 +12,6 @@ import { Act } from "@/helper/types";
 import { useParams } from "next/navigation";
 import { axiosInstance } from "@/helper/utils";
 
-("./globals.css");
-
 const steps = [
   { id: 1, name: "Данные о Заказчике", component: Customer },
   { id: 2, name: "Характер и Вес Груза", component: PackageCharacteristics },
@@ -23,24 +21,26 @@ const steps = [
 
 export default function CreateActPage() {
   const { data: session, status } = useSession();
+  const router = useRouter();
   const [currentStep, setCurrentStep] = useState(0);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isStorageChecked, setIsStorageChecked] = useState(false);
   const [actStatus, setActStatus] = useState("акт сформирован");
-  const [actData, setActData] = useState<Act | null>(null); // Store fetched data
+  const [actData, setActData] = useState<Act | null>(null); // Store fetched or new act data
   const params = useParams();
 
   useEffect(() => {
-    const fetchActData = async () => {
-      try {
-        const response = await axiosInstance.get(`/acts/${params.id}/`);
-        setActData(response.data); // Set the fetched data
-      } catch (error) {
-        console.error("Error fetching act data:", error);
-      }
-    };
-
-    fetchActData();
+    // If params.id is provided, fetch the existing act data.
+    if (params.id) {
+      const fetchActData = async () => {
+        try {
+          const response = await axiosInstance.get(`/acts/${params.id}/`);
+          setActData(response.data);
+        } catch (error) {
+          console.error("Error fetching act data:", error);
+        }
+      };
+      fetchActData();
+    }
   }, [params.id]);
 
   if (status === "loading") {
@@ -63,8 +63,23 @@ export default function CreateActPage() {
     window.print();
   };
 
-  const handleSend = () => {
-    setIsModalOpen(true);
+  // Updated handleSend that uses POST if no id is present and PATCH if editing
+  const handleSend = async () => {
+    if (!actData) {
+      alert("Нет данных акта для отправки");
+      return;
+    }
+    try {
+      let response;
+      response = await axiosInstance.post(`/acts/`, actData);
+      console.log("Response:", response.data);
+      setIsModalOpen(true);
+      // Optionally, navigate to the new act page after creation:
+      // if (!params.id) router.push(`/acts/${response.data.id}`);
+    } catch (error) {
+      console.error("Error sending act data:", error);
+      alert("Ошибка при отправке акта");
+    }
   };
 
   const ProgressBar = ({ step }: { step: number }) => {
@@ -88,12 +103,17 @@ export default function CreateActPage() {
 
   return (
     <>
+      {/* Mobile Layout */}
       <div className="block min-[500px]:hidden p-4 max-w-md bg-yellow-50">
         <h1 className="text-xl font-semibold text-center mb-4">ПриемСдатчик</h1>
         <ProgressBar step={currentStep} />
 
         <div className="my-4">
-          <CurrentComponent data={actData} />
+          <CurrentComponent
+            title="О Получении"
+            setData={setActData}
+            data={actData}
+          />
         </div>
 
         <div className="flex justify-between mt-4">
@@ -124,14 +144,19 @@ export default function CreateActPage() {
         </div>
       </div>
 
+      {/* Desktop Layout */}
       <div className="hidden min-[500px]:flex act-flex gap-4 mt-4 w-full">
         <div className="flex flex-col md:w-1/2 space-y-4">
-          <Customer data={actData} />
-          <PackageCharacteristics />
-          <CargoPhoto />
+          <Customer setData={setActData} data={actData} />
+          <PackageCharacteristics setData={setActData} data={actData} />
+          <CargoPhoto setData={setActData} data={actData} />
         </div>
         <div className="flex flex-col md:w-1/2 space-y-4">
-          <InformationPackage />
+          <InformationPackage
+            title="О Получении"
+            setData={setActData}
+            data={actData}
+          />
         </div>
       </div>
 
@@ -209,7 +234,7 @@ export default function CreateActPage() {
         </div>
       </div>
 
-      {isModalOpen && <CreateSuccessAct />}
+      {isModalOpen && <CreateSuccessAct setIsModalOpen={setIsModalOpen} />}
     </>
   );
 }

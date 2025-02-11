@@ -24,7 +24,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   }, [router]);
 
   let headerText = "Акт передачи документов";
-  if (pathname === "manager/create-act") {
+  if (pathname === "/manager/create-act") {
     headerText = "Создать акт";
   } else if (/^\/act\/[^/]+$/.test(pathname)) {
     headerText = "Акт";

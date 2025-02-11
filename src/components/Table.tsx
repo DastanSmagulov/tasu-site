@@ -1,4 +1,5 @@
 "use client";
+
 import React, { useState, useEffect } from "react";
 import Checkbox from "./ui/CheckBox";
 import DeleteButton from "./ui/DeleteButton";
@@ -7,7 +8,7 @@ import AddMore from "./ui/AddMore";
 interface TableColumn {
   label: string;
   key: string;
-  type?: "text" | "dropdown"; // Add type to specify input type
+  type?: "text" | "dropdown"; // Specify input type
   options?: { value: string; label: string }[]; // Options for dropdown
 }
 
@@ -19,7 +20,7 @@ interface TableProps {
   columns: TableColumn[];
   data: TableRow[];
   onRowSelect?: (selectedRows: TableRow[]) => void;
-  onAddRow?: any;
+  onAddRow?: (newRow: TableRow) => Promise<void>;
   onDeleteRows?: (selectedRows: Set<number>) => void;
   onEditRow?: (id: number, updatedData: Partial<TableRow>) => void;
   text: string;
@@ -37,16 +38,31 @@ const Table: React.FC<TableProps> = ({
   width,
 }) => {
   const widthTable = `w-${width}`;
-  const [tableData, setTableData] = useState<TableRow[]>(data);
+  const [tableData, setTableData] = useState<TableRow[]>([]);
   const [selectedRows, setSelectedRows] = useState<Set<number>>(new Set());
   const [editingRowIndex, setEditingRowIndex] = useState<number | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isAllSelected, setIsAllSelected] = useState<boolean>(false);
 
-  // Sync table data with external data
+  // Transform incoming data so that for every dropdown column the value is the underlying key.
   useEffect(() => {
-    setTableData(data);
-  }, [data]);
+    const transformedData = data.map((row) => {
+      let newRow = { ...row };
+      columns.forEach((column) => {
+        if (column.type === "dropdown" && column.options) {
+          // If the current value matches an option's label, then convert it to the option's value.
+          const option = column.options.find(
+            (opt) => opt.label === newRow[column.key]
+          );
+          if (option) {
+            newRow[column.key] = option.value;
+          }
+        }
+      });
+      return newRow;
+    });
+    setTableData(transformedData);
+  }, [data, columns]);
 
   // Add a new row
   const handleAddRow = () => {
@@ -74,52 +90,49 @@ const Table: React.FC<TableProps> = ({
     setTableData(updatedData);
   };
 
-  // Transform car data to the correct format
-  const transformCar = (data: TableRow) => {
-    return {
-      license_plate: data.type,
-      brand: data.info1,
-      color: data.info2,
-      model: data.info3,
-    };
-  };
-
-  // Transform train data to the correct format
-  const transformTrain = (data: TableRow) => {
-    return {
-      train_number: data.type,
-      train_route: data.info1,
-      railway_company: data.info2,
-    };
-  };
-
+  // Always transform dropdown values to their keys before saving.
   const handleSaveRow = (rowIndex: number) => {
-    const row = tableData[rowIndex];
-    const isRowValid = columns.every((column) => row[column.key].trim() !== "");
+    // Copy the current row
+    const row = { ...tableData[rowIndex] };
 
+    // For each dropdown column, convert the value (if it's a label) to the key.
+    columns.forEach((column) => {
+      if (column.type === "dropdown" && column.options) {
+        const option = column.options.find(
+          (opt) =>
+            opt.value === row[column.key] || opt.label === row[column.key]
+        );
+        if (option) {
+          row[column.key] = option.value;
+        }
+      }
+    });
+
+    // Validate that all columns are non-empty
+    const isRowValid = columns.every(
+      (column) => String(row[column.key]).trim() !== ""
+    );
     if (!isRowValid) {
       setErrorMessage("Пожалуйста заполните все поля перед сохранением.");
       return;
     }
 
-    // Transform the row data based on the table type
+    // (Optional) Transform row data based on table type if needed
     let transformedData: TableRow = row;
     if (text === "Машина") {
-      transformedData = transformCar(row);
+      // transformedData = transformCar(row);
     } else if (text === "Поезд") {
-      transformedData = transformTrain(row);
+      // transformedData = transformTrain(row);
     }
 
     if (row.id !== undefined) {
-      // Сохранение существующей строки
+      // Editing an existing row
       if (onEditRow) {
-        console.log("Editing row:", transformedData); // Для отладки
         onEditRow(row.id, transformedData);
       }
     } else {
-      // Добавление новой строки
+      // Adding a new row
       if (onAddRow) {
-        console.log("Adding row:", transformedData); // Для отладки
         onAddRow(transformedData);
       }
     }
@@ -129,7 +142,6 @@ const Table: React.FC<TableProps> = ({
       updatedData[rowIndex] = row;
       return updatedData;
     });
-
     setEditingRowIndex(null);
     setErrorMessage(null);
   };
@@ -241,6 +253,7 @@ const Table: React.FC<TableProps> = ({
                       />
                     )
                   ) : column.type === "dropdown" ? (
+                    // Display the label (lookup the option by value)
                     column.options?.find(
                       (option) => option.value === row[column.key]
                     )?.label || row[column.key]

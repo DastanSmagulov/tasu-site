@@ -1,43 +1,43 @@
 import { ActDataProps } from "@/helper/types";
 import React, { useState, useEffect } from "react";
 
-const AccountingEsf: React.FC<ActDataProps> = ({ data, setData }) => {
+const AccountingAvr: React.FC<ActDataProps> = ({ data, setData }) => {
   // Initialize local state from parent data (if available)
-  const [file, setFile] = useState<File | string>(data?.accounting_esf || "");
+  const [file, setFile] = useState<File | string>(data?.accounting_avr || "");
 
   // Synchronize local state if parent's data changes
   useEffect(() => {
-    if (data?.accounting_esf) {
-      setFile(data.accounting_esf);
+    if (data?.accounting_avr) {
+      setFile(data.accounting_avr);
     }
-  }, [data?.accounting_esf]);
+  }, [data?.accounting_avr]);
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const fileList = event.target.files;
     if (fileList && fileList[0]) {
       const newFile = fileList[0];
       setFile(newFile);
-      // Update parent's data for ESF
+      // Update parent's data for AVR
       setData((prev: any) => ({
         ...prev,
-        accounting_esf: newFile,
+        accounting_avr: newFile,
       }));
     }
   };
 
   const handleRemoveFile = () => {
     setFile("");
-    // Update parent's data for ESF
+    // Update parent's data for AVR
     setData((prev: any) => ({
       ...prev,
-      accounting_esf: "",
+      accounting_avr: "",
     }));
   };
 
   return (
     <div className="bg-white p-6 rounded-lg shadow-md">
       <h2 className="text-lg font-semibold mb-4 text-[#1D1B23]">
-        Бухгалтерия ЭСФ
+        Бухгалтерия AVR
       </h2>
 
       {/* Drag-and-Drop / Upload Area */}
@@ -45,7 +45,7 @@ const AccountingEsf: React.FC<ActDataProps> = ({ data, setData }) => {
         <p className="text-gray-500 mb-2">Перетащите сюда</p>
         <p className="text-gray-500 mb-4">или</p>
         <label className="bg-[#FDE107] hover:bg-[#efdc4b] px-4 py-2 rounded-md cursor-pointer">
-          Загрузите ЭСФ
+          Загрузите AVR
           <input
             type="file"
             accept="image/*,application/pdf"
@@ -61,7 +61,7 @@ const AccountingEsf: React.FC<ActDataProps> = ({ data, setData }) => {
           {typeof file !== "string" && file.type.startsWith("image/") ? (
             <img
               src={URL.createObjectURL(file)}
-              alt="ESF File"
+              alt="AVR File"
               className="object-cover h-full w-full rounded-md"
             />
           ) : typeof file !== "string" && file.type === "application/pdf" ? (
@@ -118,7 +118,7 @@ const AccountingEsf: React.FC<ActDataProps> = ({ data, setData }) => {
             ) : (
               <img
                 src={file}
-                alt="ESF File"
+                alt="AVR File"
                 className="object-cover h-full w-full rounded-md"
               />
             )
@@ -138,4 +138,4 @@ const AccountingEsf: React.FC<ActDataProps> = ({ data, setData }) => {
   );
 };
 
-export default AccountingEsf;
+export default AccountingAvr;

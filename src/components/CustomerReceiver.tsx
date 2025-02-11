@@ -1,18 +1,15 @@
 import React, { useState, useEffect } from "react";
 import Checkbox from "./ui/CheckBox";
 import { axiosInstance } from "@/helper/utils";
-import { Act, ActDataProps } from "@/helper/types";
+import { ActDataProps } from "@/helper/types";
 
-const Customer: React.FC<ActDataProps> = ({ data, setData }) => {
+const CustomerReceiver: React.FC<ActDataProps> = ({ data, setData }) => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
-  const [isPayer, setIsPayer] = useState(
-    data?.customer_data?.customer_is_payer || false
-  );
   const [fullName, setFullName] = useState(
-    data?.customer_data?.full_name || ""
+    data?.receiver_data?.full_name || ""
   );
   const [phoneNumber, setPhoneNumber] = useState(
-    data?.customer_data?.phone || ""
+    data?.receiver_data?.phone || ""
   );
   const [customers, setCustomers] = useState<Array<any>>([]);
   const [selectedCustomer, setSelectedCustomer] = useState("");
@@ -39,13 +36,12 @@ const Customer: React.FC<ActDataProps> = ({ data, setData }) => {
     // Update parent state with selected customer info including id and current isPayer flag.
     setData((prevData: any) => ({
       ...prevData,
-      customer_data: {
-        ...prevData.customer_data,
-        id: customer.id, // Pass the id from the selected customer
+      receiver_data: {
+        ...prevData.receiver_data,
+        id: customer.id,
         full_name: customer.full_name,
         phone: customer.phone || "",
         role: customer.role,
-        customer_is_payer: isPayer, // Retain the current value of isPayer
       },
     }));
   };
@@ -55,8 +51,8 @@ const Customer: React.FC<ActDataProps> = ({ data, setData }) => {
     setFullName(newFullName);
     setData((prevData: any) => ({
       ...prevData,
-      customer_data: {
-        ...prevData.customer_data,
+      receiver_data: {
+        ...prevData.receiver_data,
         full_name: newFullName,
       },
     }));
@@ -67,21 +63,9 @@ const Customer: React.FC<ActDataProps> = ({ data, setData }) => {
     setPhoneNumber(newPhone);
     setData((prevData: any) => ({
       ...prevData,
-      customer_data: {
-        ...prevData.customer_data,
+      receiver_data: {
+        ...prevData.receiver_data,
         phone: newPhone,
-      },
-    }));
-  };
-
-  const handlePayerChange = () => {
-    const newValue = !isPayer;
-    setIsPayer(newValue);
-    setData((prevData: any) => ({
-      ...prevData,
-      customer_data: {
-        ...prevData.customer_data,
-        customer_is_payer: newValue,
       },
     }));
   };
@@ -95,15 +79,6 @@ const Customer: React.FC<ActDataProps> = ({ data, setData }) => {
       {/* Checkbox for "Заказчик является плательщиком?" */}
       <div className="flex items-center md:flex-row flex-col gap-3 mb-4">
         <h2 className="text-lg font-semibold mb-6 text-[#1D1B23]">Заказчик</h2>
-        <div className="flex items-start gap-3">
-          <label
-            htmlFor="isPayer"
-            className="flex items-center mb-6 text-sm font-medium text-gray-700 cursor-pointer"
-          >
-            Заказчик является плательщиком?
-          </label>
-          <Checkbox checked={isPayer} onChange={handlePayerChange} />
-        </div>
       </div>
 
       {/* Dropdown for Selecting Customer */}
@@ -163,4 +138,4 @@ const Customer: React.FC<ActDataProps> = ({ data, setData }) => {
   );
 };
 
-export default Customer;
+export default CustomerReceiver;

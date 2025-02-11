@@ -101,20 +101,18 @@ const Table = ({ data, loading, fetchActsData }: any) => {
               // Map act fields to table columns:
               const actNumber = act.number || "-";
               const actId = act.id || "-";
-              const customer = act.customer_data?.full_name || "-";
+              const customer = act.customer?.full_name || "-";
               // Use receiving_cargo_info.date (or delivery_cargo_info.date) and format it:
-              const date = act.receiving_cargo_info?.date
-                ? act.receiving_cargo_info.date
-                : "-";
-              const places = act.cargo ? act.cargo.length : 0;
-              const weight = calculateTotalWeight(act.cargo);
-              const volume = calculateTotalVolume(act.cargo);
+              const date = act?.created_at ? act?.сreated_at : "-";
+              const places = act.cargo ? act.cargo.slots : 0;
+              const weight = calculateTotalWeight(act.cargo.weight);
+              const volume = calculateTotalVolume(act.cargo.volume);
               // For status, you might have a dedicated field; here we fallback to transportation_type
               const status = act.status || "-";
               // For view, we use transportation_type
               const view = act.transportation_type || "-";
               // For amount, we use characteristic.cargo_cost
-              const amount = act.characteristic?.cargo_cost || "-";
+              const amount = act.total_cost || "-";
 
               return (
                 <tr key={actId} className="text-sm text-gray-800">

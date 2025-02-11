@@ -9,13 +9,13 @@ import Pagination from "@/shared/Pagination";
 import "../../styles/globals.css";
 import { axiosInstance } from "@/helper/utils";
 import { TableRow } from "@/helper/types";
+import AccountantTable from "@/shared/AccountantTable";
 
 const AccountantPage = () => {
   const [data, setData] = useState<TableRow[]>([]);
-  const [currentPage, setCurrentPage] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
-  const [nextPage, setNextPage] = useState<string | null>(null);
-  const [previousPage, setPreviousPage] = useState<string | null>(null);
+  const [nextPageUrl, setNextPageUrl] = useState<string | null>(null);
+  const [prevPageUrl, setPrevPageUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState({
     search: "",
@@ -25,36 +25,22 @@ const AccountantPage = () => {
     created_at: "",
     closed_at: "",
     ordering: "",
+    limit: "10",
   });
 
-  const onPageChange = (page: number) => {
-    setCurrentPage(page);
-  };
+  const limit = parseInt(filters.limit, 10);
 
-  const fetchActsData = async () => {
+  /** Fetch data from API **/
+  const fetchActsData = async (url?: string | null) => {
     setLoading(true);
     try {
-      const queryParams = new URLSearchParams();
+      let finalUrl = url || `/acts/?limit=${limit}&offset=0`; // Default to first page if no URL
 
-      // Append filters to the query params
-      Object.entries(filters).forEach(([key, value]) => {
-        if (value) queryParams.append(key, value);
-      });
-      queryParams.append("page", currentPage.toString());
-
-      const url = `/acts/?${queryParams.toString()}`;
-
-      // Fetch filtered acts
-      const actsResponse = await axiosInstance.get(url);
-      const actsData = actsResponse.data.results;
-
-      // Update pagination state
-      setTotalCount(actsResponse.data.count);
-      setNextPage(actsResponse.data.next);
-      setPreviousPage(actsResponse.data.previous);
-
-      // Process data...
-      setData(actsData);
+      const response = await axiosInstance.get(finalUrl);
+      setData(response.data.results);
+      setTotalCount(response.data.count);
+      setNextPageUrl(response.data.next);
+      setPrevPageUrl(response.data.previous);
     } catch (error) {
       console.error("Error fetching data:", error);
     } finally {
@@ -62,26 +48,30 @@ const AccountantPage = () => {
     }
   };
 
+  /** When filters change, reset to page 1 and fetch new data **/
   useEffect(() => {
     fetchActsData();
-  }, [filters, currentPage]);
+  }, [filters]);
 
   return (
     <div>
       <TabsNavigation role="accountant" />
-      <FilterPanel />
-      <Table data={data} fetchActsData={fetchActsData} loading={loading} />
+      <FilterPanel filters={filters} setFilters={setFilters} />
+      <AccountantTable
+        data={data}
+        fetchActsData={fetchActsData}
+        loading={loading}
+      />
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center">
         <h1>
-          Показано {data?.length} из {totalCount * 10} данных
+          Показано {data.length} из {totalCount} данных
         </h1>
         <Pagination
-          currentPage={currentPage}
           totalCount={totalCount}
-          next={nextPage}
-          previous={previousPage}
-          onPageChange={onPageChange}
-          pageSize={totalCount}
+          pageSize={limit}
+          next={nextPageUrl}
+          previous={prevPageUrl}
+          onPageChange={fetchActsData}
         />
       </div>
     </div>

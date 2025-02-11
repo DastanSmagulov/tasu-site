@@ -1,32 +1,147 @@
+import React, { useState, useEffect } from "react";
+import { ActDataProps } from "@/helper/types";
+import { axiosInstance } from "@/helper/utils";
 import Signature from "@/components/Signature";
-import React, { useState } from "react";
 
-const InformationPackage: React.FC = () => {
-  const [issuedBy, setIssuedBy] = useState("");
-  const [issuedStatus, setIssuedStatus] = useState("");
-  const [receivedBy, setReceivedBy] = useState("");
-  const [receivedStatus, setReceivedStatus] = useState("");
-  const [signatureDataUrl, setSignatureDataUrl] = useState<string | null>(null);
-  const [uploadedSignature, setUploadedSignature] = useState<File | null>(null);
-  const [dateTime, setDateTime] = useState<string>(""); // State for date and time
+interface CustomerOption {
+  id: string;
+  full_name: string;
+  phone?: string;
+}
 
-  const handleSignatureSubmit = (signatureDataUrl: string) => {
-    setSignatureDataUrl(signatureDataUrl);
-  };
+// Helper: convert an ISO date string to the HTML datetime-local format (YYYY-MM-DDTHH:mm)
+const convertISOToDateTimeLocal = (iso: string): string => {
+  const date = new Date(iso);
+  const pad = (n: number) => n.toString().padStart(2, "0");
+  const year = date.getFullYear();
+  const month = pad(date.getMonth() + 1);
+  const day = pad(date.getDate());
+  const hours = pad(date.getHours());
+  const minutes = pad(date.getMinutes());
+  return `${year}-${month}-${day}T${hours}:${minutes}`;
+};
 
-  const handleSignatureUpload = (file: File) => {
-    setUploadedSignature(file);
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setSignatureDataUrl(reader.result as string);
+const InformationPackage: React.FC<ActDataProps & { title: string }> = ({
+  title,
+  data,
+  setData,
+}) => {
+  // Local states for issued and received info
+  const [issuedBy, setIssuedBy] = useState<CustomerOption | null>(null);
+  const [receivedBy, setReceivedBy] = useState<CustomerOption | null>(null);
+  const [dateTime, setDateTime] = useState(""); // datetime-local string
+
+  // Signature states:
+  const [signatureDataUrl, setSignatureDataUrl] = useState<string | null>(
+    data?.customer_data?.signature || null
+  );
+  const [receiverSignatureDataUrl, setReceiverSignatureDataUrl] = useState<
+    string | null
+  >(data?.receiver_data?.signature || null);
+
+  // Dropdown states for "Выдал" and "Принял"
+  const [customers, setCustomers] = useState<CustomerOption[]>([]);
+  const [issuedDropdownOpen, setIssuedDropdownOpen] = useState(false);
+  const [receivedDropdownOpen, setReceivedDropdownOpen] = useState(false);
+
+  // Fetch customers for dropdown options
+  useEffect(() => {
+    const fetchCustomers = async () => {
+      try {
+        const response = await axiosInstance.get("/admin/users/search/");
+        setCustomers(response.data.results); // Each item assumed to have id and full_name
+      } catch (error) {
+        console.error("Error fetching customers:", error);
+      }
     };
-    reader.readAsDataURL(file);
-  };
+    fetchCustomers();
+  }, []);
 
+  // Initialize local state from parent's data only once on mount.
+  useEffect(() => {
+    if (data) {
+      if (
+        title.toLowerCase().includes("получении") &&
+        data.delivery_cargo_info
+      ) {
+        const info = data.delivery_cargo_info;
+        if (info.issued) {
+          // If info.issued is only a name, use it for both id and full_name
+          setIssuedBy({ id: info.issued, full_name: info.issued });
+        }
+        if (info.accepted) {
+          setReceivedBy({ id: info.accepted, full_name: info.accepted });
+        }
+        if (info.date) {
+          setDateTime(convertISOToDateTimeLocal(info.date));
+        }
+      } else if (
+        title.toLowerCase().includes("выдаче") &&
+        data.receiving_cargo_info
+      ) {
+        const info = data.receiving_cargo_info;
+        if (info.issued) {
+          setIssuedBy({ id: info.issued, full_name: info.issued });
+        }
+        if (info.accepted) {
+          setReceivedBy({ id: info.accepted, full_name: info.accepted });
+        }
+        if (info.date) {
+          setDateTime(convertISOToDateTimeLocal(info.date));
+        }
+      }
+    }
+    // Run only once on mount.
+  }, []);
+
+  // Update parent's state when local state changes.
+  useEffect(() => {
+    if (title.toLowerCase().includes("получении")) {
+      // For cargo receiving info, update delivery_cargo_info and customer_data's signature.
+      setData((prev: any) => ({
+        ...prev,
+        delivery_cargo_info: {
+          // Now sending both the id and name of the customer.
+          issued: issuedBy ? issuedBy.full_name : null,
+          accepted: receivedBy ? receivedBy.full_name : null,
+          date: dateTime,
+        },
+        customer_data: {
+          ...prev.customer_data,
+          signature: receiverSignatureDataUrl,
+        },
+      }));
+    } else if (title.toLowerCase().includes("выдаче")) {
+      // For cargo issuance info, update receiving_cargo_info and receiver_data's signature.
+      setData((prev: any) => ({
+        ...prev,
+        receiving_cargo_info: {
+          issued: issuedBy ? issuedBy.full_name : null,
+          accepted: receivedBy ? receivedBy.full_name : null,
+          date: dateTime,
+        },
+        receiver_data: {
+          ...prev.receiver_data,
+          signature: signatureDataUrl,
+        },
+      }));
+    }
+  }, [
+    issuedBy,
+    receivedBy,
+    dateTime,
+    title,
+    setData,
+    signatureDataUrl,
+    receiverSignatureDataUrl,
+  ]);
+
+  // Update dateTime state on input change
   const handleDateTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setDateTime(e.target.value);
   };
 
+  // Format datetime for display (for example purposes)
   const formatDateTime = (dateTime: string) => {
     if (!dateTime) return "";
     const date = new Date(dateTime);
@@ -38,79 +153,117 @@ const InformationPackage: React.FC = () => {
     return `${day}.${month}.${year} • ${hours}:${minutes}`;
   };
 
+  // Signature file upload handlers.
+  const handleCustomerSignatureUpload = (file: File) => {
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setSignatureDataUrl(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleReceiverSignatureUpload = (file: File) => {
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setReceiverSignatureDataUrl(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  // Handlers for dropdown toggling using the input field
+  const toggleIssuedDropdown = () => {
+    setIssuedDropdownOpen((prev) => !prev);
+  };
+
+  const toggleReceivedDropdown = () => {
+    setReceivedDropdownOpen((prev) => !prev);
+  };
+
+  const selectIssuedCustomer = (customer: CustomerOption) => {
+    setIssuedBy(customer);
+    setIssuedDropdownOpen(false);
+  };
+
+  const selectReceivedCustomer = (customer: CustomerOption) => {
+    setReceivedBy(customer);
+    setReceivedDropdownOpen(false);
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Handle form submission logic here
-    console.log({
-      issuedBy,
-      issuedStatus,
-      receivedBy,
-      receivedStatus,
-      dateTime: formatDateTime(dateTime),
-      signatureDataUrl,
-      uploadedSignature,
-    });
+    // Handle additional form submission logic if needed
   };
 
   return (
     <div className="p-6 bg-white shadow-md rounded-lg">
-      <h1 className="text-2xl font-bold mb-6">Информация о получении груза</h1>
-
+      <h1 className="text-2xl font-bold mb-6">Информация {title} груза</h1>
       <form onSubmit={handleSubmit}>
-        {/* Issued By */}
+        {/* Issued By Section */}
         <div className="mb-6">
           <label className="block text-sm font-medium text-gray-700">
             Выдал
           </label>
-          <div className="mt-2 grid grid-cols-2 gap-4">
+          <div className="mt-2 relative">
             <input
               type="text"
-              value={issuedBy}
-              onChange={(e) => setIssuedBy(e.target.value)}
-              className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Укажите ФИО"
+              value={issuedBy ? issuedBy.full_name : ""}
+              readOnly
+              onClick={toggleIssuedDropdown}
+              className="w-full px-4 py-2 border rounded-md focus:outline-none cursor-pointer"
+              placeholder="Выберите из списка"
             />
-            <select
-              value={issuedStatus}
-              onChange={(e) => setIssuedStatus(e.target.value)}
-              className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="">Выберите статус</option>
-              <option value="issued">Выдан</option>
-              <option value="pending">Ожидает</option>
-            </select>
+            {issuedDropdownOpen && (
+              <ul className="absolute top-full left-0 z-10 w-full max-h-40 overflow-auto border border-gray-300 bg-white">
+                {customers.map((customer) => (
+                  <li
+                    key={customer.id}
+                    onClick={() => selectIssuedCustomer(customer)}
+                    className="px-4 py-2 hover:bg-gray-200 cursor-pointer"
+                  >
+                    {customer.full_name}
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
         </div>
 
-        {/* Received By */}
+        {/* Received By Section */}
         <div className="mb-6">
           <label className="block text-sm font-medium text-gray-700">
             Принял
           </label>
-          <div className="mt-2 grid grid-cols-2 gap-4">
+          <div className="mt-2 relative">
             <input
               type="text"
-              value={receivedBy}
-              onChange={(e) => setReceivedBy(e.target.value)}
-              className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Укажите ФИО"
+              value={receivedBy ? receivedBy.full_name : ""}
+              readOnly
+              onClick={toggleReceivedDropdown}
+              className="w-full px-4 py-2 border rounded-md focus:outline-none cursor-pointer"
+              placeholder="Выберите из списка"
             />
-            <select
-              value={receivedStatus}
-              onChange={(e) => setReceivedStatus(e.target.value)}
-              className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="">Выберите статус</option>
-              <option value="received">Принят</option>
-              <option value="pending">Ожидает</option>
-            </select>
+            {receivedDropdownOpen && (
+              <ul className="absolute top-full left-0 z-10 w-full max-h-40 overflow-auto border border-gray-300 bg-white">
+                {customers.map((customer) => (
+                  <li
+                    key={customer.id}
+                    onClick={() => selectReceivedCustomer(customer)}
+                    className="px-4 py-2 hover:bg-gray-200 cursor-pointer"
+                  >
+                    {customer.full_name}
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
         </div>
 
-        {/* Date and Time */}
+        {/* Date and Time Section */}
         <div className="mb-6">
           <label className="block text-sm font-medium text-gray-700">
-            Дата и время получения:
+            Дата и время{" "}
+            {title.toLowerCase().includes("получении") ? "получения" : "выдачи"}
+            :
           </label>
           <div className="mt-2 flex items-center gap-4">
             <input
@@ -123,17 +276,35 @@ const InformationPackage: React.FC = () => {
           </div>
         </div>
 
-        {/* Signature */}
+        {/* Signature Section */}
         <div className="mb-6">
-          <h2 className="text-xl font-bold mb-4">Подпись Заказчика</h2>
-          <Signature
-            onSubmit={handleSignatureSubmit}
-            onUpload={handleSignatureUpload}
-          />
-          {signatureDataUrl && (
+          {title.toLowerCase().includes("выдаче") ? (
+            <>
+              <h2 className="text-xl font-bold mb-4">Подпись Заказчика</h2>
+              <Signature
+                onSubmit={setSignatureDataUrl}
+                onUpload={handleCustomerSignatureUpload}
+                initialDataUrl={signatureDataUrl}
+              />
+            </>
+          ) : (
+            <>
+              <h2 className="text-xl font-bold mb-4">Подпись Получателя</h2>
+              <Signature
+                onSubmit={setReceiverSignatureDataUrl}
+                onUpload={handleReceiverSignatureUpload}
+                initialDataUrl={receiverSignatureDataUrl}
+              />
+            </>
+          )}
+          {(signatureDataUrl || receiverSignatureDataUrl) && (
             <div className="mt-4">
               <img
-                src={signatureDataUrl}
+                src={
+                  title.toLowerCase().includes("выдаче")
+                    ? signatureDataUrl!
+                    : receiverSignatureDataUrl!
+                }
                 alt="Подпись"
                 className="max-w-full"
               />
