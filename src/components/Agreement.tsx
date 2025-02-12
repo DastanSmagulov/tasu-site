@@ -1,6 +1,16 @@
 import { ActDataProps } from "@/helper/types";
 import React, { useState } from "react";
 
+// Helper function to convert a File to a Base64 string.
+const convertFileToBase64 = (file: File): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = (error) => reject(error);
+  });
+};
+
 const Agreement: React.FC<ActDataProps & { original: boolean }> = ({
   data,
   setData,
@@ -11,23 +21,30 @@ const Agreement: React.FC<ActDataProps & { original: boolean }> = ({
     ? "contract_original_act"
     : "contract_mercenary_and_warehouse";
 
-  // Local state to store a single contract file (as a File object)
-  const [contractFile, setContractFile] = useState<File | null>(null);
+  // Local state to store the contract file as a Base64 string.
+  const [contractFile, setContractFile] = useState<string | null>(null);
 
-  // When a file is selected, update local state and parent state using the appropriate key.
-  const handlePhotoUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  // When a file is selected, convert it to Base64 and update local and parent state.
+  const handlePhotoUpload = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
     const files = event.target.files;
     if (files && files[0]) {
       const file = files[0];
-      setContractFile(file);
-      setData((prevData: any) => ({
-        ...prevData,
-        [contractKey]: file,
-      }));
+      try {
+        const base64String = await convertFileToBase64(file);
+        setContractFile(base64String);
+        setData((prevData: any) => ({
+          ...prevData,
+          [contractKey]: file,
+        }));
+      } catch (error) {
+        console.error("Error converting file to Base64:", error);
+      }
     }
   };
 
-  // Remove the file from local state and update parent state using the appropriate key.
+  // Remove the file from local state and update parent state.
   const handleRemovePhoto = () => {
     setContractFile(null);
     setData((prevData: any) => ({
@@ -36,12 +53,11 @@ const Agreement: React.FC<ActDataProps & { original: boolean }> = ({
     }));
   };
 
-  // Determine which file URL to display.
-  // If a new file is uploaded, use URL.createObjectURL(contractFile).
-  // Otherwise, if there is an already submitted file in data (and it is a string), display that.
+  // Determine the URL to display. If a new file is uploaded, use contractFile.
+  // Otherwise, if there's an existing Base64 string in data, use that.
   const displayFileUrl =
     contractFile !== null
-      ? URL.createObjectURL(contractFile)
+      ? contractFile
       : typeof data?.[contractKey] === "string"
       ? data[contractKey]
       : null;
@@ -51,7 +67,7 @@ const Agreement: React.FC<ActDataProps & { original: boolean }> = ({
       <h2 className="text-lg font-semibold mb-4 text-[#1D1B23]">
         Договор{" "}
         {original
-          ? "между Наемником и Складом(оригинал)"
+          ? "между Наемником и Складом (оригинал)"
           : "между Наемником и Складом"}
       </h2>
 
@@ -63,7 +79,7 @@ const Agreement: React.FC<ActDataProps & { original: boolean }> = ({
           Загрузите договор
           <input
             type="file"
-            accept="image/*"
+            accept="application/pdf"
             onChange={handlePhotoUpload}
             className="hidden"
           />
@@ -73,11 +89,22 @@ const Agreement: React.FC<ActDataProps & { original: boolean }> = ({
       {/* Display the contract file (either new or already submitted) */}
       {displayFileUrl ? (
         <div className="relative bg-gray-100 h-32 rounded-md flex items-center justify-center">
-          <img
-            src={displayFileUrl}
-            alt="Contract"
-            className="object-cover h-full w-full rounded-md"
-          />
+          {displayFileUrl.startsWith("data:application/pdf") ? (
+            <a
+              href={displayFileUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-500 underline"
+            >
+              Просмотреть договор (PDF)
+            </a>
+          ) : (
+            <img
+              src={displayFileUrl}
+              alt="Contract"
+              className="object-cover h-full w-full rounded-md"
+            />
+          )}
           <button
             onClick={handleRemovePhoto}
             className="absolute top-1 right-1 bg-red-600 text-white rounded-full p-1"

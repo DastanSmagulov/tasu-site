@@ -1,7 +1,7 @@
 import React from "react";
 import Link from "next/link";
 
-const CreateSuccessAct = ({ setIsModalOpen }: any) => {
+const CreateSuccessAct = ({ title, setIsModalOpen }: any) => {
   // Закрытие модального окна
   const handleClose = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -50,9 +50,7 @@ const CreateSuccessAct = ({ setIsModalOpen }: any) => {
         </div>
 
         {/* Success Message */}
-        <h2 className="text-2xl font-semibold text-gray-800 mb-4">
-          Документ успешно отправлен
-        </h2>
+        <h2 className="text-2xl font-semibold text-gray-800 mb-4">{title}</h2>
 
         {/* Description */}
         <p className="text-gray-600 mb-8">

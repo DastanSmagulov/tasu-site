@@ -62,7 +62,7 @@ const TransportationTypes: React.FC<ActDataProps> = ({ data, setData }) => {
             key={option.key}
             onClick={() => handleSelect(option.key)}
             className={`cursor-pointer border rounded-lg p-4 flex flex-col items-center transition-all ${
-              selectedOption === option.key
+              data?.transportation_type === option.key
                 ? "border-blue-500 shadow-lg"
                 : "border-gray-300"
             }`}

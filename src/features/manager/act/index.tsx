@@ -1,28 +1,28 @@
 "use client";
 
 import { useSession } from "next-auth/react";
-import { useEffect, useMemo, useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import Customer from "@/components/Customer";
-import CustomerReceiver from "@/components/CustomerReceiver";
 import PackageCharacteristics from "@/components/PackageCharacteristics";
 import CargoPhoto from "@/components/CargoPhoto";
 import InformationPackage from "@/components/PackageInformation";
-import QrAct from "@/components/QrAct";
 import Shipping from "@/components/Shipping";
-import Agreement from "@/components/Agreement";
-import TransportInfo from "@/components/TransportInfo";
-import DriverInfo from "@/components/DriverInfo";
-import ManagerLink from "@/components/ManagerLink";
-import TransportationTypes from "@/components/TransportationType";
 import CreateSuccessAct from "@/components/modals/CreateSuccessAct";
-import AccountingEsf from "@/features/accountant/AccountingEsf";
-import AccountingAvr from "@/features/accountant/AccountingAvr";
-import TransportationServicesTable from "@/components/TransportationServicesTable";
-import { Act, CargoImage } from "@/helper/types";
 import { useParams } from "next/navigation";
 import { axiosInstance } from "@/helper/utils";
+import { Act } from "@/helper/types";
+import CustomerReceiver from "@/components/CustomerReceiver";
+import TransportationTypes from "@/components/TransportationType";
+import DriverInfo from "@/components/DriverInfo";
+import TransportInfo from "@/components/TransportInfo";
+import ManagerLink from "@/components/ManagerLink";
+import TransportationServicesTable from "@/components/TransportationServicesTable";
+import AccountingEsf from "@/features/accountant/AccountingEsf";
+import AccountingAvr from "@/features/accountant/AccountingAvr";
 import Checkbox from "@/components/ui/CheckBox";
 import "../../../styles/globals.css";
+import Agreement from "@/components/Agreement";
+import QrAct from "@/components/QrAct";
 
 interface TransportationQuantityService {
   id: number;
@@ -31,7 +31,7 @@ interface TransportationQuantityService {
   price: string;
 }
 
-// Add status property to actData
+// Your initial act data (default values)
 const initialActData: Act = {
   contract_original_act: null,
   contract_mercenary_and_warehouse: null,
@@ -78,7 +78,7 @@ const initialActData: Act = {
     accepted: "",
     date: "",
   },
-  transportation_service_ids: [],
+  transportation_services: [],
   delivery_cargo_info: {
     issued: "",
     accepted: "",
@@ -91,30 +91,31 @@ export default function ActPage() {
   const { data: session, status: sessionStatus } = useSession();
   const [currentStep, setCurrentStep] = useState(0);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  // actData holds the current form values; originalActData holds the baseline.
   const [actData, setActData] = useState<Act>(initialActData);
+  const [originalActData, setOriginalActData] = useState<Act>(initialActData);
   const [transportationQuantityServices, setTransportationQuantityServices] =
     useState<TransportationQuantityService[]>([]);
   const params = useParams();
 
-  // Fetch act data if editing an existing act
+  // --- Fetch act data if editing an existing act ---
   useEffect(() => {
     if (params.id) {
       const fetchActData = async () => {
         try {
           const response = await axiosInstance.get(`/acts/${params.id}/`);
-          console.log("hi", response.data);
+          console.log("Fetched act data:", response.data);
           setActData(response.data);
+          setOriginalActData(response.data); // store baseline for diff
         } catch (error) {
           console.error("Error fetching act data:", error);
         }
       };
-      if (params.id) {
-        fetchActData();
-      }
+      fetchActData();
     }
   }, [params.id]);
 
-  // Fetch available transportation services
+  // --- Fetch available transportation services ---
   useEffect(() => {
     const fetchTransportationQuantityServices = async () => {
       try {
@@ -141,73 +142,83 @@ export default function ActPage() {
     fetchTransportationQuantityServices();
   }, []);
 
-  const buildFormData = (data: Act): FormData => {
-    const formData = new FormData();
-    // Fields that are expected to be files.
-    const fileFields = [
-      "accounting_esf",
-      "accounting_avr",
-      "contract_original_act",
-      "contract_mercenary_and_warehouse",
-    ];
-
-    Object.keys(data).forEach((key) => {
-      const value = data[key as keyof Act];
-
-      // For file fields, only append if there is an actual value.
-      if (fileFields.includes(key)) {
-        if (value) {
-          formData.append(key, value as string | Blob);
-        }
-        return;
-      }
-
-      // Special handling for arrays that need to be sent as multiple fields.
-      if (key === "cargo_images" && Array.isArray(value)) {
-        (value as CargoImage[]).forEach((file: any) => {
-          formData.append("cargo_images[]", file);
-        });
-        return;
-      }
-      if (key === "transportation_service_ids" && Array.isArray(value)) {
-        (value as number[]).forEach((service) => {
-          formData.append("transportation_service_ids", service.toString());
-        });
-        return;
-      }
-
-      // For complex objects (and any arrays not handled above), send as JSON string.
-      if (value && typeof value === "object" && !(value instanceof File)) {
-        formData.append(key, JSON.stringify(value));
-        return;
-      }
-
-      // Convert boolean to "1" for true and "0" for false.
-      if (typeof value === "boolean") {
-        formData.append(key, value ? "1" : "0");
-        return;
-      }
-
-      // Append primitive values if not empty.
-      if (value !== "") {
-        formData.append(key, value as string | Blob);
-      }
-    });
-
-    return formData;
+  const handleNext = () => {
+    setCurrentStep((prev) => (prev < stepsMemo.length - 1 ? prev + 1 : prev));
   };
 
-  // Send act data to the server using PATCH (if editing) or POST (if creating)
+  const handlePrevious = () => {
+    setCurrentStep((prev) => (prev > 0 ? prev - 1 : prev));
+  };
+
+  const handlePrint = () => {
+    window.print();
+  };
+
+  // --- Helper: compute only the fields that differ between original and current data ---
+  function getChangedFields<T>(initial: T, current: T): Partial<T> {
+    const diff: Partial<T> = {};
+    Object.keys(current + "").forEach((key) => {
+      const typedKey = key as keyof T;
+      const currentValue = current[typedKey];
+      const initialValue = initial[typedKey];
+      if (typeof currentValue === "object" && currentValue !== null) {
+        if (JSON.stringify(currentValue) !== JSON.stringify(initialValue)) {
+          diff[typedKey] = currentValue;
+        }
+      } else {
+        if (currentValue !== initialValue) {
+          diff[typedKey] = currentValue;
+        }
+      }
+    });
+    return diff;
+  }
+
+  // --- Helper: convert a diff object to FormData ---
+  function buildFormData(diff: Partial<Act>): FormData {
+    const formData = new FormData();
+    (Object.keys(diff) as (keyof Act)[]).forEach((key) => {
+      const value = diff[key];
+      if (value === null || value === undefined) return;
+      // Handle File objects.
+      if (value instanceof File) {
+        formData.append(key, value);
+      } else if (Array.isArray(value)) {
+        // For arrays (like transportation_services), append each item.
+        value.forEach((item) => {
+          // If item is a file, you may need to send it directly.
+          if (item instanceof File) {
+            formData.append(`${key}[]`, item);
+          } else {
+            formData.append(`${key}[]`, item + "");
+          }
+        });
+      } else if (typeof value === "object") {
+        // For nested objects, send as JSON.
+        formData.append(key, JSON.stringify(value));
+      } else {
+        formData.append(key, value + "");
+      }
+    });
+    return formData;
+  }
+
+  // --- Handle sending patch ---
   const handleSend = async () => {
     try {
-      const formData = buildFormData(actData);
-      console.log("act", actData);
-
+      // Compute diff between original and current actData.
+      const changedData = getChangedFields(originalActData, actData);
+      console.log("Changed data to be patched:", changedData);
+      // Build FormData from the diff.
+      const formData = buildFormData(changedData);
       const response = await axiosInstance.patch(
         `/acts/${params.id}/`,
         formData
       );
-      console.log(response.data);
+      console.log("Patch response:", response.data);
+      // Update both actData and originalActData with new data.
+      setActData(response.data);
+      setOriginalActData(response.data);
       setIsModalOpen(true);
     } catch (error) {
       console.error("Error sending act data:", error);
@@ -215,23 +226,7 @@ export default function ActPage() {
     }
   };
 
-  const handleNext = () => {
-    if (currentStep < stepsMemo.length - 1) {
-      setCurrentStep((prev) => prev + 1);
-    }
-  };
-
-  const handlePrevious = () => {
-    if (currentStep > 0) {
-      setCurrentStep((prev) => prev - 1);
-    }
-  };
-
-  const handlePrint = () => {
-    window.print();
-  };
-
-  // Memoize steps for both mobile and desktop layouts
+  // --- Memoize steps for mobile and desktop layouts ---
   const stepsMemo = useMemo(
     () => [
       {
@@ -321,10 +316,10 @@ export default function ActPage() {
               onChange={(newSelectedIds: number[]) =>
                 setActData((prev) => ({
                   ...prev,
-                  transportation_service_ids: newSelectedIds,
+                  transportation_services: newSelectedIds,
                 }))
               }
-            />{" "}
+            />
             <InformationPackage
               title={"О выдаче"}
               data={actData}
@@ -368,10 +363,9 @@ export default function ActPage() {
         component: () => <CreateSuccessAct />,
       },
     ],
-    [actData]
+    [actData, transportationQuantityServices]
   );
 
-  // Get current step component
   const CurrentComponent = stepsMemo[currentStep].component as any;
 
   if (sessionStatus === "loading") {
@@ -421,7 +415,7 @@ export default function ActPage() {
           ) : (
             <button
               onClick={handleSend}
-              className="font-semibold px-4 py-2 bg-yellow-400 text-black rounded-lg hover:bg-yellow-500"
+              className="font-semibold px-4 py-2 bg-yellow-400 hover:bg-yellow-500 text-black rounded-lg"
             >
               Отправить
             </button>
@@ -486,7 +480,7 @@ export default function ActPage() {
             onChange={(newSelectedIds: number[]) =>
               setActData((prev) => ({
                 ...prev,
-                transportation_service_ids: newSelectedIds,
+                transportation_services: newSelectedIds,
               }))
             }
           />
@@ -527,7 +521,7 @@ export default function ActPage() {
                 d="M6.75 15.75v3.75h10.5v-3.75M4.5 9.75h15a1.5 1.5 0 011.5 1.5v6a1.5 1.5 0 01-1.5 1.5H4.5A1.5 1.5 0 013 17.25v-6a1.5 1.5 0 011.5-1.5zM15.75 3.75v6m-7.5-6v6"
               />
             </svg>
-            Отправить на хранение
+            Распечатать Акт
           </button>
           <div className="flex items-center space-x-4">
             <label className="text-sm font-semibold text-gray-700">
@@ -546,7 +540,6 @@ export default function ActPage() {
             </select>
           </div>
         </div>
-
         <div className="flex gap-4 mt-4 text-[#000000] sm:h-10 min-[500px]:flex-row flex-col">
           <button
             onClick={handlePrint}
@@ -568,11 +561,9 @@ export default function ActPage() {
             </svg>
             Распечатать Акт
           </button>
-
           <button className="font-semibold border border-gray-500 px-4 py-2 bg-white hover:bg-gray-100 text-black rounded-lg">
             Сохранить
           </button>
-
           <button
             onClick={handleSend}
             className="font-semibold px-4 py-2 bg-yellow-400 hover:bg-yellow-500 text-black rounded-lg"
@@ -582,7 +573,12 @@ export default function ActPage() {
         </div>
       </div>
 
-      {isModalOpen && <CreateSuccessAct setIsModalOpen={setIsModalOpen} />}
+      {isModalOpen && (
+        <CreateSuccessAct
+          title="Акт успешно обновлен!"
+          setIsModalOpen={setIsModalOpen}
+        />
+      )}
     </>
   );
 }

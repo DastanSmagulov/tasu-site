@@ -33,67 +33,26 @@ const steps = [
   { id: 4, name: "Данные о Получения Груза", component: InformationPackage },
 ];
 
-// Helper function to build FormData from actData
-const buildFormData = (data: Act): FormData => {
-  const formData = new FormData();
-
-  // Define file fields which should be appended directly
-  const fileFields = [
-    "accounting_esf",
-    "accounting_avr",
-    "contract_original_act",
-    "contract_mercenary_and_warehouse",
-  ];
-
-  // Define keys that should be JSON-stringified
-  const jsonKeys = [
-    "customer_data",
-    "characteristic",
-    "cargo",
-    "cargo_images",
-    "driver_data",
-    "vehicle_data",
-    "receiver_data",
-    "receiving_cargo_info",
-    "delivery_cargo_info",
-    "transportation",
-  ];
-
-  Object.keys(data).forEach((key) => {
-    const value = data[key as keyof Act];
-
-    // Rename transportation_services to transportation_service_ids
-    if (key === "transportation_services") {
-      const services = Array.isArray(value) ? value : [];
-      services.forEach((service) =>
-        formData.append("transportation_service_ids", service.toString())
-      );
-      return;
-    }
-
-    if (jsonKeys.includes(key)) {
-      // If the value is missing, default to an empty object.
-      const jsonValue = value === null || value === undefined ? {} : value;
-      formData.append(key, JSON.stringify(jsonValue));
-      return;
-    }
-
-    if (typeof value === "boolean") {
-      formData.append(key, value ? "true" : "false");
-      return;
-    }
-
-    if (value !== undefined && value !== null) {
-      formData.append(key, value.toString());
-    }
-  });
-
-  // Ensure that keys required by your backend exist (e.g., transportation)
-  if (!(data as any).transportation) {
-    formData.append("transportation", JSON.stringify({}));
-  }
-
-  return formData;
+// Initial actData (modify as needed)
+const initialActData: any = {
+  number: "0",
+  cargo_status: "",
+  customer_data: {
+    id: 0,
+    full_name: "",
+    signature: "",
+    customer_is_payer: false,
+    role: "",
+  },
+  characteristic: {
+    cargo_cost: 0,
+    sender_city: "",
+    receiver_city: "",
+    additional_info: "",
+  },
+  cargo: [],
+  cargo_images: [],
+  status: "акт сформирован",
 };
 
 export default function CreateActPage() {
@@ -103,7 +62,7 @@ export default function CreateActPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isStorageChecked, setIsStorageChecked] = useState(false);
   const [actStatus, setActStatus] = useState("акт сформирован");
-  const [actData, setActData] = useState<Act | null>(null); // Store fetched or new act data
+  const [actData, setActData] = useState<Act>(initialActData);
   const params = useParams();
 
   useEffect(() => {
@@ -141,19 +100,74 @@ export default function CreateActPage() {
     window.print();
   };
 
-  // Updated handleSend to either POST (create) or PATCH (update)
   const handleSend = async () => {
-    if (!actData) {
-      alert("Нет данных акта для отправки");
-      return;
-    }
     try {
-      const formData = buildFormData(actData);
-      let response;
-      response = await axiosInstance.post(`/acts/`, formData);
+      const formData = new FormData();
+
+      // List of file fields to handle
+      const fileFields: (keyof Act)[] = [
+        "accounting_esf",
+        "accounting_avr",
+        "contract_mercenary_and_warehouse",
+        "contract_original_act",
+      ];
+
+      // Append file fields:
+      fileFields.forEach((field) => {
+        const value = actData[field];
+        console.log(`Field ${field}:`, value);
+        if (value) {
+          // If the value is a File object, append it directly.
+          if (value instanceof File) {
+            formData.append(field, value);
+          } else if (typeof value === "string" && value.startsWith("http")) {
+            // If it's a URL string (file already uploaded), append as text.
+            formData.append(field, value);
+          } else if (
+            typeof value === "object" &&
+            value !== null &&
+            !Array.isArray(value)
+          ) {
+            const nestedObj = value as Record<string, any>;
+            Object.keys(nestedObj).forEach((subKey) => {
+              formData.append(`${field}[${subKey}]`, nestedObj[subKey]);
+            });
+          }
+        }
+      });
+
+      // Append the remaining fields from actData.
+      (Object.keys(actData) as (keyof Act)[]).forEach((key) => {
+        // Skip file fields already processed.
+        if (fileFields.includes(key)) return;
+        const value = actData[key];
+        if (value === null || value === undefined) return;
+
+        // Special handling for arrays.
+        if (Array.isArray(value)) {
+          // For transportation_service_ids, append each id separately.
+          if (key === "transportation_service_ids") {
+            value.forEach((id) => {
+              formData.append(key, id.toString());
+            });
+          } else {
+            // For other arrays, you might send a JSON string.
+            formData.append(key, JSON.stringify(value));
+          }
+        } else if (typeof value === "object") {
+          // For nested objects, send as JSON.
+          formData.append(key, JSON.stringify(value));
+        } else {
+          // For primitives, append directly.
+          formData.append(key, value + "");
+        }
+      });
+
+      const response = await axiosInstance.post("/acts/", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      setActData(response.data);
       setIsModalOpen(true);
-      // Optionally, redirect after creation/update:
-      // router.push(`/acts/${response.data.id}`);
     } catch (error) {
       console.error("Error sending act data:", error);
       alert("Ошибка при отправке акта");
@@ -312,7 +326,7 @@ export default function CreateActPage() {
         </div>
       </div>
 
-      {isModalOpen && <CreateSuccessAct />}
+      {isModalOpen && <CreateSuccessAct setIsModalOpen={setIsModalOpen} />}
     </>
   );
 }

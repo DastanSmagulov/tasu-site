@@ -19,13 +19,35 @@ const steps = [
   { id: 4, name: "Данные о Получении Груза", component: InformationPackage },
 ];
 
+// Initial actData (modify as needed)
+const initialActData: any = {
+  number: "0",
+  cargo_status: "",
+  customer_data: {
+    id: 0,
+    full_name: "",
+    signature: "",
+    customer_is_payer: false,
+    role: "",
+  },
+  characteristic: {
+    cargo_cost: 0,
+    sender_city: "",
+    receiver_city: "",
+    additional_info: "",
+  },
+  cargo: [],
+  cargo_images: [],
+  status: "акт сформирован",
+};
+
 export default function CreateActPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const [currentStep, setCurrentStep] = useState(0);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [actStatus, setActStatus] = useState("акт сформирован");
-  const [actData, setActData] = useState<Act | null>(null); // Store fetched or new act data
+  const [actData, setActData] = useState<Act>(initialActData);
   const params = useParams();
 
   useEffect(() => {
@@ -63,19 +85,75 @@ export default function CreateActPage() {
     window.print();
   };
 
-  // Updated handleSend that uses POST if no id is present and PATCH if editing
   const handleSend = async () => {
-    if (!actData) {
-      alert("Нет данных акта для отправки");
-      return;
-    }
     try {
-      let response;
-      response = await axiosInstance.post(`/acts/`, actData);
-      console.log("Response:", response.data);
+      const formData = new FormData();
+      console.log(actData);
+
+      // List of file fields to handle
+      const fileFields: (keyof Act)[] = [
+        "accounting_esf",
+        "accounting_avr",
+        "contract_mercenary_and_warehouse",
+        "contract_original_act",
+      ];
+
+      // Append file fields:
+      fileFields.forEach((field) => {
+        const value = actData[field];
+        if (value) {
+          // If the value is a File object, append it directly.
+          if (value instanceof File) {
+            formData.append(field, value);
+          } else if (typeof value === "string" && value.startsWith("http")) {
+            // If it's a URL string (file already uploaded), append as text.
+            formData.append(field, value);
+          } else if (
+            typeof value === "object" &&
+            value !== null &&
+            !Array.isArray(value)
+          ) {
+            const nestedObj = value as Record<string, any>;
+            Object.keys(nestedObj).forEach((subKey) => {
+              formData.append(`${field}[${subKey}]`, nestedObj[subKey]);
+            });
+          }
+        }
+      });
+
+      // Append the remaining fields from actData.
+      (Object.keys(actData) as (keyof Act)[]).forEach((key) => {
+        // Skip file fields already processed.
+        if (fileFields.includes(key)) return;
+        const value = actData[key];
+        if (value === null || value === undefined) return;
+
+        // Special handling for arrays.
+        if (Array.isArray(value)) {
+          // For transportation_service_ids, append each id separately.
+          if (key === "transportation_services") {
+            value.forEach((id) => {
+              formData.append(key, id.toString());
+            });
+          } else {
+            // For other arrays, you might send a JSON string.
+            formData.append(key, JSON.stringify(value));
+          }
+        } else if (typeof value === "object") {
+          // For nested objects, send as JSON.
+          formData.append(key, JSON.stringify(value));
+        } else {
+          // For primitives, append directly.
+          formData.append(key, value + "");
+        }
+      });
+
+      const response = await axiosInstance.post("/acts/", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      console.log("Response data:", response.data);
+      setActData(response.data);
       setIsModalOpen(true);
-      // Optionally, navigate to the new act page after creation:
-      // if (!params.id) router.push(`/acts/${response.data.id}`);
     } catch (error) {
       console.error("Error sending act data:", error);
       alert("Ошибка при отправке акта");

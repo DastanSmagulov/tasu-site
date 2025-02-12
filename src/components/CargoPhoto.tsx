@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { ActDataProps } from "@/helper/types";
+import { axiosInstance } from "@/helper/utils";
 
 // Define your base URL (could also come from an environment variable)
 const BASE_URL = "https://tasukaz.kz";
@@ -30,12 +31,12 @@ const CargoPhoto: React.FC<ActDataProps> = ({ data, setData }) => {
   // New uploaded photos (File objects) are stored separately.
   const [photos, setPhotos] = useState<File[]>([]);
 
-  // Update parent's state with only the new files.
+  // Update parent's state with only the new files,
+  // wrapping each file in an object with key "image".
   useEffect(() => {
     setData((prev: any) => ({
       ...prev,
-      // Only sending new photos as File objects.
-      cargo_images: photos,
+      cargo_images: photos.map((file) => ({ image: file })),
     }));
   }, [photos, setData]);
 

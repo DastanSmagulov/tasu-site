@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { ActDataProps } from "@/helper/types";
 import { axiosInstance } from "@/helper/utils";
 import Signature from "@/components/Signature";
@@ -38,6 +38,7 @@ const InformationPackage: React.FC<ActDataProps & { title: string }> = ({
   const [receiverSignatureDataUrl, setReceiverSignatureDataUrl] = useState<
     string | null
   >(data?.receiver_data?.signature || null);
+  const initializedRef = useRef(false);
 
   // Dropdown states for "Выдал" and "Принял"
   const [customers, setCustomers] = useState<CustomerOption[]>([]);
@@ -58,8 +59,9 @@ const InformationPackage: React.FC<ActDataProps & { title: string }> = ({
   }, []);
 
   // Initialize local state from parent's data only once on mount.
+  // Initialize local state from parent's data only once when data becomes available.
   useEffect(() => {
-    if (data) {
+    if (data && !initializedRef.current) {
       if (
         title.toLowerCase().includes("получении") &&
         data.delivery_cargo_info
@@ -90,9 +92,10 @@ const InformationPackage: React.FC<ActDataProps & { title: string }> = ({
           setDateTime(convertISOToDateTimeLocal(info.date));
         }
       }
+      // Mark as initialized so we don't run again.
+      initializedRef.current = true;
     }
-    // Run only once on mount.
-  }, []);
+  }, [data, title]);
 
   // Update parent's state when local state changes.
   useEffect(() => {
@@ -102,8 +105,9 @@ const InformationPackage: React.FC<ActDataProps & { title: string }> = ({
         ...prev,
         delivery_cargo_info: {
           // Now sending both the id and name of the customer.
-          issued: issuedBy ? issuedBy.full_name : null,
-          accepted: receivedBy ? receivedBy.full_name : null,
+          issued: issuedBy && issuedBy.id !== "" ? Number(issuedBy.id) : null,
+          accepted:
+            receivedBy && receivedBy.id !== "" ? Number(receivedBy.id) : null,
           date: dateTime,
         },
         customer_data: {
@@ -116,8 +120,9 @@ const InformationPackage: React.FC<ActDataProps & { title: string }> = ({
       setData((prev: any) => ({
         ...prev,
         receiving_cargo_info: {
-          issued: issuedBy ? issuedBy.full_name : null,
-          accepted: receivedBy ? receivedBy.full_name : null,
+          issued: issuedBy && issuedBy.id !== "" ? Number(issuedBy.id) : null,
+          accepted:
+            receivedBy && receivedBy.id !== "" ? Number(receivedBy.id) : null,
           date: dateTime,
         },
         receiver_data: {
@@ -284,7 +289,7 @@ const InformationPackage: React.FC<ActDataProps & { title: string }> = ({
               <Signature
                 onSubmit={setSignatureDataUrl}
                 onUpload={handleCustomerSignatureUpload}
-                initialDataUrl={signatureDataUrl}
+                initialDataUrl={data?.customer_data?.signature}
               />
             </>
           ) : (
@@ -293,7 +298,7 @@ const InformationPackage: React.FC<ActDataProps & { title: string }> = ({
               <Signature
                 onSubmit={setReceiverSignatureDataUrl}
                 onUpload={handleReceiverSignatureUpload}
-                initialDataUrl={receiverSignatureDataUrl}
+                initialDataUrl={data?.receiver_data?.signature}
               />
             </>
           )}
@@ -302,8 +307,8 @@ const InformationPackage: React.FC<ActDataProps & { title: string }> = ({
               <img
                 src={
                   title.toLowerCase().includes("выдаче")
-                    ? signatureDataUrl!
-                    : receiverSignatureDataUrl!
+                    ? data?.customer_data?.signature!
+                    : data?.receiver_data?.signature!
                 }
                 alt="Подпись"
                 className="max-w-full"

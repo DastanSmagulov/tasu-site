@@ -38,13 +38,13 @@ const ServicesTables: React.FC<ServicesTablesProps> = ({
 }) => {
   // Use a local state for selected IDs (initialized from parent's data)
   const [selectedIds, setSelectedIds] = useState<number[]>(
-    data?.transportation_service_ids || []
+    data?.transportation_services|| []
   );
 
   // When parent's data changes, update our local state.
   useEffect(() => {
-    setSelectedIds(data?.transportation_service_ids || []);
-  }, [data.transportation_service_ids]);
+    setSelectedIds(data?.transportation_services || []);
+  }, [data.transportation_services]);
 
   /*** TRANSPORTATION SERVICES ***/
   const [selectedTransportationRows, setSelectedTransportationRows] = useState<

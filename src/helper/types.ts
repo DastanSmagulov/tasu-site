@@ -23,7 +23,7 @@ export interface City {
 interface Customer {
   id: number;
   full_name: string;
-  phone: string;
+  phone?: string;
   signature: string;
   customer_is_payer: boolean;
   role?: string;
@@ -32,7 +32,7 @@ interface Customer {
 interface Receiver {
   id?: number;
   full_name: string;
-  phone: string;
+  phone?: string;
   signature: string;
   role?: string;
 }
@@ -96,7 +96,8 @@ export interface Act {
   receiver_data: Receiver;
   receiving_cargo_info: CargoInfo;
   contract_mercenary_and_warehouse: string | null;
-  transportation_service_ids: number[]; // Add specific type if needed
+  transportation_services?: number[]; // Add specific type if needed
+  transportation_service_ids?: number[]; // Add specific type if needed
   delivery_cargo_info: CargoInfo;
   accounting_esf: string | null;
   accounting_avr: string | null;

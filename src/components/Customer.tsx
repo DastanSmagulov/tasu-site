@@ -43,7 +43,6 @@ const Customer: React.FC<ActDataProps> = ({ data, setData }) => {
         ...prevData.customer_data,
         id: customer.id, // Pass the id from the selected customer
         full_name: customer.full_name,
-        phone: customer.phone || "",
         role: customer.role,
         customer_is_payer: isPayer, // Retain the current value of isPayer
       },
@@ -69,7 +68,6 @@ const Customer: React.FC<ActDataProps> = ({ data, setData }) => {
       ...prevData,
       customer_data: {
         ...prevData.customer_data,
-        phone: newPhone,
       },
     }));
   };
@@ -102,7 +100,10 @@ const Customer: React.FC<ActDataProps> = ({ data, setData }) => {
           >
             Заказчик является плательщиком?
           </label>
-          <Checkbox checked={isPayer} onChange={handlePayerChange} />
+          <Checkbox
+            checked={data?.customer_data?.customer_is_payer}
+            onChange={handlePayerChange}
+          />
         </div>
       </div>
 
@@ -139,7 +140,7 @@ const Customer: React.FC<ActDataProps> = ({ data, setData }) => {
         </label>
         <input
           type="text"
-          value={fullName}
+          value={data?.customer_data?.full_name}
           onChange={handleFullNameChange}
           placeholder="Введите ФИО"
           className="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-[#09BD3C] focus:border-transparent"
@@ -153,7 +154,7 @@ const Customer: React.FC<ActDataProps> = ({ data, setData }) => {
         </label>
         <input
           type="tel"
-          value={phoneNumber}
+          value={data?.customer_data?.phone}
           onChange={handlePhoneNumberChange}
           placeholder="Укажите номер телефона"
           className="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-[#09BD3C] focus:border-transparent"

@@ -37,7 +37,6 @@ const initialActData: Act = {
   customer_data: {
     id: 0,
     full_name: "",
-    phone: "",
     signature: "",
     customer_is_payer: false,
     role: "",
@@ -64,7 +63,6 @@ const initialActData: Act = {
   receiver_data: {
     id: 0,
     full_name: "",
-    phone: "",
     signature: "",
     role: "",
   },
@@ -73,7 +71,7 @@ const initialActData: Act = {
     accepted: "",
     date: "",
   },
-  transportation_service_ids: [],
+  transportation_services: [],
   delivery_cargo_info: {
     issued: "",
     accepted: "",
@@ -137,43 +135,72 @@ export default function CreateActPage() {
     fetchTransportationQuantityServices();
   }, []);
 
-  // Build FormData for the POST/PATCH request
-  const buildFormData = (data: Act): FormData => {
-    const formData = new FormData();
-
-    Object.keys(data).forEach((key) => {
-      const value = data[key as keyof Act];
-
-      if (key === "cargo_images" && Array.isArray(value)) {
-        (value as CargoImage[]).forEach((file: any) => {
-          formData.append("cargo_images[]", file);
-        });
-      } else if (key === "transportation_service_ids" && Array.isArray(value)) {
-        (value as number[]).forEach((service) => {
-          formData.append("transportation_service_ids", service.toString());
-        });
-      } else if (typeof value === "object" && value !== null) {
-        Object.keys(value).forEach((subKey) => {
-          formData.append(`${key}[${subKey}]`, (value as any)[subKey]);
-        });
-      } else {
-        formData.append(key, value as string | Blob);
-      }
-    });
-
-    return formData;
-  };
-
-  // Send act data to the server
   const handleSend = async () => {
-    console.log("data", actData);
     try {
-      const formData = buildFormData(actData);
+      const formData = new FormData();
+
+      // List of file fields to handle
+      const fileFields: (keyof Act)[] = [
+        "accounting_esf",
+        "accounting_avr",
+        "contract_mercenary_and_warehouse",
+        "contract_original_act",
+      ];
+
+      // Append file fields:
+      fileFields.forEach((field) => {
+        const value = actData[field];
+        console.log(`Field ${field}:`, value);
+        if (value) {
+          // If the value is a File object, append it directly.
+          if (value instanceof File) {
+            formData.append(field, value);
+          } else if (typeof value === "string" && value.startsWith("http")) {
+            // If it's a URL string (file already uploaded), append as text.
+            formData.append(field, value);
+          } else if (
+            typeof value === "object" &&
+            value !== null &&
+            !Array.isArray(value)
+          ) {
+            const nestedObj = value as Record<string, any>;
+            Object.keys(nestedObj).forEach((subKey) => {
+              formData.append(`${field}[${subKey}]`, nestedObj[subKey]);
+            });
+          }
+        }
+      });
+
+      // Append the remaining fields from actData.
+      (Object.keys(actData) as (keyof Act)[]).forEach((key) => {
+        // Skip file fields already processed.
+        if (fileFields.includes(key)) return;
+        const value = actData[key];
+        if (value === null || value === undefined) return;
+
+        // Special handling for arrays.
+        if (Array.isArray(value)) {
+          // For transportation_service_ids, append each id separately.
+          if (key === "transportation_service_ids") {
+            value.forEach((id) => {
+              formData.append(key, id.toString());
+            });
+          } else {
+            // For other arrays, you might send a JSON string.
+            formData.append(key, JSON.stringify(value));
+          }
+        } else if (typeof value === "object") {
+          // For nested objects, send as JSON.
+          formData.append(key, JSON.stringify(value));
+        } else {
+          // For primitives, append directly.
+          formData.append(key, value + "");
+        }
+      });
 
       const response = await axiosInstance.post("/acts/", formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
-      console.log(response, response.data);
       setActData(response.data);
       setIsModalOpen(true);
     } catch (error) {
@@ -288,7 +315,7 @@ export default function CreateActPage() {
               onChange={(newSelectedIds: number[]) =>
                 setActData((prev) => ({
                   ...prev,
-                  transportation_service_ids: newSelectedIds,
+                  transportation_services: newSelectedIds,
                 }))
               }
             />{" "}
@@ -540,7 +567,12 @@ export default function CreateActPage() {
           </button>
         </div>
       </div>
-      {isModalOpen && <CreateSuccessAct />}
+      {isModalOpen && (
+        <CreateSuccessAct
+          title="Акт успешно создан!"
+          setIsModalOpen={setIsModalOpen}
+        />
+      )}
     </>
   );
 }

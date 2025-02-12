@@ -19,7 +19,6 @@ interface PackageOption {
 
 const PackageCharacteristics: React.FC<ActDataProps> = ({ data, setData }) => {
   // --- Local state for characteristic fields ---
-  // We expect senderCity and receiverCity to be the city names.
   const [cargoCost, setCargoCost] = useState(
     data?.characteristic?.cargo_cost || ""
   );
@@ -74,6 +73,17 @@ const PackageCharacteristics: React.FC<ActDataProps> = ({ data, setData }) => {
     fetchCityOptions();
   }, []);
 
+  // --- Synchronize parent's data to local state on every change ---
+  useEffect(() => {
+    if (data) {
+      setCargoCost(data?.characteristic?.cargo_cost || "");
+      setSenderCity(data?.characteristic?.sender_city || "");
+      setReceiverCity(data?.characteristic?.receiver_city || "");
+      setAdditionalInfo(data?.characteristic?.additional_info || "");
+      setPackages(data?.cargo || []);
+    }
+  }, [data]);
+
   // --- Memoize unique sender cities ---
   const uniqueSenderCities = useMemo(() => {
     return Array.from(
@@ -92,21 +102,8 @@ const PackageCharacteristics: React.FC<ActDataProps> = ({ data, setData }) => {
     return found ? found.receiver_cities : [];
   }, [cityOptions, senderCity]);
 
-  // --- When city options are available, initialize local state from server data ---
-  useEffect(() => {
-    if (cityOptions.length > 0) {
-      if (data?.characteristic?.sender_city) {
-        setSenderCity(data.characteristic.sender_city);
-      }
-      if (data?.characteristic?.receiver_city) {
-        setReceiverCity(data.characteristic.receiver_city);
-      }
-    }
-  }, [cityOptions, data]);
-
   // --- Update parent state when cargoCost, senderCity, additionalInfo change ---
   useEffect(() => {
-    // Look up the sender city object from uniqueSenderCities.
     const senderObj = uniqueSenderCities.find(
       (city) => String(city.name) === senderCity
     );
@@ -148,7 +145,7 @@ const PackageCharacteristics: React.FC<ActDataProps> = ({ data, setData }) => {
     setPackages((prev: any) => [
       ...prev,
       {
-        characteristics: "", // will store the display name after selection
+        characteristics: null, // Will store the characteristic id
         slots: "0",
         weight: "0",
         dimensions: {
@@ -185,35 +182,46 @@ const PackageCharacteristics: React.FC<ActDataProps> = ({ data, setData }) => {
   };
 
   // --- Inline component for package characteristic dropdown ---
-  const PackageCharacteristicDropdown = ({
-    index,
-    currentValue,
-    onSelect,
-  }: {
+  interface PackageCharacteristicDropdownProps {
     index: number;
-    currentValue: string;
-    onSelect: (val: string) => void;
-  }) => {
+    currentValue: number | null; // expecting the id
+    onSelect: (val: number) => void;
+  }
+
+  const PackageCharacteristicDropdown: React.FC<
+    PackageCharacteristicDropdownProps
+  > = ({ index, currentValue, onSelect }) => {
     const [open, setOpen] = useState(false);
     const toggleOpen = () => setOpen((prev) => !prev);
+
+    // Find the selected option by its id and show its display label.
+    const selectedOption = packageOptions.find((opt) =>
+      typeof currentValue === "string"
+        ? opt.name_ru + "" === currentValue + ""
+        : opt.id === currentValue
+    );
+    const displayValue = selectedOption
+      ? selectedOption.name_ru
+      : "Выберите характеристику груза";
+
     return (
       <div className="relative">
         <button
           onClick={toggleOpen}
-          className="w-full border bg-white hover:bg-white border-gray-300 rounded-md p-2 text-left focus:outline-none focus:ring-2 focus:ring-[#09BD3C]"
+          className="w-full border bg-white hover:bg-white border-gray-300 rounded-md p-2 text-left text-sm focus:outline-none focus:ring-2 focus:ring-[#09BD3C]"
         >
-          {currentValue || "Выберите характеристику груза"}
+          {displayValue}
         </button>
         {open && (
-          <ul className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-40 overflow-auto">
+          <ul className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-40 overflow-auto text-sm">
             {packageOptions.map((option) => (
               <li
                 key={option.id}
                 onClick={() => {
-                  onSelect(option.name_ru);
+                  onSelect(option.id);
                   setOpen(false);
                 }}
-                className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                className="px-3 py-1 hover:bg-gray-100 cursor-pointer"
               >
                 {option.name_ru}
               </li>
@@ -224,7 +232,6 @@ const PackageCharacteristics: React.FC<ActDataProps> = ({ data, setData }) => {
     );
   };
 
-  // --- Render UI ---
   return (
     <div className="bg-white p-6 rounded-lg shadow-md mb-8 relative">
       <h2 className="text-lg font-semibold mb-4 text-[#1D1B23]">
@@ -241,7 +248,7 @@ const PackageCharacteristics: React.FC<ActDataProps> = ({ data, setData }) => {
           value={cargoCost}
           onChange={(e) => setCargoCost(e.target.value)}
           placeholder="Укажите стоимость"
-          className="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-[#09BD3C]"
+          className="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-[#09BD3C] text-sm"
         />
       </div>
 
@@ -257,12 +264,12 @@ const PackageCharacteristics: React.FC<ActDataProps> = ({ data, setData }) => {
               setSenderDropdownOpen((prev) => !prev);
               setReceiverDropdownOpen(false);
             }}
-            className="w-full border bg-white hover:bg-white border-gray-300 rounded-md p-2 text-left focus:outline-none focus:ring-2 focus:ring-[#09BD3C]"
+            className="w-full border bg-white hover:bg-white border-gray-300 rounded-md p-2 text-left text-sm focus:outline-none focus:ring-2 focus:ring-[#09BD3C]"
           >
-            {senderCity || "Выберите город отправителя"}
+            {data?.characteristic?.sender_city || "Выберите город отправителя"}
           </button>
           {senderDropdownOpen && (
-            <ul className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-40 overflow-auto">
+            <ul className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-40 overflow-auto text-sm">
               {uniqueSenderCities.map((city) => (
                 <li
                   key={city.id}
@@ -287,12 +294,12 @@ const PackageCharacteristics: React.FC<ActDataProps> = ({ data, setData }) => {
           <button
             onClick={() => setReceiverDropdownOpen((prev) => !prev)}
             disabled={!senderCity}
-            className="w-full border bg-white hover:bg-white border-gray-300 rounded-md p-2 text-left focus:outline-none focus:ring-2 focus:ring-[#09BD3C]"
+            className="w-full border bg-white hover:bg-white border-gray-300 rounded-md p-2 text-left text-sm focus:outline-none focus:ring-2 focus:ring-[#09BD3C]"
           >
-            {receiverCity || "Выберите город получателя"}
+            {data?.characteristic?.receiver_city || "Выберите город получателя"}
           </button>
           {receiverDropdownOpen && (
-            <ul className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-40 overflow-auto">
+            <ul className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-40 overflow-auto text-sm">
               {availableReceiverCities.map((city: any) => (
                 <li
                   key={city.id}
@@ -319,121 +326,128 @@ const PackageCharacteristics: React.FC<ActDataProps> = ({ data, setData }) => {
           value={additionalInfo}
           onChange={(e) => setAdditionalInfo(e.target.value)}
           placeholder="Любые дополнения относительно характера груза и веса товара"
-          className="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-[#09BD3C]"
+          className="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-[#09BD3C] text-sm"
           rows={3}
         />
       </div>
 
-      {/* Package (Cargo) Details */}
-      <div className="space-y-6">
-        {packages.map((pkg: any, index: number) => (
-          <div
-            key={index}
-            className="border border-gray-200 rounded-lg p-4 mb-4"
-          >
-            <h3 className="text-lg font-semibold mb-4 text-[#1D1B23]">
-              Груз №{index + 1}
-            </h3>
-            <div className="mb-2">
-              <label className="block text-sm font-medium text-[#1D1B23] mb-1">
+      {/* Package (Cargo) Details as a Table */}
+      <div className="overflow-x-auto mb-4 max-w-full md:max-w-3xl mx-auto">
+        <table className="min-w-full divide-y divide-gray-200 text-sm">
+          <thead className="bg-gray-50">
+            <tr>
+              <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                №
+              </th>
+              <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Характеристика груза
-              </label>
-              <PackageCharacteristicDropdown
-                index={index}
-                currentValue={pkg.characteristics}
-                onSelect={(val: string) =>
-                  handleChange(index, "characteristics", val)
-                }
-              />
-            </div>
-            {/* Other package inputs */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="mb-2">
-                <label className="block text-sm font-medium text-[#1D1B23] mb-1">
-                  Слоты
-                </label>
-                <input
-                  type="number"
-                  value={pkg.slots}
-                  onChange={(e) => handleChange(index, "slots", e.target.value)}
-                  placeholder="Количество"
-                  className="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-[#09BD3C]"
-                />
-              </div>
-              <div className="mb-2">
-                <label className="block text-sm font-medium text-[#1D1B23] mb-1">
-                  Вес
-                </label>
-                <input
-                  type="number"
-                  value={pkg.weight}
-                  onChange={(e) =>
-                    handleChange(index, "weight", e.target.value)
-                  }
-                  placeholder="Вес"
-                  className="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-[#09BD3C]"
-                />
-              </div>
-            </div>
-            {/* Dimensions */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-4">
-              <div>
-                <label className="block text-sm font-medium text-[#1D1B23] mb-1">
-                  Длина
-                </label>
-                <input
-                  type="number"
-                  value={pkg.dimensions?.length || ""}
-                  onChange={(e) =>
-                    handleChange(index, "dimensions.length", e.target.value)
-                  }
-                  placeholder="Длина"
-                  className="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-[#09BD3C]"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-[#1D1B23] mb-1">
-                  Ширина
-                </label>
-                <input
-                  type="number"
-                  value={pkg.dimensions?.width || ""}
-                  onChange={(e) =>
-                    handleChange(index, "dimensions.width", e.target.value)
-                  }
-                  placeholder="Ширина"
-                  className="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-[#09BD3C]"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-[#1D1B23] mb-1">
-                  Высота
-                </label>
-                <input
-                  type="number"
-                  value={pkg.dimensions?.height || ""}
-                  onChange={(e) =>
-                    handleChange(index, "dimensions.height", e.target.value)
-                  }
-                  placeholder="Высота"
-                  className="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-[#09BD3C]"
-                />
-              </div>
-            </div>
-            <div className="mt-4 flex justify-end">
-              <button
-                onClick={() =>
-                  setPackages((prev: any) =>
-                    prev.filter((_: any, i: number) => i !== index)
-                  )
-                }
-                className="text-gray-500 bg-transparent hover:bg-transparent hover:text-red-500"
-              >
-                🗑️ Удалить
-              </button>
-            </div>
-          </div>
-        ))}
+              </th>
+              <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Слоты
+              </th>
+              <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Вес
+              </th>
+              <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Длина
+              </th>
+              <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Ширина
+              </th>
+              <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Высота
+              </th>
+              <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Действия
+              </th>
+            </tr>
+          </thead>
+          <tbody className="bg-white divide-y divide-gray-200">
+            {packages.map((pkg: any, index: number) => (
+              <tr key={index}>
+                <td className="px-4 py-2 whitespace-nowrap">{index + 1}</td>
+                <td className="px-4 py-2 whitespace-nowrap">
+                  <PackageCharacteristicDropdown
+                    index={index}
+                    currentValue={
+                      pkg.characteristics ? pkg.characteristics : null
+                    }
+                    onSelect={(val: number) =>
+                      handleChange(index, "characteristics", val)
+                    }
+                  />
+                </td>
+                <td className="px-4 py-2 whitespace-nowrap">
+                  <input
+                    type="number"
+                    value={pkg.slots}
+                    onChange={(e) =>
+                      handleChange(index, "slots", e.target.value)
+                    }
+                    placeholder="Слоты"
+                    className="border border-gray-300 rounded-md p-1 w-16 text-sm"
+                  />
+                </td>
+                <td className="px-4 py-2 whitespace-nowrap">
+                  <input
+                    type="number"
+                    value={pkg.weight}
+                    onChange={(e) =>
+                      handleChange(index, "weight", e.target.value)
+                    }
+                    placeholder="Вес"
+                    className="border border-gray-300 rounded-md p-1 w-16 text-sm"
+                  />
+                </td>
+                <td className="px-4 py-2 whitespace-nowrap">
+                  <input
+                    type="number"
+                    value={pkg.dimensions?.length || ""}
+                    onChange={(e) =>
+                      handleChange(index, "dimensions.length", e.target.value)
+                    }
+                    placeholder="Длина"
+                    className="border border-gray-300 rounded-md p-1 w-16 text-sm"
+                  />
+                </td>
+                <td className="px-4 py-2 whitespace-nowrap">
+                  <input
+                    type="number"
+                    value={pkg.dimensions?.width || ""}
+                    onChange={(e) =>
+                      handleChange(index, "dimensions.width", e.target.value)
+                    }
+                    placeholder="Ширина"
+                    className="border border-gray-300 rounded-md p-1 w-16 text-sm"
+                  />
+                </td>
+                <td className="px-4 py-2 whitespace-nowrap">
+                  <input
+                    type="number"
+                    value={pkg.dimensions?.height || ""}
+                    onChange={(e) =>
+                      handleChange(index, "dimensions.height", e.target.value)
+                    }
+                    placeholder="Высота"
+                    className="border border-gray-300 rounded-md p-1 w-16 text-sm"
+                  />
+                </td>
+                <td className="px-4 py-2 whitespace-nowrap">
+                  <button
+                    onClick={() =>
+                      setPackages((prev: any) =>
+                        prev.filter((_: any, i: number) => i !== index)
+                      )
+                    }
+                    className="bg-transparent hover:bg-transparent text-red-500"
+                  >
+                    🗑️
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
 
       <button

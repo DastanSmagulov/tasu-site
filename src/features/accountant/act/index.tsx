@@ -57,7 +57,7 @@ const initialActData: Act = {
     accepted: "",
     date: "",
   },
-  transportation_service_ids: [],
+  transportation_services: [],
   delivery_cargo_info: {
     issued: "",
     accepted: "",

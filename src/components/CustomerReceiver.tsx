@@ -40,7 +40,6 @@ const CustomerReceiver: React.FC<ActDataProps> = ({ data, setData }) => {
         ...prevData.receiver_data,
         id: customer.id,
         full_name: customer.full_name,
-        phone: customer.phone || "",
         role: customer.role,
       },
     }));
@@ -65,7 +64,6 @@ const CustomerReceiver: React.FC<ActDataProps> = ({ data, setData }) => {
       ...prevData,
       receiver_data: {
         ...prevData.receiver_data,
-        phone: newPhone,
       },
     }));
   };
@@ -114,7 +112,7 @@ const CustomerReceiver: React.FC<ActDataProps> = ({ data, setData }) => {
         </label>
         <input
           type="text"
-          value={fullName}
+          value={data?.receiver_data?.full_name}
           onChange={handleFullNameChange}
           placeholder="Введите ФИО"
           className="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-[#09BD3C] focus:border-transparent"
@@ -128,7 +126,7 @@ const CustomerReceiver: React.FC<ActDataProps> = ({ data, setData }) => {
         </label>
         <input
           type="tel"
-          value={phoneNumber}
+          value={data?.receiver_data?.phone}
           onChange={handlePhoneNumberChange}
           placeholder="Укажите номер телефона"
           className="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-[#09BD3C] focus:border-transparent"
