@@ -28,9 +28,12 @@ import CustomerReceiver from "@/components/CustomerReceiver";
 
 // Initial actData (modify as needed)
 const initialActData: Act = {
+  number: "",
+  qr_code: {
+    qr: "",
+  },
   contract_original_act: null,
   contract_mercenary_and_warehouse: null,
-  number: "0",
   accounting_esf: null,
   accounting_avr: null,
   cargo_status: "",
@@ -43,8 +46,8 @@ const initialActData: Act = {
   },
   characteristic: {
     cargo_cost: 0,
-    sender_city: "",
-    receiver_city: "",
+    sender_city: 1,
+    receiver_city: 1,
     additional_info: "",
   },
   cargo: [],
@@ -67,17 +70,21 @@ const initialActData: Act = {
     role: "",
   },
   receiving_cargo_info: {
-    issued: "",
-    accepted: "",
+    issued: 0,
+    accepted: 0,
     date: "",
   },
   transportation_services: [],
   delivery_cargo_info: {
-    issued: "",
-    accepted: "",
+    issued: 0,
+    accepted: 0,
     date: "",
   },
-  status: "акт сформирован",
+  transportation: {
+    sender: "1",
+    receiver: "5",
+    sender_is_payer: true,
+  },
 };
 
 interface TransportationQuantityService {
@@ -130,12 +137,28 @@ export default function CreateActPage() {
     }
   }, [params.id]);
 
+  useEffect(() => {
+    if (!params.id) {
+      const fetchNewActData = async () => {
+        try {
+          const response = await axiosInstance.get("/acts/get_act_data/");
+          const { act_number, qr_code } = response.data;
+          setActData((prev) => ({ ...prev, number: act_number, qr_code }));
+        } catch (error) {
+          console.error("Error fetching new act data:", error);
+        }
+      };
+      fetchNewActData();
+    }
+  }, [params.id]);
+
   // Fetch the available transportation services (only once)
   useEffect(() => {
     fetchTransportationQuantityServices();
   }, []);
 
   const handleSend = async () => {
+    console.log(actData);
     try {
       const formData = new FormData();
 
@@ -150,7 +173,6 @@ export default function CreateActPage() {
       // Append file fields:
       fileFields.forEach((field) => {
         const value = actData[field];
-        console.log(`Field ${field}:`, value);
         if (value) {
           // If the value is a File object, append it directly.
           if (value instanceof File) {
@@ -197,10 +219,10 @@ export default function CreateActPage() {
           formData.append(key, value + "");
         }
       });
-
       const response = await axiosInstance.post("/acts/", formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
+      console.log("response", response.data);
       setActData(response.data);
       setIsModalOpen(true);
     } catch (error) {
@@ -335,7 +357,7 @@ export default function CreateActPage() {
           setData: React.Dispatch<React.SetStateAction<Act>>;
         }) => (
           <>
-            <Shipping data={props.data} setData={props.setData} />
+            {/* <Shipping data={props.data} setData={props.setData} /> */}
             <AccountingEsf data={props.data} setData={props.setData} />
             <AccountingAvr data={props.data} setData={props.setData} />
           </>
@@ -369,7 +391,7 @@ export default function CreateActPage() {
   const CurrentComponent = stepsMemo[currentStep].component as any;
 
   if (sessionStatus === "loading") {
-    return <div>Loading...</div>;
+    return <div>Загрузка...</div>;
   }
 
   return (
@@ -459,6 +481,7 @@ export default function CreateActPage() {
           <Agreement original={true} data={actData} setData={setActData} />
         </div>
         <div className="flex flex-col lg:w-1/2 space-y-4">
+          {/* <Shipping data={actData} setData={setActData} /> */}
           <CustomerReceiver data={actData} setData={setActData} />
           <InformationPackage
             title={"О получении"}
@@ -483,13 +506,6 @@ export default function CreateActPage() {
           />
           <AccountingEsf data={actData} setData={setActData} />
           <AccountingAvr data={actData} setData={setActData} />
-          {actData && actData.status === "готов к отправке" && (
-            <QrAct
-              qrCodeUrl="/images/qr-code.png"
-              actNumber="1234"
-              description="Lorem ipsum dolor sit amet consectetur. Dictum morbi ut lacus ultrices pulvinar lectus adipiscing sit."
-            />
-          )}
         </div>
       </div>
 

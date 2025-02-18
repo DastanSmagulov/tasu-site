@@ -32,7 +32,7 @@ interface TransportationQuantityService {
 }
 
 // Your initial act data (default values)
-const initialActData: Act = {
+const initialActData: any = {
   contract_original_act: null,
   contract_mercenary_and_warehouse: null,
   number: "0",
@@ -84,8 +84,114 @@ const initialActData: Act = {
     accepted: "",
     date: "",
   },
-  status: "акт сформирован",
+  transportation: {
+    sender: "",
+    receiver: "",
+    sender_is_payer: false,
+  },
 };
+
+//
+// Helper functions for normalization and comparison
+//
+
+// Convert NaN (or null/undefined) to a canonical value.
+function normalizeValue(val: any): any {
+  if (typeof val === "number" && isNaN(val)) return "";
+  if (val === null || val === undefined) return "";
+  return val;
+}
+
+// Compare two values after normalizing them.
+// For objects and arrays, we use JSON.stringify after mapping normalization.
+function isEqualNormalized(val1: any, val2: any): boolean {
+  // Both are numbers and NaN:
+  if (
+    typeof val1 === "number" &&
+    isNaN(val1) &&
+    typeof val2 === "number" &&
+    isNaN(val2)
+  ) {
+    return true;
+  }
+  // If both are objects or arrays:
+  if (
+    typeof val1 === "object" &&
+    val1 !== null &&
+    typeof val2 === "object" &&
+    val2 !== null
+  ) {
+    if (Array.isArray(val1) && Array.isArray(val2)) {
+      return (
+        JSON.stringify(val1.map(normalizeValue)) ===
+        JSON.stringify(val2.map(normalizeValue))
+      );
+    }
+    return (
+      JSON.stringify(normalizeValue(val1)) ===
+      JSON.stringify(normalizeValue(val2))
+    );
+  }
+  return normalizeValue(val1) === normalizeValue(val2);
+}
+
+// Recursively get only the fields that differ between two objects.
+function getChangedFields<T>(initial: T, current: T): Partial<T> {
+  const diff: Partial<T> = {};
+  const keys = new Set([
+    ...Object.keys(initial + ""),
+    ...Object.keys(current + ""),
+  ]);
+  keys.forEach((key) => {
+    const typedKey = key as keyof T;
+    const initVal = initial[typedKey];
+    const currVal = current[typedKey];
+    if (!isEqualNormalized(initVal, currVal)) {
+      // If both values are non-null objects and not arrays, perform a nested diff.
+      if (
+        typeof initVal === "object" &&
+        initVal !== null &&
+        typeof currVal === "object" &&
+        currVal !== null &&
+        !Array.isArray(initVal) &&
+        !Array.isArray(currVal)
+      ) {
+        const nestedDiff = getChangedFields(initVal, currVal);
+        if (Object.keys(nestedDiff).length > 0) {
+          diff[typedKey] = nestedDiff as any;
+        }
+      } else {
+        diff[typedKey] = currVal;
+      }
+    }
+  });
+  return diff;
+}
+
+// Convert a diff object to FormData.
+function buildFormData(diff: Partial<Act>): FormData {
+  const formData = new FormData();
+  (Object.keys(diff) as (keyof Act)[]).forEach((key) => {
+    const value = diff[key];
+    if (value === null || value === undefined) return;
+    if (value instanceof File) {
+      formData.append(key, value);
+    } else if (Array.isArray(value)) {
+      value.forEach((item) => {
+        if (item instanceof File) {
+          formData.append(`${key}[]`, item);
+        } else {
+          formData.append(`${key}[]`, item + "");
+        }
+      });
+    } else if (typeof value === "object") {
+      formData.append(key, JSON.stringify(value));
+    } else {
+      formData.append(key, value + "");
+    }
+  });
+  return formData;
+}
 
 export default function ActPage() {
   const { data: session, status: sessionStatus } = useSession();
@@ -154,58 +260,11 @@ export default function ActPage() {
     window.print();
   };
 
-  // --- Helper: compute only the fields that differ between original and current data ---
-  function getChangedFields<T>(initial: T, current: T): Partial<T> {
-    const diff: Partial<T> = {};
-    Object.keys(current + "").forEach((key) => {
-      const typedKey = key as keyof T;
-      const currentValue = current[typedKey];
-      const initialValue = initial[typedKey];
-      if (typeof currentValue === "object" && currentValue !== null) {
-        if (JSON.stringify(currentValue) !== JSON.stringify(initialValue)) {
-          diff[typedKey] = currentValue;
-        }
-      } else {
-        if (currentValue !== initialValue) {
-          diff[typedKey] = currentValue;
-        }
-      }
-    });
-    return diff;
-  }
-
-  // --- Helper: convert a diff object to FormData ---
-  function buildFormData(diff: Partial<Act>): FormData {
-    const formData = new FormData();
-    (Object.keys(diff) as (keyof Act)[]).forEach((key) => {
-      const value = diff[key];
-      if (value === null || value === undefined) return;
-      // Handle File objects.
-      if (value instanceof File) {
-        formData.append(key, value);
-      } else if (Array.isArray(value)) {
-        // For arrays (like transportation_services), append each item.
-        value.forEach((item) => {
-          // If item is a file, you may need to send it directly.
-          if (item instanceof File) {
-            formData.append(`${key}[]`, item);
-          } else {
-            formData.append(`${key}[]`, item + "");
-          }
-        });
-      } else if (typeof value === "object") {
-        // For nested objects, send as JSON.
-        formData.append(key, JSON.stringify(value));
-      } else {
-        formData.append(key, value + "");
-      }
-    });
-    return formData;
-  }
-
   // --- Handle sending patch ---
   const handleSend = async () => {
     try {
+      console.log("Original data:", originalActData);
+      console.log("Current data:", actData);
       // Compute diff between original and current actData.
       const changedData = getChangedFields(originalActData, actData);
       console.log("Changed data to be patched:", changedData);
@@ -336,7 +395,7 @@ export default function ActPage() {
           setData: React.Dispatch<React.SetStateAction<Act>>;
         }) => (
           <>
-            <Shipping data={props.data} setData={props.setData} />
+            {/* <Shipping data={props.data} setData={props.setData} /> */}
             <AccountingEsf data={props.data} setData={props.setData} />
             <AccountingAvr data={props.data} setData={props.setData} />
           </>
@@ -369,7 +428,7 @@ export default function ActPage() {
   const CurrentComponent = stepsMemo[currentStep].component as any;
 
   if (sessionStatus === "loading") {
-    return <div>Loading...</div>;
+    return <div>Загрузка...</div>;
   }
 
   return (
@@ -429,7 +488,7 @@ export default function ActPage() {
           Номер акта {actData.number}
         </h2>
         <span className="px-3 py-1 rounded-full text-sm font-medium bg-green-500 text-white">
-          {actData.cargo_status ? actData.cargo_status : "Status"}
+          {actData.status ? actData.status : "Status"}
         </span>
       </div>
       <div className="hidden min-[500px]:flex act-flex gap-4 mt-4 w-full">
@@ -467,6 +526,7 @@ export default function ActPage() {
           <Agreement original={true} data={actData} setData={setActData} />
         </div>
         <div className="flex flex-col lg:w-1/2 space-y-4">
+          {/* <Shipping data={actData} setData={setActData} /> */}
           <CustomerReceiver data={actData} setData={setActData} />
           <InformationPackage
             title={"О получении"}
@@ -491,13 +551,11 @@ export default function ActPage() {
           />
           <AccountingEsf data={actData} setData={setActData} />
           <AccountingAvr data={actData} setData={setActData} />
-          {actData && actData.status === "готов к отправке" && (
-            <QrAct
-              qrCodeUrl="/images/qr-code.png"
-              actNumber="1234"
-              description="Lorem ipsum dolor sit amet consectetur. Dictum morbi ut lacus ultrices pulvinar lectus adipiscing sit."
-            />
-          )}
+          <QrAct
+            qrCodeUrl={actData?.qr_code + ""}
+            actNumber={actData?.number + ""}
+            description="Lorem ipsum dolor sit amet consectetur. Dictum morbi ut lacus ultrices pulvinar lectus adipiscing sit."
+          />
         </div>
       </div>
 

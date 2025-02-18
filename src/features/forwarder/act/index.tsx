@@ -10,20 +10,7 @@ import CreateSuccessAct from "@/components/modals/CreateSuccessAct";
 import { Act } from "@/helper/types";
 import { useParams } from "next/navigation";
 import { axiosInstance } from "@/helper/utils";
-
-// Define the data type
-type DocumentData = {
-  id: string;
-  date: string;
-  status: string;
-  customer: string;
-  place: string;
-  weight: string;
-  volume: string;
-  statusColor: string;
-  view: string;
-  amount: string;
-};
+import QrAct from "@/components/QrAct";
 
 const steps = [
   { id: 1, name: "Данные о Заказчике", component: Customer },
@@ -32,19 +19,53 @@ const steps = [
   { id: 4, name: "Данные о Получении Груза", component: InformationPackage },
 ];
 
+// Initial actData for new acts
+const initialActData: any = {
+  number: "",
+  qr_code: {
+    qr: "",
+  },
+  cargo_status: "",
+  customer_data: {
+    id: 0,
+    full_name: "",
+    signature: "",
+    customer_is_payer: false,
+    role: "",
+  },
+  characteristic: {
+    cargo_cost: 0,
+    sender_city: "",
+    receiver_city: "",
+    additional_info: "",
+  },
+  cargo: [],
+  cargo_images: [],
+  contract_mercenary_and_warehouse: "",
+  status: "акт сформирован",
+};
+
 export default function ActPage() {
   const { data: session, status } = useSession();
   const [currentStep, setCurrentStep] = useState(0);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [actStatus, setActStatus] = useState("акт сформирован");
-  const [actData, setActData] = useState<Act | null>(null); // Store fetched data
+
   const params = useParams();
 
+  // Initialize actData:
+  // If we are creating a new act (no params.id), use initialActData.
+  // Otherwise (editing), start with null until data is fetched.
+  const [actData, setActData] = useState<Act | null>(
+    params.id ? null : initialActData
+  );
+
+  // Fetch act data if editing an existing act.
   useEffect(() => {
     const fetchActData = async () => {
       try {
         const response = await axiosInstance.get(`/acts/${params.id}/`);
-        setActData(response.data); // Set the fetched data
+        setActData(response.data);
       } catch (error) {
         console.error("Error fetching act data:", error);
       }
@@ -55,19 +76,20 @@ export default function ActPage() {
     }
   }, [params.id]);
 
-  if (status === "loading") {
-    return <div>Loading...</div>;
+  // While actData is not ready, show a loading message.
+  if (status === "loading" || !actData) {
+    return <div>Загрузка...</div>;
   }
 
   const handleNext = () => {
     if (currentStep < steps.length - 1) {
-      setCurrentStep(currentStep + 1);
+      setCurrentStep((prev) => prev + 1);
     }
   };
 
   const handlePrevious = () => {
     if (currentStep > 0) {
-      setCurrentStep(currentStep - 1);
+      setCurrentStep((prev) => prev - 1);
     }
   };
 
@@ -75,19 +97,19 @@ export default function ActPage() {
     window.print();
   };
 
-  // Updated handleSend with PATCH API call
+  // Before sending, update actData with the current actStatus.
   const handleSend = async () => {
-    if (!actData) {
-      alert("Нет данных акта для отправки");
-      return;
-    }
     try {
-      // Send a PATCH request to update the act data
+      const updatedActData = { ...actData, status: actStatus };
       const response = await axiosInstance.patch(
         `/acts/${params.id}/`,
-        actData
+        updatedActData,
+        {
+          headers: { "Content-Type": "application/json" },
+        }
       );
       console.log("Patch response:", response.data);
+      setActData(response.data);
       setIsModalOpen(true);
     } catch (error) {
       console.error("Error sending act data:", error);
@@ -138,7 +160,6 @@ export default function ActPage() {
               Назад
             </button>
           )}
-
           {currentStep < steps.length - 1 ? (
             <button
               onClick={handleNext}
@@ -170,10 +191,17 @@ export default function ActPage() {
             setData={setActData}
             data={actData}
           />
+          {actData.status === "готов к отправке" && (
+            <QrAct
+              qrCodeUrl={actData?.qr_code + ""}
+              actNumber={actData?.number + ""}
+              description="Lorem ipsum dolor sit amet consectetur. Dictum morbi ut lacus ultrices pulvinar lectus adipiscing sit."
+            />
+          )}
         </div>
       </div>
 
-      {/* New Bottom-Left Section */}
+      {/* Bottom-Left Section */}
       <div className="flex justify-between min-[1050px]:flex-row flex-col">
         <div className="flex flex-col space-y-4 mt-4">
           <button

@@ -15,7 +15,7 @@ const WarehousePage = () => {
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState({
     search: "",
-    consignment__cargo_status: "IN_STORAGE",
+    consignment__cargo_status: "SENT_TO_STORAGE",
     sender_city: "",
     receiver_city: "",
     created_at: "",

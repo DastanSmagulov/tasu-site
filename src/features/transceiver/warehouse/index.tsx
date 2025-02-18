@@ -13,10 +13,10 @@ const WarehousePage = () => {
   const [nextPageUrl, setNextPageUrl] = useState<string | null>(null);
   const [prevPageUrl, setPrevPageUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  // Set consignment__cargo_status to "IN_STORAGE" by default.
+  // Set consignment__cargo_status to "SENT_TO_STORAGE" by default.
   const [filters, setFilters] = useState({
     search: "",
-    consignment__cargo_status: "IN_STORAGE",
+    consignment__cargo_status: "SENT_TO_STORAGE",
     sender_city: "",
     receiver_city: "",
     created_at: "",

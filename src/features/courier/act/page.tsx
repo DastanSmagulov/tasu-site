@@ -47,7 +47,7 @@ export default function ActPage() {
   }, [params.id]);
 
   if (status === "loading") {
-    return <div>Loading...</div>;
+    return <div>Загрузка...</div>;
   }
 
   const handleNext = () => {

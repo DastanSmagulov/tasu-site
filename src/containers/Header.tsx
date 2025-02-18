@@ -87,7 +87,7 @@ const Header: React.FC<HeaderProps> = ({ text, role }) => {
                   onClick={() => setModalOpen(true)}
                 />
               ) : (
-                <div className="loading"></div>
+                <div className="Загрузка..."></div>
               )}
             </div>
           )}

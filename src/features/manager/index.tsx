@@ -31,8 +31,7 @@ const ManagerPage = () => {
   const fetchActsData = async (url?: string | null) => {
     setLoading(true);
     try {
-      let finalUrl = url || `/acts/?limit=${limit}&offset=0`; // Default to first page if no URL
-
+      const finalUrl = url || `/acts/?limit=${limit}&offset=0`; // Corrected URL syntax
       const response = await axiosInstance.get(finalUrl);
       setData(response.data.results);
       setTotalCount(response.data.count);

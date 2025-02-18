@@ -75,13 +75,20 @@ interface VehicleData {
 }
 
 interface CargoInfo {
-  issued: string;
-  accepted: string;
+  issued: string | number;
+  accepted: string | number;
   date: string; // ISO Date string
 }
 
+interface Transportation {
+  sender: string;
+  receiver: string;
+  sender_is_payer: boolean;
+}
+
 export interface Act {
-  number: string;
+  qr_code: { qr: string };
+  number?: string;
   id?: number;
   status?: string;
   customer_data: Customer;
@@ -102,6 +109,7 @@ export interface Act {
   accounting_esf: string | null;
   accounting_avr: string | null;
   cargo_status: string;
+  transportation?: Transportation;
 }
 
 export interface TableRow {

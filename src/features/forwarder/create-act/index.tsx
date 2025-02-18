@@ -11,6 +11,7 @@ import CreateSuccessAct from "@/components/modals/CreateSuccessAct";
 import { Act } from "@/helper/types";
 import { useParams } from "next/navigation";
 import { axiosInstance } from "@/helper/utils";
+import QrAct from "@/components/QrAct";
 
 const steps = [
   { id: 1, name: "Данные о Заказчике", component: Customer },
@@ -21,7 +22,10 @@ const steps = [
 
 // Initial actData (modify as needed)
 const initialActData: any = {
-  number: "0",
+  number: "",
+  qr_code: {
+    qr: "",
+  },
   cargo_status: "",
   customer_data: {
     id: 0,
@@ -38,8 +42,14 @@ const initialActData: any = {
   },
   cargo: [],
   cargo_images: [],
-  status: "акт сформирован",
+  transportation: {
+    sender: "1",
+    receiver: "5",
+    sender_is_payer: true,
+  },
 };
+
+console.log("HELLLO");
 
 export default function CreateActPage() {
   const { data: session, status } = useSession();
@@ -65,8 +75,27 @@ export default function CreateActPage() {
     }
   }, [params.id]);
 
+  useEffect(() => {
+    if (!params.id) {
+      const fetchNewActData = async () => {
+        try {
+          const response = await axiosInstance.get("/acts/get_act_data/");
+          const { act_number } = response.data;
+          setActData((prev) => ({
+            ...prev,
+            number: act_number,
+            qr_code: { qr: response.data.qr_code },
+          }));
+        } catch (error) {
+          console.error("Error fetching new act data:", error);
+        }
+      };
+      fetchNewActData();
+    }
+  }, [params.id]);
+
   if (status === "loading") {
-    return <div>Loading...</div>;
+    return <div>Загрузка...</div>;
   }
 
   const handleNext = () => {
@@ -88,7 +117,6 @@ export default function CreateActPage() {
   const handleSend = async () => {
     try {
       const formData = new FormData();
-      console.log(actData);
 
       // List of file fields to handle
       const fileFields: (keyof Act)[] = [
@@ -151,7 +179,8 @@ export default function CreateActPage() {
       const response = await axiosInstance.post("/acts/", formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
-      console.log("Response data:", response.data);
+
+      console.log("response", response.data);
       setActData(response.data);
       setIsModalOpen(true);
     } catch (error) {

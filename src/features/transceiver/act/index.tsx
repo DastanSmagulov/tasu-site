@@ -1,7 +1,7 @@
 "use client";
 
 import { useSession } from "next-auth/react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Customer from "@/components/Customer";
 import PackageCharacteristics from "@/components/PackageCharacteristics";
 import CargoPhoto from "@/components/CargoPhoto";
@@ -11,25 +11,87 @@ import CreateSuccessAct from "@/components/modals/CreateSuccessAct";
 import { useParams } from "next/navigation";
 import { axiosInstance } from "@/helper/utils";
 import { Act } from "@/helper/types";
+import QrAct from "@/components/QrAct";
 
-const steps = [
-  { id: 1, name: "Данные о Заказчике", component: Customer },
-  { id: 2, name: "Характер и Вес Груза", component: PackageCharacteristics },
-  { id: 3, name: "Фотографии Груза", component: CargoPhoto },
-  { id: 4, name: "Перевозка", component: Shipping },
-  { id: 5, name: "Данные о Получении Груза", component: InformationPackage },
-];
+// --- Normalization & Deep Diff Utilities ---
 
-// Helper function to build FormData from actData
-const buildFormData = (data: Act): FormData => {
+// Normalize a primitive value so that null, undefined, and NaN become an empty string.
+function normalize(val: any): any {
+  if (val === null || val === undefined) return "";
+  if (typeof val === "number" && Number.isNaN(val)) return "";
+  return val;
+}
+
+// Recursively compare two values after normalizing primitives.
+// If they are deeply equal, return undefined.
+// Otherwise, if they’re not objects, return the current value.
+// For objects, compare key by key.
+function deepDiff(initial: any, current: any): any {
+  // If both values are non-objects (or null), compare after normalization.
+  if (
+    (typeof initial !== "object" || initial === null) &&
+    (typeof current !== "object" || current === null)
+  ) {
+    const normInitial = normalize(initial);
+    const normCurrent = normalize(current);
+    if (normInitial === normCurrent) return undefined;
+    return normCurrent;
+  }
+
+  // If both are objects, first check deep equality using JSON.stringify.
+  // (This is a fast way to check deep equality.)
+  if (JSON.stringify(initial) === JSON.stringify(current)) {
+    return undefined;
+  }
+
+  // Otherwise, both are objects and not deeply equal.
+  const diff: any = {};
+  const keys = new Set([
+    ...Object.keys(initial || {}),
+    ...Object.keys(current || {}),
+  ]);
+  keys.forEach((key) => {
+    const d = deepDiff(
+      initial ? initial[key] : undefined,
+      current ? current[key] : undefined
+    );
+    if (d !== undefined) {
+      diff[key] = d;
+    }
+  });
+  return Object.keys(diff).length === 0 ? undefined : diff;
+}
+
+// Returns an object containing only the changed fields (deeply compared)
+// Iterate over the union of keys from both original and current objects.
+function getChangedFields<T>(initial: T, current: T): Partial<T> {
+  const diff: Partial<T> = {} as Partial<T>;
+  // Cast the objects to Record<string, any>
+  const initialRecord = initial as Record<string, any>;
+  const currentRecord = current as Record<string, any>;
+
+  const keys = new Set([
+    ...Object.keys(initialRecord),
+    ...Object.keys(currentRecord),
+  ]);
+
+  keys.forEach((key) => {
+    const changed = deepDiff(initialRecord[key], currentRecord[key]);
+    if (changed !== undefined) {
+      console.log(`Change detected for "${key}":`, {
+        before: initialRecord[key],
+        after: currentRecord[key],
+        diff: changed,
+      });
+      diff[key as keyof T] = changed;
+    }
+  });
+  return diff;
+}
+
+// Build FormData from the diff object.
+const buildFormData = (data: any): FormData => {
   const formData = new FormData();
-
-  const fileFields = [
-    "accounting_esf",
-    "accounting_avr",
-    "contract_original_act",
-    "contract_mercenary_and_warehouse",
-  ];
 
   const jsonKeys = [
     "customer_data",
@@ -45,20 +107,19 @@ const buildFormData = (data: Act): FormData => {
   ];
 
   Object.keys(data).forEach((key) => {
-    const value = data[key as keyof Act];
+    const value = data[key];
 
-    // Rename transportation_services to transportation_service_ids
+    // Handle transportation_services separately.
     if (key === "transportation_services") {
       const services = Array.isArray(value) ? value : [];
-      services.forEach((service) =>
+      services.forEach((service: any) =>
         formData.append("transportation_services", service.toString())
       );
       return;
     }
 
     if (jsonKeys.includes(key)) {
-      const jsonValue = value === null || value === undefined ? {} : value;
-      formData.append(key, JSON.stringify(jsonValue));
+      formData.append(key, JSON.stringify(value));
       return;
     }
 
@@ -72,44 +133,51 @@ const buildFormData = (data: Act): FormData => {
     }
   });
 
-  if (!(data as any).transportation) {
+  // Optionally, if you always want a transportation key even if unchanged.
+  if (!data.transportation) {
     formData.append("transportation", JSON.stringify({}));
   }
 
   return formData;
 };
 
+const steps = [
+  { id: 1, name: "Данные о Заказчике", component: Customer },
+  { id: 2, name: "Характер и Вес Груза", component: PackageCharacteristics },
+  { id: 3, name: "Фотографии Груза", component: CargoPhoto },
+  { id: 4, name: "Перевозка", component: Shipping },
+  { id: 5, name: "Данные о Получении Груза", component: InformationPackage },
+];
+
 export default function ActPage() {
-  const { data: session, status } = useSession();
+  const { data: session, status: sessionStatus } = useSession();
   const [currentStep, setCurrentStep] = useState(0);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [actStatus, setActStatus] = useState("акт сформирован");
   const [actData, setActData] = useState<Act | null>(null);
+  // Store the originally fetched data in a ref for diffing.
+  const originalDataRef = useRef<Act | null>(null);
   const params = useParams();
 
   useEffect(() => {
-    const fetchActData = async () => {
-      try {
-        const response = await axiosInstance.get(`/acts/${params.id}/`);
-        setActData(response.data);
-      } catch (error) {
-        console.error("Error fetching act data:", error);
-      }
-    };
-
     if (params.id) {
+      const fetchActData = async () => {
+        try {
+          const response = await axiosInstance.get(`/acts/${params.id}/`);
+          // Sanitize data (replace null/NaN with empty strings)
+          const sanitizedData = JSON.parse(
+            JSON.stringify(response.data, (key, value) =>
+              typeof value === "number" && isNaN(value) ? "" : value
+            )
+          );
+          setActData(sanitizedData);
+          originalDataRef.current = sanitizedData; // baseline for diffing
+        } catch (error) {
+          console.error("Error fetching act data:", error);
+        }
+      };
       fetchActData();
     }
   }, [params.id]);
-
-  if (status === "loading") {
-    return <div>Loading session...</div>;
-  }
-
-  // Show a loader until actData is fetched
-  if (!actData) {
-    return <div>Loading act data...</div>;
-  }
 
   const handleNext = () => {
     if (currentStep < steps.length - 1) {
@@ -127,15 +195,33 @@ export default function ActPage() {
     window.print();
   };
 
-  // PATCH API call in handleSend: updates actData before opening the modal.
+  // Patch sending logic: send only fields that differ from the original.
   const handleSend = async () => {
     try {
-      const formData = buildFormData(actData);
+      if (!originalDataRef.current || !actData) return;
+
+      const changedData = getChangedFields(originalDataRef.current, actData);
+
+      // If no changes detected, avoid making an unnecessary request.
+      if (!changedData || Object.keys(changedData).length === 0) {
+        console.log("No changes detected, nothing to update.");
+        return;
+      }
+
+      console.log("Changed data to be patched:", changedData);
+
+      const formData = buildFormData(changedData);
+
       const response = await axiosInstance.patch(
         `/acts/${params.id}/`,
-        formData
+        formData,
+        {
+          headers: { "Content-Type": "multipart/form-data" },
+        }
       );
       console.log("Patch response:", response.data);
+      setActData(response.data);
+      originalDataRef.current = response.data;
       setIsModalOpen(true);
     } catch (error) {
       console.error("Error sending act data:", error);
@@ -161,6 +247,14 @@ export default function ActPage() {
   };
 
   const CurrentComponent = steps[currentStep].component as any;
+
+  if (sessionStatus === "loading") {
+    return <div>Загрузка сессии...</div>;
+  }
+
+  if (!actData) {
+    return <div>Загрузка данных акта...</div>;
+  }
 
   return (
     <>
@@ -210,11 +304,19 @@ export default function ActPage() {
           <CargoPhoto data={actData} setData={setActData} />
         </div>
         <div className="flex flex-col md:w-1/2 space-y-4">
+          {/* <Shipping data={actData} setData={setActData} /> */}
           <InformationPackage
             title="О получении"
             data={actData}
             setData={setActData}
           />
+          {actData.status === "готов к отправке" && (
+            <QrAct
+              qrCodeUrl={actData?.qr_code + ""}
+              actNumber={actData?.number + ""}
+              description="Lorem ipsum dolor sit amet consectetur. Dictum morbi ut lacus ultrices pulvinar lectus adipiscing sit."
+            />
+          )}
         </div>
       </div>
 
@@ -246,8 +348,10 @@ export default function ActPage() {
               Статус:
             </label>
             <select
-              value={actStatus}
-              onChange={(e) => setActStatus(e.target.value)}
+              value={actData.status}
+              onChange={(e) =>
+                setActData((prev: any) => ({ ...prev, status: e.target.value }))
+              }
               className="border rounded-lg px-2 py-1 bg-white focus:ring-2 focus:ring-yellow-400"
             >
               <option value="акт сформирован">акт сформирован</option>

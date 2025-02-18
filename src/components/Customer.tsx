@@ -36,15 +36,14 @@ const Customer: React.FC<ActDataProps> = ({ data, setData }) => {
     setPhoneNumber(customer.phone || "");
     setDropdownOpen(false);
 
-    // Update parent state with selected customer info including id and current isPayer flag.
     setData((prevData: any) => ({
       ...prevData,
       customer_data: {
         ...prevData.customer_data,
-        id: customer.id, // Pass the id from the selected customer
+        id: Number(customer.id) || 0, // ensure id is a number
         full_name: customer.full_name,
         role: customer.role,
-        customer_is_payer: isPayer, // Retain the current value of isPayer
+        customer_is_payer: isPayer,
       },
     }));
   };
@@ -126,7 +125,7 @@ const Customer: React.FC<ActDataProps> = ({ data, setData }) => {
                 onClick={() => handleSelectCustomer(customer)}
                 className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
               >
-                {customer.full_name}
+                {customer.full_name} ({customer.phone})
               </li>
             ))}
           </ul>

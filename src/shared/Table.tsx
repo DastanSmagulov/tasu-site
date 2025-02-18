@@ -45,7 +45,7 @@ const Table = ({ data, loading, fetchActsData }: any) => {
     );
   };
 
-  if (loading) return <p>Loading...</p>;
+  if (loading) return <p>Загрузка...</p>;
 
   // Helper to compute total cargo weight
   const calculateTotalWeight = (cargo: any) => {
@@ -103,7 +103,7 @@ const Table = ({ data, loading, fetchActsData }: any) => {
               const actId = act.id || "-";
               const customer = act.customer?.full_name || "-";
               // Use receiving_cargo_info.date (or delivery_cargo_info.date) and format it:
-              const date = act?.created_at ? act?.сreated_at : "-";
+              const date = act.created_at ? act.created_at : "-";
               const places = act.cargo ? act.cargo.slots : 0;
               const weight = calculateTotalWeight(act.cargo.weight);
               const volume = calculateTotalVolume(act.cargo.volume);
@@ -131,7 +131,9 @@ const Table = ({ data, loading, fetchActsData }: any) => {
                     )}
                   </td>
                   <td className="p-3 border border-gray-300">{customer}</td>
-                  <td className="p-3 border border-gray-300">{date}</td>
+                  <td className="p-3 border border-gray-300">
+                    {formatDate(date)}
+                  </td>
                   <td className="p-3 border border-gray-300">{places}</td>
                   <td className="p-3 font-semibold border border-gray-300">
                     {weight}

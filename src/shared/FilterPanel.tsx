@@ -33,6 +33,7 @@ const FilterPanel: React.FC<FilterPanelProps> = ({ filters, setFilters }) => {
   // Check if any filter (except "limit") is active
   const activeFilter = Boolean(
     filters.search ||
+      filters.number ||
       filters.consignment__cargo_status ||
       filters.sender_city ||
       filters.receiver_city ||
@@ -90,12 +91,13 @@ const FilterPanel: React.FC<FilterPanelProps> = ({ filters, setFilters }) => {
                 {["", "Активный", "Завершенный"].map((status) => (
                   <li
                     key={status}
-                    onClick={() =>
+                    onClick={() => {
                       setFilters({
                         ...filters,
                         consignment__cargo_status: status,
-                      })
-                    }
+                      });
+                      setShowStatusDropdown(false);
+                    }}
                     className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
                   >
                     {status || "Все"}
@@ -197,6 +199,7 @@ const FilterPanel: React.FC<FilterPanelProps> = ({ filters, setFilters }) => {
               onClick={() =>
                 setFilters({
                   search: "",
+                  number: "",
                   consignment__cargo_status: "",
                   sender_city: "",
                   receiver_city: "",

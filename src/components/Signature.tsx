@@ -1,3 +1,4 @@
+import Image from "next/image";
 import React, { useRef, useState } from "react";
 import SignaturePadWrapper from "react-signature-pad-wrapper";
 
@@ -79,9 +80,11 @@ const Signature: React.FC<SignatureProps> = ({
       <div className="border-2 border-gray-800 bg-white rounded-md w-full max-w-lg relative">
         {submittedSignature ? (
           <div className="relative">
-            <img
+            <Image
               src={submittedSignature}
               alt="Submitted Signature"
+              width={100}
+              height={100}
               className="w-full h-auto object-contain"
             />
             <button
@@ -93,9 +96,11 @@ const Signature: React.FC<SignatureProps> = ({
           </div>
         ) : uploadedImage ? (
           <div className="relative">
-            <img
+            <Image
               src={uploadedImage}
               alt="Uploaded Signature"
+              width={100}
+              height={100}
               className="w-full h-auto object-contain"
             />
             <button

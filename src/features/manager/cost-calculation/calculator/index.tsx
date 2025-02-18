@@ -31,7 +31,7 @@ export default function CalculatorPage() {
   const router = useRouter();
 
   if (status === "loading") {
-    return <div>Loading...</div>;
+    return <div>Загрузка...</div>;
   }
 
   const handleSignatureSubmit = (signatureDataUrl: string) => {

@@ -14,6 +14,7 @@ import { Act } from "@/helper/types";
 const initialActData: Act = {
   contract_original_act: null,
   contract_mercenary_and_warehouse: null,
+  qr_code: { qr: "" },
   number: "0",
   accounting_esf: null,
   accounting_avr: null,
@@ -78,7 +79,7 @@ export default function ActPage() {
 
   // While session is loading, display a loader.
   if (status === "loading") {
-    return <div>Loading...</div>;
+    return <div>Загрузка...</div>;
   }
 
   // GET API call to fill the fields.

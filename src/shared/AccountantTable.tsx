@@ -51,7 +51,7 @@ const AccountantTable: React.FC<TableProps> = ({
     );
   };
 
-  if (loading) return <p>Loading...</p>;
+  if (loading) return <p>Загрузка...</p>;
 
   return (
     <div className="mt-8">

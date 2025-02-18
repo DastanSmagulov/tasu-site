@@ -16,17 +16,21 @@ const QrAct: React.FC<QrActProps> = ({ qrCodeUrl, actNumber, description }) => {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center py-20 bg-gray-100">
-      <div className="bg-white p-8 rounded-lg shadow-md text-center max-w-md">
+    <div className="flex flex-col items-center justify-center">
+      <div className="p-8 rounded-lg text-center max-w-md">
         {/* QR Code */}
         <div className="mb-6">
-          <Image
-            src={qrCodeUrl}
-            alt="QR Code"
-            width={200}
-            height={200}
-            className="mx-auto"
-          />
+          {qrCodeUrl ? (
+            <img
+              src={qrCodeUrl ? qrCodeUrl : "../../public/images/qr-code.png"}
+              alt="QR Code"
+              // width={200}
+              // height={200}
+              className="mx-auto w-52 h-52"
+            />
+          ) : (
+            <img src="../../public/images/qr-code.png" alt="qr" />
+          )}
         </div>
 
         {/* Title */}

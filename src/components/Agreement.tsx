@@ -1,5 +1,5 @@
 import { ActDataProps } from "@/helper/types";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 
 // Helper function to convert a File to a Base64 string.
 const convertFileToBase64 = (file: File): Promise<string> => {
@@ -21,22 +21,52 @@ const Agreement: React.FC<ActDataProps & { original: boolean }> = ({
     ? "contract_original_act"
     : "contract_mercenary_and_warehouse";
 
-  // Local state to store the contract file as a Base64 string.
-  const [contractFile, setContractFile] = useState<string | null>(null);
+  // Local state: either a File object or a Base64 string.
+  const [file, setFile] = useState<File | string>(data?.[contractKey] || "");
 
-  // When a file is selected, convert it to Base64 and update local and parent state.
-  const handlePhotoUpload = async (
+  // Synchronize local state if parent's data changes.
+  useEffect(() => {
+    if (data?.[contractKey]) {
+      setFile(data[contractKey]);
+    }
+  }, [data, contractKey]);
+
+  // Compute a URL for displaying the file.
+  let displayFileUrl = "";
+  if (typeof file === "string") {
+    displayFileUrl = file;
+  } else if (file instanceof File) {
+    displayFileUrl = URL.createObjectURL(file);
+  }
+
+  // Helper: determine the PDF file name (if applicable).
+  const getPdfFileName = (): string => {
+    if (file instanceof File && file.type === "application/pdf") {
+      return file.name;
+    } else if (
+      typeof file === "string" &&
+      (file.startsWith("data:application/pdf") || file.endsWith(".pdf"))
+    ) {
+      const parts = file.split("/");
+      return parts[parts.length - 1];
+    }
+    return "";
+  };
+
+  // Handle file upload.
+  const handleFileUpload = async (
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
     const files = event.target.files;
     if (files && files[0]) {
-      const file = files[0];
+      const newFile = files[0];
       try {
-        const base64String = await convertFileToBase64(file);
-        setContractFile(base64String);
+        const base64String = await convertFileToBase64(newFile);
+        setFile(base64String);
+        // Update parent's data with the new file.
         setData((prevData: any) => ({
           ...prevData,
-          [contractKey]: file,
+          [contractKey]: newFile,
         }));
       } catch (error) {
         console.error("Error converting file to Base64:", error);
@@ -44,23 +74,14 @@ const Agreement: React.FC<ActDataProps & { original: boolean }> = ({
     }
   };
 
-  // Remove the file from local state and update parent state.
-  const handleRemovePhoto = () => {
-    setContractFile(null);
+  // Handle removal of file.
+  const handleRemoveFile = () => {
+    setFile("");
     setData((prevData: any) => ({
       ...prevData,
-      [contractKey]: null,
+      [contractKey]: "",
     }));
   };
-
-  // Determine the URL to display. If a new file is uploaded, use contractFile.
-  // Otherwise, if there's an existing Base64 string in data, use that.
-  const displayFileUrl =
-    contractFile !== null
-      ? contractFile
-      : typeof data?.[contractKey] === "string"
-      ? data[contractKey]
-      : null;
 
   return (
     <div className="bg-white p-6 rounded-lg shadow-md mt-8">
@@ -80,24 +101,27 @@ const Agreement: React.FC<ActDataProps & { original: boolean }> = ({
           <input
             type="file"
             accept="application/pdf"
-            onChange={handlePhotoUpload}
+            onChange={handleFileUpload}
             className="hidden"
           />
         </label>
       </div>
 
-      {/* Display the contract file (either new or already submitted) */}
+      {/* Display Uploaded File */}
       {displayFileUrl ? (
         <div className="relative bg-gray-100 h-32 rounded-md flex items-center justify-center">
-          {displayFileUrl.startsWith("data:application/pdf") ? (
-            <a
-              href={displayFileUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-blue-500 underline"
-            >
-              Просмотреть договор (PDF)
-            </a>
+          {!displayFileUrl.startsWith("application/pdf") ? (
+            <div className="flex flex-col items-center">
+              <a
+                href={displayFileUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-500 underline"
+              >
+                Просмотреть договор (PDF)
+              </a>
+              <p className="text-xs text-gray-500 mt-2">{getPdfFileName()}</p>
+            </div>
           ) : (
             <img
               src={displayFileUrl}
@@ -106,7 +130,7 @@ const Agreement: React.FC<ActDataProps & { original: boolean }> = ({
             />
           )}
           <button
-            onClick={handleRemovePhoto}
+            onClick={handleRemoveFile}
             className="absolute top-1 right-1 bg-red-600 text-white rounded-full p-1"
           >
             &times;

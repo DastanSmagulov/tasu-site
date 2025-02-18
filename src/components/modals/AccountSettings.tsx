@@ -7,6 +7,7 @@ import * as Yup from "yup";
 import Cookies from "js-cookie";
 import { FaSignOutAlt, FaArrowCircleDown } from "react-icons/fa";
 import { AiOutlineCloseCircle } from "react-icons/ai";
+import Image from "next/image";
 
 interface AccountSettingsProps {
   setModalOpen: (value: boolean) => void;
@@ -144,8 +145,6 @@ const AccountSettings: React.FC<AccountSettingsProps> = ({
     fetchProfileInfo();
   }, []);
 
-  console.log(profileImage);
-
   return (
     <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
       <div className="w-full max-w-3xl p-6 bg-white shadow-md rounded-lg relative">
@@ -174,12 +173,14 @@ const AccountSettings: React.FC<AccountSettingsProps> = ({
                 <div className="flex items-center space-x-4">
                   <div className="w-20 h-20 rounded-full bg-gray-200 flex items-center justify-center">
                     {profileImage ? (
-                      <img
+                      <Image
                         src={
                           typeof profileImage === "string"
                             ? profileImage // Display fetched URL
                             : URL.createObjectURL(profileImage) // Display uploaded file preview
                         }
+                        width={33}
+                        height={33}
                         alt="Profile"
                         className="w-full h-full object-cover rounded-full"
                       />

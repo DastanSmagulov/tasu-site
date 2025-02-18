@@ -22,11 +22,16 @@ const PackageCharacteristics: React.FC<ActDataProps> = ({ data, setData }) => {
   const [cargoCost, setCargoCost] = useState(
     data?.characteristic?.cargo_cost || ""
   );
-  const [senderCity, setSenderCity] = useState<string>(
-    data?.characteristic?.sender_city || ""
+  // Now we store the city id (or 0 if not selected)
+  const [senderCity, setSenderCity] = useState<number>(
+    data?.characteristic?.sender_city
+      ? Number(data.characteristic.sender_city)
+      : 0
   );
-  const [receiverCity, setReceiverCity] = useState<string>(
-    data?.characteristic?.receiver_city || ""
+  const [receiverCity, setReceiverCity] = useState<number>(
+    data?.characteristic?.receiver_city
+      ? Number(data.characteristic.receiver_city)
+      : 0
   );
   const [additionalInfo, setAdditionalInfo] = useState(
     data?.characteristic?.additional_info || ""
@@ -77,10 +82,9 @@ const PackageCharacteristics: React.FC<ActDataProps> = ({ data, setData }) => {
   useEffect(() => {
     if (data) {
       setCargoCost(data?.characteristic?.cargo_cost || "");
-      setSenderCity(data?.characteristic?.sender_city || "");
-      setReceiverCity(data?.characteristic?.receiver_city || "");
+      // Note: We do not overwrite the local sender/receiver id if they've been set
       setAdditionalInfo(data?.characteristic?.additional_info || "");
-      setPackages(data?.cargo || []);
+      // setPackages(data?.cargo || []);
     }
   }, [data]);
 
@@ -97,40 +101,35 @@ const PackageCharacteristics: React.FC<ActDataProps> = ({ data, setData }) => {
   const availableReceiverCities = useMemo(() => {
     if (!senderCity) return [];
     const found = cityOptions.find(
-      (item) => String(item.sender_city.name) === senderCity
+      (item) => item.sender_city.id === senderCity
     );
     return found ? found.receiver_cities : [];
   }, [cityOptions, senderCity]);
 
   // --- Update parent state when cargoCost, senderCity, additionalInfo change ---
   useEffect(() => {
-    const senderObj = uniqueSenderCities.find(
-      (city) => String(city.name) === senderCity
-    );
     setData((prevData: any) => ({
       ...prevData,
       characteristic: {
         ...prevData?.characteristic,
         cargo_cost: cargoCost,
-        sender_city: senderObj?.name || senderCity,
+        // Now we send the id
+        sender_city: senderCity,
         additional_info: additionalInfo,
       },
     }));
-  }, [cargoCost, senderCity, additionalInfo, setData, uniqueSenderCities]);
+  }, [cargoCost, senderCity, additionalInfo, setData]);
 
   // --- Update parent state for receiverCity ---
   useEffect(() => {
-    const receiverObj = availableReceiverCities.find(
-      (city) => String(city.name) === receiverCity
-    );
     setData((prevData: any) => ({
       ...prevData,
       characteristic: {
         ...prevData?.characteristic,
-        receiver_city: receiverObj?.name || receiverCity,
+        receiver_city: receiverCity,
       },
     }));
-  }, [receiverCity, setData, availableReceiverCities]);
+  }, [receiverCity, setData]);
 
   // --- Update parent state for packages ---
   useEffect(() => {
@@ -196,9 +195,9 @@ const PackageCharacteristics: React.FC<ActDataProps> = ({ data, setData }) => {
 
     // Find the selected option by its id and show its display label.
     const selectedOption = packageOptions.find((opt) =>
-      typeof currentValue === "string"
-        ? opt.name_ru + "" === currentValue + ""
-        : opt.id === currentValue
+      typeof currentValue == "string"
+        ? opt.name_ru == currentValue
+        : opt.id == currentValue
     );
     const displayValue = selectedOption
       ? selectedOption.name_ru
@@ -213,7 +212,7 @@ const PackageCharacteristics: React.FC<ActDataProps> = ({ data, setData }) => {
           {displayValue}
         </button>
         {open && (
-          <ul className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-40 overflow-auto text-sm">
+          <ul className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-40 overflow-y-auto text-sm">
             {packageOptions.map((option) => (
               <li
                 key={option.id}
@@ -266,7 +265,11 @@ const PackageCharacteristics: React.FC<ActDataProps> = ({ data, setData }) => {
             }}
             className="w-full border bg-white hover:bg-white border-gray-300 rounded-md p-2 text-left text-sm focus:outline-none focus:ring-2 focus:ring-[#09BD3C]"
           >
-            {data?.characteristic?.sender_city || "Выберите город отправителя"}
+            {
+              // If a sender city is selected, find its name.
+              uniqueSenderCities.find((city) => city.id === senderCity)?.name ||
+                "Выберите город отправителя"
+            }
           </button>
           {senderDropdownOpen && (
             <ul className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-40 overflow-auto text-sm">
@@ -274,9 +277,9 @@ const PackageCharacteristics: React.FC<ActDataProps> = ({ data, setData }) => {
                 <li
                   key={city.id}
                   onClick={() => {
-                    setSenderCity(city.name);
+                    setSenderCity(city.id);
                     setSenderDropdownOpen(false);
-                    setReceiverCity(""); // reset receiver when sender changes
+                    setReceiverCity(0); // reset receiver when sender changes
                   }}
                   className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
                 >
@@ -296,7 +299,8 @@ const PackageCharacteristics: React.FC<ActDataProps> = ({ data, setData }) => {
             disabled={!senderCity}
             className="w-full border bg-white hover:bg-white border-gray-300 rounded-md p-2 text-left text-sm focus:outline-none focus:ring-2 focus:ring-[#09BD3C]"
           >
-            {data?.characteristic?.receiver_city || "Выберите город получателя"}
+            {availableReceiverCities.find((city) => city.id === receiverCity)
+              ?.name || "Выберите город получателя"}
           </button>
           {receiverDropdownOpen && (
             <ul className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-40 overflow-auto text-sm">
@@ -304,7 +308,7 @@ const PackageCharacteristics: React.FC<ActDataProps> = ({ data, setData }) => {
                 <li
                   key={city.id}
                   onClick={() => {
-                    setReceiverCity(city.name);
+                    setReceiverCity(city.id);
                     setReceiverDropdownOpen(false);
                   }}
                   className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
@@ -363,7 +367,7 @@ const PackageCharacteristics: React.FC<ActDataProps> = ({ data, setData }) => {
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {packages.map((pkg: any, index: number) => (
+            {data?.cargo.map((pkg: any, index: number) => (
               <tr key={index}>
                 <td className="px-4 py-2 whitespace-nowrap">{index + 1}</td>
                 <td className="px-4 py-2 whitespace-nowrap">
@@ -402,7 +406,7 @@ const PackageCharacteristics: React.FC<ActDataProps> = ({ data, setData }) => {
                 <td className="px-4 py-2 whitespace-nowrap">
                   <input
                     type="number"
-                    value={pkg.dimensions?.length || ""}
+                    value={pkg.dimensions.length || ""}
                     onChange={(e) =>
                       handleChange(index, "dimensions.length", e.target.value)
                     }
@@ -413,7 +417,7 @@ const PackageCharacteristics: React.FC<ActDataProps> = ({ data, setData }) => {
                 <td className="px-4 py-2 whitespace-nowrap">
                   <input
                     type="number"
-                    value={pkg.dimensions?.width || ""}
+                    value={pkg.dimensions.width || ""}
                     onChange={(e) =>
                       handleChange(index, "dimensions.width", e.target.value)
                     }
@@ -424,7 +428,7 @@ const PackageCharacteristics: React.FC<ActDataProps> = ({ data, setData }) => {
                 <td className="px-4 py-2 whitespace-nowrap">
                   <input
                     type="number"
-                    value={pkg.dimensions?.height || ""}
+                    value={pkg.dimensions.height || ""}
                     onChange={(e) =>
                       handleChange(index, "dimensions.height", e.target.value)
                     }

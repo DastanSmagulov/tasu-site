@@ -33,10 +33,11 @@ const steps = [
   { id: 4, name: "Данные о Получения Груза", component: InformationPackage },
 ];
 
-// Initial actData (modify as needed)
 const initialActData: any = {
-  number: "0",
-  cargo_status: "",
+  number: "",
+  qr_code: {
+    qr: "",
+  },
   customer_data: {
     id: 0,
     full_name: "",
@@ -51,8 +52,17 @@ const initialActData: any = {
     additional_info: "",
   },
   cargo: [],
+  receiving_cargo_info: {
+    issued: "",
+    accepted: "",
+    date: "",
+  },
   cargo_images: [],
-  status: "акт сформирован",
+  transportation: {
+    sender: "1",
+    receiver: "5",
+    sender_is_payer: true,
+  },
 };
 
 export default function CreateActPage() {
@@ -80,8 +90,27 @@ export default function CreateActPage() {
     }
   }, [params.id]);
 
+  useEffect(() => {
+    if (!params.id) {
+      const fetchNewActData = async () => {
+        try {
+          const response = await axiosInstance.get("/acts/get_act_data/");
+          const { act_number, qr_code } = response.data;
+          setActData((prev) => ({
+            ...prev,
+            number: act_number,
+            qr_code: { qr: qr_code },
+          }));
+        } catch (error) {
+          console.error("Error fetching new act data:", error);
+        }
+      };
+      fetchNewActData();
+    }
+  }, [params.id]);
+
   if (status === "loading") {
-    return <div>Loading...</div>;
+    return <div>Загрузка...</div>;
   }
 
   const handleNext = () => {
@@ -100,8 +129,34 @@ export default function CreateActPage() {
     window.print();
   };
 
+  // Helper function to convert any property named "id" (or ending in "_id")
+  // to a number. It does this recursively on arrays and objects.
+  const convertIds = (data: any): any => {
+    if (Array.isArray(data)) {
+      return data.map(convertIds);
+    } else if (typeof data === "object" && data !== null) {
+      const newObj: any = {};
+      for (const key in data) {
+        if (Object.prototype.hasOwnProperty.call(data, key)) {
+          const value = data[key];
+          if (key.toLowerCase() === "id" || key.toLowerCase().endsWith("_id")) {
+            // Convert to number if possible (if empty string, use 0)
+            newObj[key] = value === "" || value === null ? 0 : Number(value);
+          } else {
+            newObj[key] = convertIds(value);
+          }
+        }
+      }
+      return newObj;
+    }
+    return data;
+  };
+
   const handleSend = async () => {
     try {
+      // First, convert all id fields to numbers.
+      const convertedActData = convertIds(actData);
+
       const formData = new FormData();
 
       // List of file fields to handle
@@ -114,7 +169,7 @@ export default function CreateActPage() {
 
       // Append file fields:
       fileFields.forEach((field) => {
-        const value = actData[field];
+        const value = convertedActData[field];
         console.log(`Field ${field}:`, value);
         if (value) {
           // If the value is a File object, append it directly.
@@ -136,11 +191,11 @@ export default function CreateActPage() {
         }
       });
 
-      // Append the remaining fields from actData.
-      (Object.keys(actData) as (keyof Act)[]).forEach((key) => {
+      // Append the remaining fields from convertedActData.
+      (Object.keys(convertedActData) as (keyof Act)[]).forEach((key) => {
         // Skip file fields already processed.
         if (fileFields.includes(key)) return;
-        const value = actData[key];
+        const value = convertedActData[key];
         if (value === null || value === undefined) return;
 
         // Special handling for arrays.
@@ -166,6 +221,7 @@ export default function CreateActPage() {
       const response = await axiosInstance.post("/acts/", formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
+      console.log("response", response.data);
       setActData(response.data);
       setIsModalOpen(true);
     } catch (error) {
@@ -326,7 +382,12 @@ export default function CreateActPage() {
         </div>
       </div>
 
-      {isModalOpen && <CreateSuccessAct setIsModalOpen={setIsModalOpen} />}
+      {isModalOpen && (
+        <CreateSuccessAct
+          title="Акт успешно создан!"
+          setIsModalOpen={setIsModalOpen}
+        />
+      )}
     </>
   );
 }

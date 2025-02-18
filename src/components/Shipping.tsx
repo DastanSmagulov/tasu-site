@@ -1,38 +1,113 @@
 "use client";
+import React, { FC, useState, useEffect, useRef } from "react";
 import { ActDataProps } from "@/helper/types";
-import React, { FC, useState } from "react";
+import { axiosInstance } from "@/helper/utils";
 
-const Shipping: FC<ActDataProps> = (data, setData) => {
-  const [senderName, setSenderName] = useState(""); // Sender's full name
-  const [recipientName, setRecipientName] = useState(""); // Recipient's full name
-  const [selectedPayer, setSelectedPayer] = useState("sender"); // Radio button state
+// Define the option type (assumed structure)
+interface CustomerOption {
+  id: string;
+  full_name: string;
+}
+
+const Shipping: FC<ActDataProps> = ({ data, setData }) => {
+  // State for API-fetched options
+  const [options, setOptions] = useState<CustomerOption[]>([]);
+
+  // State for selected sender & recipient
+  const [selectedSender, setSelectedSender] = useState<CustomerOption | null>(
+    null
+  );
+  const [selectedRecipient, setSelectedRecipient] =
+    useState<CustomerOption | null>(null);
+
+  // State for payer selection
+  const [selectedPayer, setSelectedPayer] = useState<"sender" | "recipient">(
+    "sender"
+  );
+
+  // Ref to ensure we pre-select from parent's data only once.
+  const preSelectRef = useRef(false);
+
+  // Fetch users from API once on mount.
+  useEffect(() => {
+    const fetchOptions = async () => {
+      try {
+        const response = await axiosInstance.get("/admin/users/search/");
+        const users: CustomerOption[] = response.data.results || [];
+        setOptions(users);
+      } catch (error) {
+        console.error("Error fetching shipping options", error);
+      }
+    };
+    fetchOptions();
+  }, []);
+
+  // Pre-select sender and recipient from data.transportation only once.
+  useEffect(() => {
+    if (!preSelectRef.current && options.length > 0 && data?.transportation) {
+      const { sender, receiver, sender_is_payer } = data.transportation;
+      console.log(data);
+      const preSelectedSender =
+        options.find((u) => u.full_name === sender) ||
+        (sender ? { id: sender, full_name: sender } : null);
+      const preSelectedReceiver =
+        options.find((u) => u.full_name === receiver) ||
+        (receiver ? { id: receiver, full_name: receiver } : null);
+      setSelectedSender(preSelectedSender);
+      setSelectedRecipient(preSelectedReceiver);
+      setSelectedPayer(sender_is_payer ? "sender" : "recipient");
+      preSelectRef.current = true;
+    }
+  }, [options, data?.transportation]);
+
+  // Update parent's state when local selections change.
+  useEffect(() => {
+    // Construct new transportation data
+    const newTransportation = {
+      sender: selectedSender ? selectedSender.full_name : "",
+      receiver: selectedRecipient ? selectedRecipient.full_name : "",
+      sender_is_payer: selectedPayer === "sender",
+    };
+    setData((prev: any) => ({
+      ...prev,
+      transportation: newTransportation,
+    }));
+  }, [selectedSender, selectedRecipient, selectedPayer, setData]);
 
   return (
     <div className="bg-white p-6 rounded-lg shadow-md relative">
-      {/* Section Header */}
       <h2 className="text-lg font-semibold mb-4 text-[#1D1B23]">Перевозка</h2>
-
-      {/* Grid Layout */}
       <div className="grid grid-cols-3 gap-4 items-center">
-        {/* Sender Name Input */}
-        <div className="col-span-1">
-          <input
-            type="text"
-            value={senderName}
-            onChange={(e) => setSenderName(e.target.value)}
-            placeholder="Укажите ФИО"
-            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#09BD3C]"
-          />
-        </div>
-
         {/* Sender Dropdown */}
         <div className="col-span-1">
-          <select className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#09BD3C]">
-            <option>Отправитель</option>
+          <select
+            value={selectedSender?.id || ""}
+            onChange={(e) => {
+              const selected = options.find((o) => o.id === e.target.value);
+              setSelectedSender(
+                selected ||
+                  (e.target.value
+                    ? { id: e.target.value, full_name: e.target.value }
+                    : null)
+              );
+            }}
+            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#09BD3C]"
+          >
+            <option value="">Выберите отправителя</option>
+            {options.map((opt) => (
+              <option key={opt.id} value={opt.id}>
+                {opt.full_name}
+              </option>
+            ))}
           </select>
         </div>
 
-        {/* Radio Button for Sender */}
+        {/* Label for Sender */}
+        <div className="col-span-1">
+          <span>Отправитель</span>
+        </div>
+
+        {/* Sender as Payer Radio */}
         <div className="col-span-1 flex items-center justify-end">
           <label className="inline-flex items-center cursor-pointer">
             <input
@@ -57,25 +132,36 @@ const Shipping: FC<ActDataProps> = (data, setData) => {
           </label>
         </div>
 
-        {/* Recipient Name Input */}
-        <div className="col-span-1">
-          <input
-            type="text"
-            value={recipientName}
-            onChange={(e) => setRecipientName(e.target.value)}
-            placeholder="Укажите ФИО"
-            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#09BD3C]"
-          />
-        </div>
-
         {/* Recipient Dropdown */}
         <div className="col-span-1">
-          <select className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#09BD3C]">
-            <option>Получатель</option>
+          <select
+            value={selectedRecipient?.id || ""}
+            onChange={(e) => {
+              const selected = options.find((o) => o.id === e.target.value);
+              setSelectedRecipient(
+                selected ||
+                  (e.target.value
+                    ? { id: e.target.value, full_name: e.target.value }
+                    : null)
+              );
+            }}
+            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#09BD3C]"
+          >
+            <option value="">Выберите получателя</option>
+            {options.map((opt) => (
+              <option key={opt.id} value={opt.id}>
+                {opt.full_name}
+              </option>
+            ))}
           </select>
         </div>
 
-        {/* Radio Button for Recipient */}
+        {/* Label for Recipient */}
+        <div className="col-span-1">
+          <span>Получатель</span>
+        </div>
+
+        {/* Recipient as Payer Radio */}
         <div className="col-span-1 flex items-center justify-end">
           <label className="inline-flex items-center cursor-pointer">
             <input
@@ -101,7 +187,6 @@ const Shipping: FC<ActDataProps> = (data, setData) => {
         </div>
       </div>
 
-      {/* Right-aligned Label */}
       <div className="absolute top-0 right-0 mt-4 mr-6 text-sm text-gray-500">
         Выберите плательщика
       </div>
