@@ -1,11 +1,15 @@
 "use client";
 
-import Checkbox from "@/components/ui/CheckBox";
 import React, { useState, useEffect } from "react";
-import Search from "../../public/icons/search.svg";
 import Image from "next/image";
+import Search from "../../public/icons/search.svg";
 import { axiosInstance } from "@/helper/utils";
 import { City } from "@/helper/types";
+
+interface Status {
+  key: string;
+  value: string;
+}
 
 interface FilterPanelProps {
   filters: any;
@@ -15,6 +19,7 @@ interface FilterPanelProps {
 const FilterPanel: React.FC<FilterPanelProps> = ({ filters, setFilters }) => {
   const [showStatusDropdown, setShowStatusDropdown] = useState(false);
   const [cities, setCities] = useState<City[]>([]);
+  const [statuses, setStatuses] = useState<Status[]>([]);
 
   useEffect(() => {
     // Fetch cities
@@ -30,13 +35,27 @@ const FilterPanel: React.FC<FilterPanelProps> = ({ filters, setFilters }) => {
     fetchCities();
   }, []);
 
+  useEffect(() => {
+    // Fetch cargo statuses
+    const fetchStatuses = async () => {
+      try {
+        const response = await axiosInstance.get("/constants/cargo_statuses/");
+        setStatuses(response.data);
+      } catch (error) {
+        console.error("Ошибка загрузки статусов:", error);
+      }
+    };
+
+    fetchStatuses();
+  }, []);
+
   // Check if any filter (except "limit") is active
   const activeFilter = Boolean(
     filters.search ||
       filters.number ||
       filters.consignment__cargo_status ||
-      filters.sender_city ||
-      filters.receiver_city ||
+      filters.sender_city__name_ru ||
+      filters.receiver_city__name_ru ||
       filters.created_at ||
       filters.closed_at ||
       filters.ordering
@@ -88,19 +107,31 @@ const FilterPanel: React.FC<FilterPanelProps> = ({ filters, setFilters }) => {
             {/* Dropdown Menu */}
             {showStatusDropdown && (
               <ul className="absolute z-10 mt-1 bg-white border border-gray-200 rounded-md shadow-md w-40 text-sm">
-                {["", "Активный", "Завершенный"].map((status) => (
+                <li
+                  onClick={() => {
+                    setFilters({
+                      ...filters,
+                      consignment__cargo_status: "",
+                    });
+                    setShowStatusDropdown(false);
+                  }}
+                  className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                >
+                  Все
+                </li>
+                {statuses.map((status) => (
                   <li
-                    key={status}
+                    key={status.key}
                     onClick={() => {
                       setFilters({
                         ...filters,
-                        consignment__cargo_status: status,
+                        consignment__cargo_status: status.key,
                       });
                       setShowStatusDropdown(false);
                     }}
                     className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
                   >
-                    {status || "Все"}
+                    {status.value}
                   </li>
                 ))}
               </ul>
@@ -153,9 +184,9 @@ const FilterPanel: React.FC<FilterPanelProps> = ({ filters, setFilters }) => {
         <div className="flex flex-col">
           <label className="font-medium mb-1">Город отправителя</label>
           <select
-            value={filters.sender_city}
+            value={filters.sender_city__name_ru}
             onChange={(e) =>
-              setFilters({ ...filters, sender_city: e.target.value })
+              setFilters({ ...filters, sender_city__name_ru: e.target.value })
             }
             className="bg-white border-b border-gray-300 focus:outline-none focus:border-gray-500 px-2 py-1"
           >
@@ -172,9 +203,12 @@ const FilterPanel: React.FC<FilterPanelProps> = ({ filters, setFilters }) => {
         <div className="flex flex-col">
           <label className="font-medium mb-1">Город получателя</label>
           <select
-            value={filters.receiver_city}
+            value={filters.receiver_city__name_ru}
             onChange={(e) =>
-              setFilters({ ...filters, receiver_city: e.target.value })
+              setFilters({
+                ...filters,
+                receiver_city__name_ru: e.target.value,
+              })
             }
             className="bg-white border-b border-gray-300 focus:outline-none focus:border-gray-500 px-2 py-1"
           >
@@ -196,8 +230,8 @@ const FilterPanel: React.FC<FilterPanelProps> = ({ filters, setFilters }) => {
                   search: "",
                   number: "",
                   consignment__cargo_status: "",
-                  sender_city: "",
-                  receiver_city: "",
+                  sender_city__name_ru: "",
+                  receiver_city__name_ru: "",
                   created_at: "",
                   closed_at: "",
                   ordering: "",

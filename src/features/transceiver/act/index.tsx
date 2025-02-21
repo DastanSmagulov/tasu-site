@@ -89,27 +89,13 @@ function getChangedFields<T>(initial: T, current: T): Partial<T> {
   return diff;
 }
 
-// Build FormData from the diff object.
-const buildFormData = (data: any): FormData => {
+function buildFormData(diff: Partial<Act>): FormData {
   const formData = new FormData();
+  (Object.keys(diff) as (keyof Act)[]).forEach((key) => {
+    const value = diff[key];
+    if (value === null || value === undefined) return;
 
-  const jsonKeys = [
-    "customer_data",
-    "characteristic",
-    "cargo",
-    "cargo_images",
-    "driver_data",
-    "vehicle_data",
-    "receiver_data",
-    "receiving_cargo_info",
-    "delivery_cargo_info",
-    "transportation",
-  ];
-
-  Object.keys(data).forEach((key) => {
-    const value = data[key];
-
-    // Handle transportation_services separately.
+    // Special handling for transportation_services:
     if (key === "transportation_services") {
       const services = Array.isArray(value) ? value : [];
       services.forEach((service: any) =>
@@ -118,28 +104,43 @@ const buildFormData = (data: any): FormData => {
       return;
     }
 
-    if (jsonKeys.includes(key)) {
+    // Special handling for file arrays (e.g. accountant_photo)
+    if (key === "accountant_photo") {
+      if (Array.isArray(value)) {
+        value.forEach((file: any) => {
+          if (file instanceof File) {
+            formData.append("accountant_photo", file);
+          }
+        });
+      }
+      return;
+    }
+
+    // Special handling for cargo and cargo_images:
+    // Send the entire array as a JSON string.
+    if (key === "cargo" || key === "cargo_images") {
       formData.append(key, JSON.stringify(value));
       return;
     }
 
-    if (typeof value === "boolean") {
-      formData.append(key, value ? "true" : "false");
-      return;
-    }
-
-    if (value !== undefined && value !== null) {
-      formData.append(key, value.toString());
+    if (value instanceof File) {
+      formData.append(key, value);
+    } else if (Array.isArray(value)) {
+      value.forEach((item) => {
+        if (item instanceof File) {
+          formData.append(`${key}`, item);
+        } else {
+          formData.append(`${key}[]`, item + "");
+        }
+      });
+    } else if (typeof value === "object") {
+      formData.append(key, JSON.stringify(value));
+    } else {
+      formData.append(key, value + "");
     }
   });
-
-  // Optionally, if you always want a transportation key even if unchanged.
-  if (!data.transportation) {
-    formData.append("transportation", JSON.stringify({}));
-  }
-
   return formData;
-};
+}
 
 const steps = [
   { id: 1, name: "Данные о Заказчике", component: Customer },
@@ -218,8 +219,7 @@ export default function ActPage() {
           headers: { "Content-Type": "multipart/form-data" },
         }
       );
-      console.log("Patch response:", response.data);
-      setActData(response.data);
+      console.log(response.data);
       originalDataRef.current = response.data;
       setIsModalOpen(true);
     } catch (error) {
@@ -342,7 +342,7 @@ export default function ActPage() {
                 d="M6.75 15.75v3.75h10.5v-3.75M4.5 9.75h15a1.5 1.5 0 011.5 1.5v6a1.5 1.5 0 01-1.5 1.5H4.5A1.5 1.5 0 013 17.25v-6a1.5 1.5 0 011.5-1.5zM15.75 3.75v6m-7.5-6v6"
               />
             </svg>
-            Распечатать Акт
+            Отправить на хранение
           </button>
           <div className="flex items-center space-x-4">
             <label className="text-sm font-semibold text-gray-700">
@@ -382,7 +382,10 @@ export default function ActPage() {
             </svg>
             Распечатать Акт
           </button>
-          <button className="font-semibold border border-gray-500 px-4 py-2 bg-white hover:bg-gray-100 text-black rounded-lg">
+          <button
+            onClick={handleSend}
+            className="font-semibold border border-gray-500 px-4 py-2 bg-white hover:bg-gray-100 text-black rounded-lg"
+          >
             Сохранить
           </button>
           <button
@@ -394,7 +397,12 @@ export default function ActPage() {
         </div>
       </div>
 
-      {isModalOpen && <CreateSuccessAct setIsModalOpen={setIsModalOpen} />}
+      {isModalOpen && (
+        <CreateSuccessAct
+          title="Акт успешно обновлен!"
+          setIsModalOpen={setIsModalOpen}
+        />
+      )}
     </>
   );
 }

@@ -31,6 +31,11 @@ interface TransportationQuantityService {
   price: string;
 }
 
+interface Status {
+  key: string;
+  value: string;
+}
+
 // Your initial act data (default values)
 const initialActData: any = {
   contract_original_act: null,
@@ -89,23 +94,19 @@ const initialActData: any = {
     receiver: "",
     sender_is_payer: false,
   },
+  status: "FORMED", // We'll use keys here (e.g. "FORMED")
 };
 
 //
-// Helper functions for normalization and comparison
+// Helper functions for normalization and diffing (unchanged)
 //
-
-// Convert NaN (or null/undefined) to a canonical value.
 function normalizeValue(val: any): any {
   if (typeof val === "number" && isNaN(val)) return "";
   if (val === null || val === undefined) return "";
   return val;
 }
 
-// Compare two values after normalizing them.
-// For objects and arrays, we use JSON.stringify after mapping normalization.
 function isEqualNormalized(val1: any, val2: any): boolean {
-  // Both are numbers and NaN:
   if (
     typeof val1 === "number" &&
     isNaN(val1) &&
@@ -114,7 +115,6 @@ function isEqualNormalized(val1: any, val2: any): boolean {
   ) {
     return true;
   }
-  // If both are objects or arrays:
   if (
     typeof val1 === "object" &&
     val1 !== null &&
@@ -146,7 +146,6 @@ function getChangedFields<T>(initial: T, current: T): Partial<T> {
     const initVal = initial[typedKey];
     const currVal = current[typedKey];
     if (!isEqualNormalized(initVal, currVal)) {
-      // If both values are non-null objects and not arrays, perform a nested diff.
       if (
         typeof initVal === "object" &&
         initVal !== null &&
@@ -167,12 +166,13 @@ function getChangedFields<T>(initial: T, current: T): Partial<T> {
   return diff;
 }
 
-// Convert a diff object to FormData.
 function buildFormData(diff: Partial<Act>): FormData {
   const formData = new FormData();
   (Object.keys(diff) as (keyof Act)[]).forEach((key) => {
     const value = diff[key];
     if (value === null || value === undefined) return;
+
+    // Special handling for transportation_services:
     if (key === "transportation_services") {
       const services = Array.isArray(value) ? value : [];
       services.forEach((service: any) =>
@@ -180,6 +180,25 @@ function buildFormData(diff: Partial<Act>): FormData {
       );
       return;
     }
+
+    // Special handling for file arrays (e.g. accountant_photo)
+    if (key === "accountant_photo") {
+      if (Array.isArray(value)) {
+        value.forEach((file: any) => {
+          if (file instanceof File) {
+            formData.append("accountant_photo", file);
+          }
+        });
+      }
+      return;
+    }
+
+    // Special handling for cargo and cargo_images: send as JSON
+    if (key === "cargo" || key === "cargo_images") {
+      formData.append(key, JSON.stringify(value));
+      return;
+    }
+
     if (value instanceof File) {
       formData.append(key, value);
     } else if (Array.isArray(value)) {
@@ -187,7 +206,7 @@ function buildFormData(diff: Partial<Act>): FormData {
         if (item instanceof File) {
           formData.append(`${key}`, item);
         } else {
-          formData.append(`${key}`, item + "");
+          formData.append(`${key}[]`, item + "");
         }
       });
     } else if (typeof value === "object") {
@@ -203,11 +222,11 @@ export default function ActPage() {
   const { data: session, status: sessionStatus } = useSession();
   const [currentStep, setCurrentStep] = useState(0);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  // actData holds the current form values; originalActData holds the baseline.
   const [actData, setActData] = useState<Act>(initialActData);
   const [originalActData, setOriginalActData] = useState<Act>(initialActData);
   const [transportationQuantityServices, setTransportationQuantityServices] =
     useState<TransportationQuantityService[]>([]);
+  const [statuses, setStatuses] = useState<Status[]>([]);
   const params = useParams();
 
   useEffect(() => {
@@ -217,7 +236,7 @@ export default function ActPage() {
           const response = await axiosInstance.get(`/acts/${params.id}/`);
           console.log("Fetched act data:", response.data);
           setActData(response.data);
-          setOriginalActData(response.data); // store baseline for diff
+          setOriginalActData(response.data);
         } catch (error) {
           console.error("Error fetching act data:", error);
         }
@@ -235,7 +254,20 @@ export default function ActPage() {
     }
   }, [params.id]);
 
-  // --- Fetch available transportation services ---
+  // Fetch statuses from /constants/cargo_statuses/
+  useEffect(() => {
+    const fetchStatuses = async () => {
+      try {
+        const response = await axiosInstance.get("/constants/cargo_statuses/");
+        setStatuses(response.data);
+      } catch (error) {
+        console.error("Error fetching statuses:", error);
+      }
+    };
+    fetchStatuses();
+  }, []);
+
+  // Fetch available transportation services.
   useEffect(() => {
     const fetchTransportationQuantityServices = async () => {
       try {
@@ -274,13 +306,12 @@ export default function ActPage() {
     window.print();
   };
 
-  // --- Handle sending patch ---
+  // Handle sending patch: compute diff and send only changed fields.
   const handleSend = async () => {
     try {
-      // Compute diff between original and current actData.
       const changedData = getChangedFields(originalActData, actData);
-      // Build FormData from the diff.
       const formData = buildFormData(changedData);
+      console.log(actData);
       const response = await axiosInstance.patch(
         `/acts/${params.id}/`,
         formData
@@ -293,7 +324,7 @@ export default function ActPage() {
     }
   };
 
-  // --- Memoize steps for mobile and desktop layouts ---
+  // Memoize steps for mobile and desktop layouts.
   const stepsMemo = useMemo(
     () => [
       {
@@ -383,7 +414,7 @@ export default function ActPage() {
               onChange={(newSelectedIds: number[]) =>
                 setActData((prev) => ({
                   ...prev,
-                  transportation_services: newSelectedIds,
+                  transportation_service_ids: newSelectedIds,
                 }))
               }
             />
@@ -414,10 +445,10 @@ export default function ActPage() {
         name: "QR Код акта",
         component: () => (
           <>
-            {actData && actData.status === "готов к отправке" && (
+            {actData && actData.status === "READY_FOR_SHIPMENT" && (
               <QrAct
                 qrCodeUrl="/images/qr-code.png"
-                actNumber="1234"
+                actNumber={actData?.number + ""}
                 description="Lorem ipsum dolor sit amet consectetur. Dictum morbi ut lacus ultrices pulvinar lectus adipiscing sit."
               />
             )}
@@ -496,7 +527,9 @@ export default function ActPage() {
           Номер акта {actData.number}
         </h2>
         <span className="px-3 py-1 rounded-full text-sm font-medium bg-green-500 text-white">
-          {actData.status ? actData.status : "Status"}
+          {statuses.find((s) => s.key === actData.status)?.value ||
+            actData.status ||
+            "Status"}
         </span>
       </div>
       <div className="hidden min-[500px]:flex act-flex gap-4 mt-4 w-full">
@@ -508,9 +541,7 @@ export default function ActPage() {
           <DriverInfo data={actData} setData={setActData} />
           {actData?.transportation_type === "AUTO_SINGLE" ? (
             <TransportInfo data={actData} setData={setActData} />
-          ) : (
-            <></>
-          )}{" "}
+          ) : null}
           <div className="space-y-6">
             <div className="flex items-center gap-2 text-lg font-medium">
               <label className="flex items-center gap-1 cursor-pointer">
@@ -538,7 +569,6 @@ export default function ActPage() {
           <Agreement original={true} data={actData} setData={setActData} />
         </div>
         <div className="flex flex-col lg:w-1/2 space-y-4">
-          {/* <Shipping data={actData} setData={setActData} /> */}
           <CustomerReceiver data={actData} setData={setActData} />
           <InformationPackage
             title={"О получении"}
@@ -571,6 +601,7 @@ export default function ActPage() {
         </div>
       </div>
 
+      {/* Bottom Section for Desktop */}
       <div className="flex justify-between min-[1050px]:flex-row flex-col">
         <div className="flex flex-col space-y-4 mt-4">
           <button
@@ -598,17 +629,32 @@ export default function ActPage() {
               Статус:
             </label>
             <select
-              value={actData?.status || ""}
+              value={
+                statuses.find((s) => s.value == actData.status)?.key ||
+                actData.status ||
+                "Status"
+              }
               onChange={(e) =>
                 setActData((prev) => ({ ...prev, status: e.target.value }))
               }
               className="border rounded-lg px-2 py-1 bg-white focus:ring-2 focus:ring-yellow-400"
             >
-              <option value="акт сформирован">акт сформирован</option>
-              <option value="на хранении">на хранении</option>
-              <option value="отправлен">отправлен</option>
+              {statuses.map((status) => (
+                <option key={status.key} value={status.key}>
+                  {status.value}
+                </option>
+              ))}
             </select>
           </div>
+          {/* Отправить на хранение button */}
+          <button
+            onClick={() =>
+              setActData((prev) => ({ ...prev, status: "SENT_TO_STORAGE" }))
+            }
+            className="font-semibold border border-gray-500 px-4 py-2 bg-white hover:bg-gray-100 text-black rounded-lg"
+          >
+            Отправить на хранение
+          </button>
         </div>
         <div className="flex gap-4 mt-4 text-[#000000] sm:h-10 min-[500px]:flex-row flex-col">
           <button

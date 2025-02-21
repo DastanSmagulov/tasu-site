@@ -15,10 +15,11 @@ const AccountantPage = () => {
   const [prevPageUrl, setPrevPageUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState({
+    number: "",
     search: "",
     consignment__cargo_status: "",
-    sender_city: "",
-    receiver_city: "",
+    sender_city__name_ru: "",
+    receiver_city__name_ru: "",
     created_at: "",
     closed_at: "",
     ordering: "",
@@ -27,12 +28,30 @@ const AccountantPage = () => {
 
   const limit = parseInt(filters.limit, 10);
 
+  /** Build a URL query string from filters **/
+  const buildQueryString = () => {
+    const params = new URLSearchParams();
+    Object.entries(filters).forEach(([key, value]) => {
+      if (value) {
+        params.append(key, value);
+      }
+    });
+    // Reset offset to 0 on filters change.
+    params.set("offset", "0");
+    return params.toString();
+  };
+
   /** Fetch data from API **/
   const fetchActsData = async (url?: string | null) => {
     setLoading(true);
     try {
-      let finalUrl = url || `/acts/?limit=${limit}&offset=0`; // Default to first page if no URL
-
+      let finalUrl: string;
+      if (url) {
+        finalUrl = url;
+      } else {
+        const queryString = buildQueryString();
+        finalUrl = `/acts/?${queryString}`;
+      }
       const response = await axiosInstance.get(finalUrl);
       setData(response.data.results);
       setTotalCount(response.data.count);

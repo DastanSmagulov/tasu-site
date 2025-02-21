@@ -229,8 +229,6 @@ export default function CreateActPage() {
       const response = await axiosInstance.post("/acts/", formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
-      console.log("response", response.data);
-      setActData(response.data);
       setIsModalOpen(true);
     } catch (error) {
       console.error("Error sending act data:", error);

@@ -6,7 +6,6 @@ import TrashIcon from "../../public/icons/trash.svg";
 import Checkbox from "@/components/ui/CheckBox";
 import { axiosInstance, formatDate } from "@/helper/utils";
 import Cookies from "js-cookie";
-import { Act } from "@/helper/types";
 
 const Table = ({ data, loading, fetchActsData }: any) => {
   const [selectedRows, setSelectedRows] = useState(new Set());

@@ -207,7 +207,6 @@ export default function ActPage() {
         console.log("No changes detected, nothing to update.");
         return;
       }
-      console.log("Changed data to be patched:", changedData);
       const formData = buildFormData(changedData);
       const response = await axiosInstance.patch(
         `/acts/${params.id}/`,
@@ -216,8 +215,6 @@ export default function ActPage() {
           headers: { "Content-Type": "multipart/form-data" },
         }
       );
-      console.log("Patch response:", response.data);
-      setActData(response.data);
       originalDataRef.current = response.data;
       setIsModalOpen(true);
     } catch (error) {

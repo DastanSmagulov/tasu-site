@@ -177,8 +177,6 @@ export default function CreateActPage() {
         headers: { "Content-Type": "multipart/form-data" },
       });
 
-      console.log("response", response.data);
-      setActData(response.data);
       setIsModalOpen(true);
     } catch (error) {
       console.error("Error sending act data:", error);

@@ -15,17 +15,6 @@ interface PackageOption {
   name_ru: string;
 }
 
-const convertISOToDateTimeLocal = (iso: string): string => {
-  const date = new Date(iso);
-  const pad = (n: number) => n.toString().padStart(2, "0");
-  const year = date.getFullYear();
-  const month = pad(date.getMonth() + 1);
-  const day = pad(date.getDate());
-  const hours = pad(date.getHours());
-  const minutes = pad(date.getMinutes());
-  return `${year}-${month}-${day}T${hours}:${minutes}`;
-};
-
 const InformationPackage: React.FC<ActDataProps & { title: string }> = ({
   title,
   data,
@@ -34,7 +23,11 @@ const InformationPackage: React.FC<ActDataProps & { title: string }> = ({
   // Local states for "Выдал" and "Принял"
   const [issuedBy, setIssuedBy] = useState<CustomerOption | null>(null);
   const [receivedBy, setReceivedBy] = useState<CustomerOption | null>(null);
-  const [dateTime, setDateTime] = useState(data?.receiving_cargo_info?.date); // datetime-local string
+  const [dateTime, setDateTime] = useState(
+    title.toLowerCase().includes("выдаче")
+      ? data?.delivery_cargo_info?.date
+      : data?.receiving_cargo_info?.date
+  ); // datetime-local string
 
   // Signature states.
   // Initialize from parent's data if available.
@@ -106,6 +99,19 @@ const InformationPackage: React.FC<ActDataProps & { title: string }> = ({
   }, [data, title]);
 
   useEffect(() => {
+    const formatDateToBackend = (date: string | null) => {
+      if (!date) return null;
+      const parsedDate = new Date(date);
+      return `${parsedDate.getFullYear()}-${String(
+        parsedDate.getMonth() + 1
+      ).padStart(2, "0")}-${String(parsedDate.getDate()).padStart(
+        2,
+        "0"
+      )} ${String(parsedDate.getHours()).padStart(2, "0")}:${String(
+        parsedDate.getMinutes()
+      ).padStart(2, "0")}:${String(parsedDate.getSeconds()).padStart(2, "0")}`;
+    };
+
     let newData;
     if (title.toLowerCase().includes("получении")) {
       newData = {
@@ -113,7 +119,7 @@ const InformationPackage: React.FC<ActDataProps & { title: string }> = ({
         receiving_cargo_info: {
           issued: issuedBy ? issuedBy.id : null,
           accepted: receivedBy ? receivedBy.id : null,
-          date: dateTime,
+          date: formatDateToBackend(dateTime+""),
         },
         receiver_data: {
           ...data?.receiver_data,
@@ -126,7 +132,7 @@ const InformationPackage: React.FC<ActDataProps & { title: string }> = ({
         delivery_cargo_info: {
           issued: issuedBy ? issuedBy.id : null,
           accepted: receivedBy ? receivedBy.id : null,
-          date: dateTime,
+          date: formatDateToBackend(dateTime+""),
         },
         customer_data: {
           ...data?.customer_data,
@@ -135,8 +141,6 @@ const InformationPackage: React.FC<ActDataProps & { title: string }> = ({
       };
     }
 
-    // Compare newData with data here (a deep equality check might be necessary)
-    // and only call setData if there are differences.
     if (JSON.stringify(newData) !== JSON.stringify(data)) {
       setData(newData);
     }
