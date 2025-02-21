@@ -38,7 +38,7 @@ const ServicesTables: React.FC<ServicesTablesProps> = ({
 }) => {
   // Use a local state for selected IDs (initialized from parent's data)
   const [selectedIds, setSelectedIds] = useState<number[]>(
-    data?.transportation_services|| []
+    data?.transportation_services || []
   );
 
   // When parent's data changes, update our local state.
@@ -496,8 +496,9 @@ const ServicesTables: React.FC<ServicesTablesProps> = ({
                           >
                             {availablePackagingOptions?.map((service) => (
                               <option key={service.id} value={service.id}>
-                                {service.type} (Низкий: {service.info1},
-                                Средний: {service.info2}, Цена: {service.info3})
+                                {service.type} (Низкий тариф: {service.info1},
+                                Средний тариф: {service.info2}, Цена:{" "}
+                                {service.info3})
                               </option>
                             ))}
                           </select>
@@ -634,8 +635,8 @@ const ServicesTables: React.FC<ServicesTablesProps> = ({
                           >
                             {availableWarehouseOptions?.map((service) => (
                               <option key={service.id} value={service.id}>
-                                {service.type} (Инфо: {service.info1}, Цена:{" "}
-                                {service.info2})
+                                {service.type} (Информация: {service.info1},
+                                Цена: {service.info2})
                               </option>
                             ))}
                           </select>

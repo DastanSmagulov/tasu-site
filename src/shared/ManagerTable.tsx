@@ -8,7 +8,7 @@ import { axiosInstance, formatDate } from "@/helper/utils";
 import Cookies from "js-cookie";
 import { Act } from "@/helper/types";
 
-const Table = ({ data, loading, fetchActsData }: any) => {
+const ManagerTable = ({ data, loading, fetchActsData }: any) => {
   const [selectedRows, setSelectedRows] = useState(new Set());
   const role = Cookies.get("role");
 
@@ -83,8 +83,9 @@ const Table = ({ data, loading, fetchActsData }: any) => {
                 { label: "Заказчик", key: "customer" },
                 { label: "Дата", key: "date" },
                 { label: "Мест", key: "places" },
-                { label: "Вес", key: "weight" },
-                { label: "Куб", key: "volume" },
+                { label: "ЭСФ", key: "esf" },
+                { label: "АВР", key: "abp" },
+                { label: "СЧЕТ", key: "bill" },
                 { label: "Статус", key: "status" },
                 { label: "Вид", key: "view" },
                 { label: "Сумма", key: "amount" },
@@ -170,4 +171,4 @@ const Table = ({ data, loading, fetchActsData }: any) => {
   );
 };
 
-export default Table;
+export default ManagerTable;

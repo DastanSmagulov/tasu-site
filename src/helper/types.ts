@@ -67,11 +67,14 @@ interface DriverData {
   full_name: string;
   id_card_number: string;
   technical_passport: string;
+  plane_id: string;
+  partner_id: string;
+  train_id: string;
 }
 
 interface VehicleData {
   auto_info: string;
-  state_number: string;
+  license_plate: string;
 }
 
 interface CargoInfo {
@@ -96,6 +99,8 @@ export interface Act {
   cargo: Cargo[];
   cargo_images: CargoImage[];
   transportation_type: string;
+  cargo_characteristics: string;
+  cargo_slots: string;
   driver_data: DriverData;
   vehicle_data: VehicleData;
   packaging_is_damaged: boolean | null;
@@ -110,11 +115,29 @@ export interface Act {
   accounting_avr: string | null;
   cargo_status: string;
   transportation?: Transportation;
+  accountant_photo: CargoImage[];
 }
 
 export interface TableRow {
   id: string;
   customer: string;
+  created_at: string;
+  cargo: Cargo;
+  status: string;
+  statusColor: string;
+  view: string;
+  total_cost: string;
+  esf?: string;
+  avr?: string;
+  invoice?: string;
+  processed?: boolean;
+}
+
+export interface AccountantTableRow {
+  has_esf: boolean;
+  has_avr: boolean;
+  id: string;
+  customer: Customer;
   created_at: string;
   cargo: Cargo;
   status: string;

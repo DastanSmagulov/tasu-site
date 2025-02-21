@@ -11,7 +11,7 @@ import CreateSuccessAct from "@/components/modals/CreateSuccessAct";
 import { Act } from "@/helper/types";
 import { useParams } from "next/navigation";
 import { axiosInstance } from "@/helper/utils";
-import QrAct from "@/components/QrAct";
+import Shipping from "@/components/Shipping";
 
 const steps = [
   { id: 1, name: "Данные о Заказчике", component: Customer },
@@ -26,7 +26,6 @@ const initialActData: any = {
   qr_code: {
     qr: "",
   },
-  cargo_status: "",
   customer_data: {
     id: 0,
     full_name: "",
@@ -43,13 +42,11 @@ const initialActData: any = {
   cargo: [],
   cargo_images: [],
   transportation: {
-    sender: "1",
-    receiver: "5",
+    sender: "",
+    receiver: "",
     sender_is_payer: true,
   },
 };
-
-console.log("HELLLO");
 
 export default function CreateActPage() {
   const { data: session, status } = useSession();
@@ -259,6 +256,7 @@ export default function CreateActPage() {
           <CargoPhoto setData={setActData} data={actData} />
         </div>
         <div className="flex flex-col md:w-1/2 space-y-4">
+          <Shipping data={actData} setData={setActData} />
           <InformationPackage
             title="О Получении"
             setData={setActData}
@@ -341,7 +339,12 @@ export default function CreateActPage() {
         </div>
       </div>
 
-      {isModalOpen && <CreateSuccessAct setIsModalOpen={setIsModalOpen} />}
+      {isModalOpen && (
+        <CreateSuccessAct
+          title="Акт успешно создан!"
+          setIsModalOpen={setIsModalOpen}
+        />
+      )}
     </>
   );
 }

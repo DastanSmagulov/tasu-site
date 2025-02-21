@@ -5,11 +5,11 @@ import Link from "next/link";
 import TrashIcon from "../../public/icons/trash.svg";
 import Checkbox from "@/components/ui/CheckBox";
 import { axiosInstance, formatDate } from "@/helper/utils";
-import { TableRow } from "@/helper/types";
+import { AccountantTableRow } from "@/helper/types";
 import Cookies from "js-cookie";
 
 interface TableProps {
-  data: TableRow[];
+  data: AccountantTableRow[];
   loading: boolean;
   fetchActsData: (arg0?: string) => void;
 }
@@ -84,7 +84,7 @@ const AccountantTable: React.FC<TableProps> = ({
             </tr>
           </thead>
           <tbody className="bg-white">
-            {data?.map((row: TableRow) => (
+            {data?.map((row: AccountantTableRow) => (
               <tr key={row.id} className="text-sm text-gray-800">
                 <td className="p-3 pl-10 border border-gray-300">
                   <Checkbox
@@ -100,12 +100,14 @@ const AccountantTable: React.FC<TableProps> = ({
                     <h2>{row.id}</h2>
                   )}
                 </td>
-                <td className="p-3 border border-gray-300">{row.customer}</td>
                 <td className="p-3 border border-gray-300">
-                  <Checkbox checked={!!row.esf} />
+                  {row.customer?.full_name}
                 </td>
                 <td className="p-3 border border-gray-300">
-                  <Checkbox checked={!!row.avr} />
+                  <Checkbox checked={!!row.has_esf} />
+                </td>
+                <td className="p-3 border border-gray-300">
+                  <Checkbox checked={!!row.has_avr} />
                 </td>
                 <td className="p-3 border border-gray-300">
                   <Checkbox checked={!!row.invoice} />

@@ -11,6 +11,7 @@ import CreateSuccessAct from "@/components/modals/CreateSuccessAct";
 import { Act } from "@/helper/types";
 import { useParams } from "next/navigation";
 import { axiosInstance } from "@/helper/utils";
+import Shipping from "@/components/Shipping";
 
 // Define the data type for your document (if needed)
 type DocumentData = {
@@ -59,8 +60,8 @@ const initialActData: any = {
   },
   cargo_images: [],
   transportation: {
-    sender: "1",
-    receiver: "5",
+    sender: "",
+    receiver: "",
     sender_is_payer: true,
   },
 };
@@ -170,7 +171,6 @@ export default function CreateActPage() {
       // Append file fields:
       fileFields.forEach((field) => {
         const value = convertedActData[field];
-        console.log(`Field ${field}:`, value);
         if (value) {
           // If the value is a File object, append it directly.
           if (value instanceof File) {
@@ -300,6 +300,7 @@ export default function CreateActPage() {
           <CargoPhoto data={actData} setData={setActData} />
         </div>
         <div className="flex flex-col md:w-1/2 space-y-4">
+          <Shipping data={actData} setData={setActData} />
           <InformationPackage
             title="О Получении"
             data={actData}

@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from "react";
-import { ActDataProps } from "@/helper/types";
+import React, { useState, useEffect, FC, CSSProperties, useRef } from "react";
 import { axiosInstance } from "@/helper/utils";
-import Signature from "@/components/Signature";
-import Image from "next/image";
+import { ActDataProps } from "@/helper/types";
+import { createPortal } from "react-dom";
+import Signature from "./Signature";
 
 interface CustomerOption {
   id: string;
@@ -10,7 +10,11 @@ interface CustomerOption {
   phone?: string;
 }
 
-// Helper: convert an ISO date string to the HTML datetime-local format (YYYY-MM-DDTHH:mm)
+interface PackageOption {
+  id: number;
+  name_ru: string;
+}
+
 const convertISOToDateTimeLocal = (iso: string): string => {
   const date = new Date(iso);
   const pad = (n: number) => n.toString().padStart(2, "0");
@@ -30,15 +34,22 @@ const InformationPackage: React.FC<ActDataProps & { title: string }> = ({
   // Local states for "Выдал" and "Принял"
   const [issuedBy, setIssuedBy] = useState<CustomerOption | null>(null);
   const [receivedBy, setReceivedBy] = useState<CustomerOption | null>(null);
-  const [dateTime, setDateTime] = useState(""); // datetime-local string
+  const [dateTime, setDateTime] = useState(data?.receiving_cargo_info?.date); // datetime-local string
 
-  // Signature states (initialize from data so the signature is shown immediately)
+  // Signature states.
+  // Initialize from parent's data if available.
   const [signatureDataUrl, setSignatureDataUrl] = useState<string | null>(
-    data?.customer_data?.signature || null
+    title.toLowerCase().includes("выдаче")
+      ? data?.customer_data?.signature || null
+      : null
   );
   const [receiverSignatureDataUrl, setReceiverSignatureDataUrl] = useState<
     string | null
-  >(data?.receiver_data?.signature || null);
+  >(
+    title.toLowerCase().includes("получении")
+      ? data?.receiver_data?.signature || null
+      : null
+  );
 
   // Dropdown states for "Выдал" and "Принял"
   const [customers, setCustomers] = useState<CustomerOption[]>([]);
@@ -58,8 +69,7 @@ const InformationPackage: React.FC<ActDataProps & { title: string }> = ({
     fetchCustomers();
   }, []);
 
-  // Initialize local state from parent's data whenever it changes,
-  // but only if local state is still empty (i.e. user hasn't modified it).
+  // Initialize local state from parent's data (run only when data or title change)
   useEffect(() => {
     if (data) {
       if (
@@ -76,9 +86,6 @@ const InformationPackage: React.FC<ActDataProps & { title: string }> = ({
             full_name: info.accepted + "",
           });
         }
-        if (!dateTime && info.date) {
-          setDateTime(convertISOToDateTimeLocal(info.date));
-        }
       } else if (
         title.toLowerCase().includes("выдаче") &&
         data.delivery_cargo_info
@@ -93,43 +100,45 @@ const InformationPackage: React.FC<ActDataProps & { title: string }> = ({
             full_name: info.accepted + "",
           });
         }
-        if (!dateTime && info.date) {
-          setDateTime(convertISOToDateTimeLocal(info.date));
-        }
       }
     }
-  }, [data, title, issuedBy, receivedBy, dateTime]);
+    // Only depend on data and title (not local state) to avoid loops.
+  }, [data, title]);
 
-  // Update parent's state when local state changes.
   useEffect(() => {
+    let newData;
     if (title.toLowerCase().includes("получении")) {
-      // For receiving info, update receiving_cargo_info and receiver_data's signature.
-      setData((prev: any) => ({
-        ...prev,
+      newData = {
+        ...data,
         receiving_cargo_info: {
           issued: issuedBy ? issuedBy.id : null,
           accepted: receivedBy ? receivedBy.id : null,
           date: dateTime,
         },
         receiver_data: {
-          ...prev.receiver_data,
+          ...data?.receiver_data,
           signature: receiverSignatureDataUrl,
         },
-      }));
+      };
     } else if (title.toLowerCase().includes("выдаче")) {
-      // For issuance info, update delivery_cargo_info and customer_data's signature.
-      setData((prev: any) => ({
-        ...prev,
+      newData = {
+        ...data,
         delivery_cargo_info: {
           issued: issuedBy ? issuedBy.id : null,
           accepted: receivedBy ? receivedBy.id : null,
           date: dateTime,
         },
         customer_data: {
-          ...prev.customer_data,
+          ...data?.customer_data,
           signature: signatureDataUrl,
         },
-      }));
+      };
+    }
+
+    // Compare newData with data here (a deep equality check might be necessary)
+    // and only call setData if there are differences.
+    if (JSON.stringify(newData) !== JSON.stringify(data)) {
+      setData(newData);
     }
   }, [
     issuedBy,
@@ -141,12 +150,12 @@ const InformationPackage: React.FC<ActDataProps & { title: string }> = ({
     receiverSignatureDataUrl,
   ]);
 
-  // Update dateTime state on input change
+  // Update dateTime state on input change.
   const handleDateTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setDateTime(e.target.value);
   };
 
-  // Format datetime for display
+  // Format datetime for display.
   const formatDateTime = (dateTime: string) => {
     if (!dateTime) return "";
     const date = new Date(dateTime);
@@ -175,7 +184,7 @@ const InformationPackage: React.FC<ActDataProps & { title: string }> = ({
     reader.readAsDataURL(file);
   };
 
-  // Handlers for dropdown toggling using the input field
+  // Handlers for dropdown toggling.
   const toggleIssuedDropdown = () => {
     setIssuedDropdownOpen((prev) => !prev);
   };
@@ -196,7 +205,7 @@ const InformationPackage: React.FC<ActDataProps & { title: string }> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Handle additional form submission logic if needed
+    // Additional submission logic if needed.
   };
 
   return (
@@ -273,11 +282,21 @@ const InformationPackage: React.FC<ActDataProps & { title: string }> = ({
           <div className="mt-2 flex items-center gap-4">
             <input
               type="datetime-local"
-              value={dateTime}
+              value={
+                title.toLowerCase().includes("получении")
+                  ? data?.receiving_cargo_info?.date + ""
+                  : data?.delivery_cargo_info?.date + ""
+              }
               onChange={handleDateTimeChange}
               className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
-            <span className="text-gray-700">{formatDateTime(dateTime)}</span>
+            <span className="text-gray-700">
+              {formatDateTime(
+                title.toLowerCase().includes("получении")
+                  ? data?.receiving_cargo_info?.date + ""
+                  : data?.delivery_cargo_info?.date + ""
+              )}
+            </span>{" "}
           </div>
         </div>
 
@@ -289,9 +308,7 @@ const InformationPackage: React.FC<ActDataProps & { title: string }> = ({
               <Signature
                 onSubmit={setSignatureDataUrl}
                 onUpload={handleCustomerSignatureUpload}
-                initialDataUrl={
-                  data?.customer_data?.signature || signatureDataUrl
-                }
+                initialDataUrl={data?.customer_data?.signature}
               />
             </>
           ) : (
@@ -300,29 +317,20 @@ const InformationPackage: React.FC<ActDataProps & { title: string }> = ({
               <Signature
                 onSubmit={setReceiverSignatureDataUrl}
                 onUpload={handleReceiverSignatureUpload}
-                initialDataUrl={
-                  data?.receiver_data?.signature || receiverSignatureDataUrl
-                }
+                initialDataUrl={data?.receiver_data?.signature}
               />
             </>
           )}
           <div className="mt-4">
-            {data?.customer_data?.signature ||
-            data?.receiver_data?.signature ? (
-              <Image
-                src={
-                  title.toLowerCase().includes("выдаче")
-                    ? data?.customer_data?.signature + ""
-                    : data?.receiver_data?.signature + ""
-                }
-                width={500}
-                height={500}
-                alt="Подпись"
-                className="max-w-full"
-              />
-            ) : (
-              <span className="Загрузка..."></span>
-            )}
+            <img
+              src={
+                title.toLowerCase().includes("выдаче")
+                  ? data?.customer_data?.signature || ""
+                  : data?.receiver_data?.signature || ""
+              }
+              alt="Подпись"
+              className="max-w-full"
+            />
           </div>
         </div>
       </form>

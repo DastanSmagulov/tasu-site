@@ -10,25 +10,41 @@ interface CustomerOption {
 }
 
 const Shipping: FC<ActDataProps> = ({ data, setData }) => {
-  // State for API-fetched options
+  // Fetch options from API.
   const [options, setOptions] = useState<CustomerOption[]>([]);
 
-  // State for selected sender & recipient
+  // Initialize local state from parent's data if available.
+  const initialSender =
+    data?.transportation?.sender && data.transportation.sender !== ""
+      ? {
+          id: data.transportation.sender,
+          full_name: data.transportation.sender,
+        }
+      : null;
+  const initialReceiver =
+    data?.transportation?.receiver && data.transportation.receiver !== ""
+      ? {
+          id: data.transportation.receiver,
+          full_name: data.transportation.receiver,
+        }
+      : null;
+  const initialPayer = data?.transportation?.sender_is_payer
+    ? "sender"
+    : "recipient";
+
   const [selectedSender, setSelectedSender] = useState<CustomerOption | null>(
-    null
+    initialSender
   );
   const [selectedRecipient, setSelectedRecipient] =
-    useState<CustomerOption | null>(null);
-
-  // State for payer selection
+    useState<CustomerOption | null>(initialReceiver);
   const [selectedPayer, setSelectedPayer] = useState<"sender" | "recipient">(
-    "sender"
+    initialPayer
   );
 
-  // Ref to ensure we pre-select from parent's data only once.
+  // Ref to ensure we only pre-select once from parent's data if options are available.
   const preSelectRef = useRef(false);
 
-  // Fetch users from API once on mount.
+  // Fetch options once on mount.
   useEffect(() => {
     const fetchOptions = async () => {
       try {
@@ -42,36 +58,44 @@ const Shipping: FC<ActDataProps> = ({ data, setData }) => {
     fetchOptions();
   }, []);
 
-  // Pre-select sender and recipient from data.transportation only once.
+  // Once options are available, try to update our local state with matching objects.
   useEffect(() => {
     if (!preSelectRef.current && options.length > 0 && data?.transportation) {
       const { sender, receiver, sender_is_payer } = data.transportation;
-      console.log(data);
-      const preSelectedSender =
+      // Try to find matching option objects.
+      const matchedSender =
         options.find((u) => u.full_name === sender) ||
         (sender ? { id: sender, full_name: sender } : null);
-      const preSelectedReceiver =
+      const matchedReceiver =
         options.find((u) => u.full_name === receiver) ||
         (receiver ? { id: receiver, full_name: receiver } : null);
-      setSelectedSender(preSelectedSender);
-      setSelectedRecipient(preSelectedReceiver);
+      setSelectedSender(matchedSender);
+      setSelectedRecipient(matchedReceiver);
       setSelectedPayer(sender_is_payer ? "sender" : "recipient");
       preSelectRef.current = true;
     }
   }, [options, data?.transportation]);
 
-  // Update parent's state when local selections change.
   useEffect(() => {
-    // Construct new transportation data
     const newTransportation = {
       sender: selectedSender ? selectedSender.full_name : "",
       receiver: selectedRecipient ? selectedRecipient.full_name : "",
       sender_is_payer: selectedPayer === "sender",
     };
-    setData((prev: any) => ({
-      ...prev,
-      transportation: newTransportation,
-    }));
+
+    // Use JSON.stringify to compare the new object with the previous one.
+    setData((prev: any) => {
+      const prevTransportation = prev.transportation || {};
+      if (
+        JSON.stringify(prevTransportation) === JSON.stringify(newTransportation)
+      ) {
+        return prev; // no changes, so do nothing
+      }
+      return {
+        ...prev,
+        transportation: newTransportation,
+      };
+    });
   }, [selectedSender, selectedRecipient, selectedPayer, setData]);
 
   return (

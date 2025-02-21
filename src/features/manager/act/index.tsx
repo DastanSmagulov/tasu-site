@@ -135,12 +135,11 @@ function isEqualNormalized(val1: any, val2: any): boolean {
   return normalizeValue(val1) === normalizeValue(val2);
 }
 
-// Recursively get only the fields that differ between two objects.
 function getChangedFields<T>(initial: T, current: T): Partial<T> {
   const diff: Partial<T> = {};
   const keys = new Set([
-    ...Object.keys(initial + ""),
-    ...Object.keys(current + ""),
+    ...Object.keys(initial as any),
+    ...Object.keys(current as any),
   ]);
   keys.forEach((key) => {
     const typedKey = key as keyof T;
@@ -174,14 +173,21 @@ function buildFormData(diff: Partial<Act>): FormData {
   (Object.keys(diff) as (keyof Act)[]).forEach((key) => {
     const value = diff[key];
     if (value === null || value === undefined) return;
+    if (key === "transportation_services") {
+      const services = Array.isArray(value) ? value : [];
+      services.forEach((service: any) =>
+        formData.append("transportation_service_ids", service.toString())
+      );
+      return;
+    }
     if (value instanceof File) {
       formData.append(key, value);
     } else if (Array.isArray(value)) {
       value.forEach((item) => {
         if (item instanceof File) {
-          formData.append(`${key}[]`, item);
+          formData.append(`${key}`, item);
         } else {
-          formData.append(`${key}[]`, item + "");
+          formData.append(`${key}`, item + "");
         }
       });
     } else if (typeof value === "object") {
@@ -204,7 +210,6 @@ export default function ActPage() {
     useState<TransportationQuantityService[]>([]);
   const params = useParams();
 
-  // --- Fetch act data if editing an existing act ---
   useEffect(() => {
     if (params.id) {
       const fetchActData = async () => {
@@ -217,7 +222,16 @@ export default function ActPage() {
           console.error("Error fetching act data:", error);
         }
       };
+
+      // First fetch on mount.
       fetchActData();
+
+      // Second fetch after 500ms.
+      const timer = setTimeout(() => {
+        fetchActData();
+      }, 500);
+
+      return () => clearTimeout(timer);
     }
   }, [params.id]);
 
@@ -263,21 +277,15 @@ export default function ActPage() {
   // --- Handle sending patch ---
   const handleSend = async () => {
     try {
-      console.log("Original data:", originalActData);
-      console.log("Current data:", actData);
       // Compute diff between original and current actData.
       const changedData = getChangedFields(originalActData, actData);
-      console.log("Changed data to be patched:", changedData);
       // Build FormData from the diff.
       const formData = buildFormData(changedData);
       const response = await axiosInstance.patch(
         `/acts/${params.id}/`,
         formData
       );
-      console.log("Patch response:", response.data);
-      // Update both actData and originalActData with new data.
-      setActData(response.data);
-      setOriginalActData(response.data);
+      console.log(response.data);
       setIsModalOpen(true);
     } catch (error) {
       console.error("Error sending act data:", error);
@@ -347,11 +355,11 @@ export default function ActPage() {
             <TransportInfo data={props.data} setData={props.setData} />
             <ManagerLink
               title="приема наемником"
-              link="https://tasu.kz/shortlive_reference_607/"
+              link="https://tasu-site.vercel.app/carrier"
             />
             <ManagerLink
               title="передачи наемником"
-              link="https://tasu.kz/shortlive_reference_148/"
+              link="https://tasu-site.vercel.app/carrier/packageInfo"
             />
           </>
         ),
@@ -498,7 +506,11 @@ export default function ActPage() {
           <CargoPhoto data={actData} setData={setActData} />
           <TransportationTypes data={actData} setData={setActData} />
           <DriverInfo data={actData} setData={setActData} />
-          <TransportInfo data={actData} setData={setActData} />
+          {actData?.transportation_type === "AUTO_SINGLE" ? (
+            <TransportInfo data={actData} setData={setActData} />
+          ) : (
+            <></>
+          )}{" "}
           <div className="space-y-6">
             <div className="flex items-center gap-2 text-lg font-medium">
               <label className="flex items-center gap-1 cursor-pointer">
@@ -516,11 +528,11 @@ export default function ActPage() {
             </div>
             <ManagerLink
               title="приема наемником"
-              link="https://tasu.kz/shortlive_reference_607/"
+              link="https://tasu-site.vercel.app/carrier"
             />
             <ManagerLink
               title="передачи наемником"
-              link="https://tasu.kz/shortlive_reference_148/"
+              link="https://tasu-site.vercel.app/carrier/packageInfo"
             />
           </div>
           <Agreement original={true} data={actData} setData={setActData} />
@@ -540,7 +552,7 @@ export default function ActPage() {
             onChange={(newSelectedIds: number[]) =>
               setActData((prev) => ({
                 ...prev,
-                transportation_services: newSelectedIds,
+                transportation_service_ids: newSelectedIds,
               }))
             }
           />

@@ -1,15 +1,21 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, {
+  useState,
+  useEffect,
+  useCallback,
+  FC,
+  useRef,
+  CSSProperties,
+} from "react";
 import { axiosInstance } from "@/helper/utils";
 import { ActDataProps } from "@/helper/types";
+import { createPortal } from "react-dom";
 
-interface Option {
+interface City {
   id: number;
-  name: string;
-}
-
-interface CityOption {
-  sender_city: Option;
-  receiver_cities: Option[];
+  country: string;
+  name_ru: string;
+  name_kz: string;
+  name_en: string;
 }
 
 interface PackageOption {
@@ -17,135 +23,96 @@ interface PackageOption {
   name_ru: string;
 }
 
-const PackageCharacteristics: React.FC<ActDataProps> = ({ data, setData }) => {
-  // --- Local state for characteristic fields ---
+interface GlobalPackageCharacteristicDropdownProps {
+  currentValue: number | string | null;
+  onSelect: (val: number) => void;
+}
+
+const PackageCharacteristics: FC<ActDataProps> = ({ data, setData }) => {
+  // Initialize local state from the parent's data only on mount.
   const [cargoCost, setCargoCost] = useState(
     data?.characteristic?.cargo_cost || ""
   );
-  // Now we store the city id (or 0 if not selected)
-  const [senderCity, setSenderCity] = useState<number>(
+  const [senderCity, setSenderCity] = useState<number | string>(
     data?.characteristic?.sender_city
-      ? Number(data.characteristic.sender_city)
-      : 0
   );
-  const [receiverCity, setReceiverCity] = useState<number>(
+  const [receiverCity, setReceiverCity] = useState<number | string>(
     data?.characteristic?.receiver_city
-      ? Number(data.characteristic.receiver_city)
-      : 0
   );
   const [additionalInfo, setAdditionalInfo] = useState(
     data?.characteristic?.additional_info || ""
   );
+  const [cargoCharacteristics, setCargoCharacteristics] = useState<
+    number | string | null
+  >(data?.cargo_characteristics || null);
+  const [cargoSlots, setCargoSlots] = useState<number>(
+    Number(data?.cargo_slots)
+  );
+  const [packages, setPackages] = useState<any[]>(data?.cargo || []);
 
-  // --- Local state for packages ---
-  const [packages, setPackages] = useState<any>(data?.cargo || []);
-
-  // --- Local state for package options (characteristics) ---
+  // Other local states
   const [packageOptions, setPackageOptions] = useState<PackageOption[]>([]);
-
-  // --- Local state for available city options ---
-  const [cityOptions, setCityOptions] = useState<CityOption[]>([]);
-
-  // --- Dropdown toggles for cities ---
+  const [cities, setCities] = useState<City[]>([]);
   const [senderDropdownOpen, setSenderDropdownOpen] = useState(false);
   const [receiverDropdownOpen, setReceiverDropdownOpen] = useState(false);
 
   // --- Fetch package options ---
-  const fetchPackageOptions = async () => {
-    try {
-      const response = await axiosInstance.get("/admin/characteristics/");
-      setPackageOptions(response.data.results);
-    } catch (error) {
-      console.error("Error fetching package options:", error);
-    }
-  };
   useEffect(() => {
+    const fetchPackageOptions = async () => {
+      try {
+        const response = await axiosInstance.get("/admin/characteristics/");
+        setPackageOptions(response.data.results);
+      } catch (error) {
+        console.error("Error fetching package options:", error);
+      }
+    };
     fetchPackageOptions();
   }, []);
 
-  // --- Fetch city options ---
-  const fetchCityOptions = async () => {
-    try {
-      const response = await axiosInstance.get(
-        "/admin/city-transportations/available-cities/"
-      );
-      setCityOptions(response.data);
-    } catch (error) {
-      console.error("Error fetching city options:", error);
-    }
-  };
+  // --- Fetch cities ---
   useEffect(() => {
-    fetchCityOptions();
+    const fetchCities = async () => {
+      try {
+        const response = await axiosInstance.get("/admin/cities");
+        setCities(response.data.results);
+      } catch (error) {
+        console.error("Error fetching cities:", error);
+      }
+    };
+    fetchCities();
   }, []);
 
-  // --- Synchronize parent's data to local state on every change ---
+  // --- Combine updating parent's state in one effect ---
   useEffect(() => {
-    if (data) {
-      setCargoCost(data?.characteristic?.cargo_cost || "");
-      // Note: We do not overwrite the local sender/receiver id if they've been set
-      setAdditionalInfo(data?.characteristic?.additional_info || "");
-      // setPackages(data?.cargo || []);
-    }
-  }, [data]);
-
-  // --- Memoize unique sender cities ---
-  const uniqueSenderCities = useMemo(() => {
-    return Array.from(
-      new Map(
-        cityOptions.map((item) => [item.sender_city.id, item.sender_city])
-      ).values()
-    );
-  }, [cityOptions]);
-
-  // --- Memoize available receiver cities based on senderCity ---
-  const availableReceiverCities = useMemo(() => {
-    if (!senderCity) return [];
-    const found = cityOptions.find(
-      (item) => item.sender_city.id === senderCity
-    );
-    return found ? found.receiver_cities : [];
-  }, [cityOptions, senderCity]);
-
-  // --- Update parent state when cargoCost, senderCity, additionalInfo change ---
-  useEffect(() => {
-    setData((prevData: any) => ({
-      ...prevData,
+    setData((prev: any) => ({
+      ...prev,
       characteristic: {
-        ...prevData?.characteristic,
+        ...prev?.characteristic,
         cargo_cost: cargoCost,
-        // Now we send the id
         sender_city: senderCity,
+        receiver_city: receiverCity,
         additional_info: additionalInfo,
       },
-    }));
-  }, [cargoCost, senderCity, additionalInfo, setData]);
-
-  // --- Update parent state for receiverCity ---
-  useEffect(() => {
-    setData((prevData: any) => ({
-      ...prevData,
-      characteristic: {
-        ...prevData?.characteristic,
-        receiver_city: receiverCity,
-      },
-    }));
-  }, [receiverCity, setData]);
-
-  // --- Update parent state for packages ---
-  useEffect(() => {
-    setData((prevData: any) => ({
-      ...prevData,
+      cargo_characteristics: cargoCharacteristics,
+      cargo_slots: cargoSlots,
       cargo: packages,
     }));
-  }, [packages, setData]);
+  }, [
+    cargoCost,
+    senderCity,
+    receiverCity,
+    additionalInfo,
+    cargoCharacteristics,
+    cargoSlots,
+    packages,
+    setData,
+  ]);
 
-  // --- Add a new package ---
-  const handleAddPackage = () => {
-    setPackages((prev: any) => [
+  // --- Handlers ---
+  const handleAddPackage = useCallback(() => {
+    setPackages((prev) => [
       ...prev,
       {
-        characteristics: null, // Will store the characteristic id
-        slots: "0",
         weight: "0",
         dimensions: {
           length: "0",
@@ -155,79 +122,95 @@ const PackageCharacteristics: React.FC<ActDataProps> = ({ data, setData }) => {
         },
       },
     ]);
-  };
+  }, []);
 
-  // --- Generic handler to update package values ---
-  const handleChange = (index: number, field: string, value: any) => {
-    setPackages((prev: any) => {
-      const newPackages = [...prev];
-      if (field.includes(".")) {
-        const [parent, child] = field.split(".");
-        newPackages[index] = {
-          ...newPackages[index],
-          [parent]: {
-            ...newPackages[index][parent],
-            [child]: value,
-          },
-        };
-      } else {
-        newPackages[index] = {
-          ...newPackages[index],
-          [field]: value,
-        };
-      }
-      return newPackages;
-    });
-  };
+  const handleChange = useCallback(
+    (index: number, field: string, value: any) => {
+      setPackages((prev) => {
+        const newPackages = [...prev];
+        if (field.includes(".")) {
+          const [parent, child] = field.split(".");
+          newPackages[index] = {
+            ...newPackages[index],
+            [parent]: {
+              ...newPackages[index][parent],
+              [child]: value,
+            },
+          };
+        } else {
+          newPackages[index] = { ...newPackages[index], [field]: value };
+        }
+        return newPackages;
+      });
+    },
+    []
+  );
 
-  // --- Inline component for package characteristic dropdown ---
-  interface PackageCharacteristicDropdownProps {
-    index: number;
-    currentValue: number | null; // expecting the id
-    onSelect: (val: number) => void;
-  }
-
-  const PackageCharacteristicDropdown: React.FC<
-    PackageCharacteristicDropdownProps
-  > = ({ index, currentValue, onSelect }) => {
+  // --- Global Package Characteristic Dropdown ---
+  const GlobalPackageCharacteristicDropdown: FC<
+    GlobalPackageCharacteristicDropdownProps
+  > = ({ currentValue, onSelect }) => {
     const [open, setOpen] = useState(false);
+    const [dropdownStyles, setDropdownStyles] = useState<CSSProperties>({});
+    const buttonRef = useRef<HTMLButtonElement>(null);
+
     const toggleOpen = () => setOpen((prev) => !prev);
 
-    // Find the selected option by its id and show its display label.
+    useEffect(() => {
+      if (open && buttonRef.current) {
+        const rect = buttonRef.current.getBoundingClientRect();
+        setDropdownStyles({
+          position: "absolute",
+          top: rect.bottom + window.scrollY,
+          left: rect.left + window.scrollX,
+          width: rect.width,
+          zIndex: 1000,
+        });
+      }
+    }, [open]);
+
     const selectedOption = packageOptions.find((opt) =>
-      typeof currentValue == "string"
-        ? opt.name_ru == currentValue
-        : opt.id == currentValue
+      typeof currentValue === "string"
+        ? opt.name_ru === currentValue
+        : opt.id === currentValue
     );
     const displayValue = selectedOption
       ? selectedOption.name_ru
       : "Выберите характеристику груза";
 
+    const dropdownList = (
+      <ul
+        className="bg-white border border-gray-300 rounded-md shadow-lg max-h-40 overflow-y-auto text-sm"
+        style={dropdownStyles}
+      >
+        {packageOptions.map((option) => (
+          <li
+            key={option.id}
+            onClick={() => {
+              onSelect(option.id);
+              setOpen(false);
+            }}
+            className="px-3 py-1 hover:bg-gray-100 cursor-pointer"
+          >
+            {option.name_ru}
+          </li>
+        ))}
+      </ul>
+    );
+
     return (
-      <div className="relative">
-        <button
-          onClick={toggleOpen}
-          className="w-full border bg-white hover:bg-white border-gray-300 rounded-md p-2 text-left text-sm focus:outline-none focus:ring-2 focus:ring-[#09BD3C]"
-        >
-          {displayValue}
-        </button>
-        {open && (
-          <ul className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-40 overflow-y-auto text-sm">
-            {packageOptions.map((option) => (
-              <li
-                key={option.id}
-                onClick={() => {
-                  onSelect(option.id);
-                  setOpen(false);
-                }}
-                className="px-3 py-1 hover:bg-gray-100 cursor-pointer"
-              >
-                {option.name_ru}
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
+      <>
+        <div className="relative">
+          <button
+            ref={buttonRef}
+            onClick={toggleOpen}
+            className="w-full border bg-white hover:bg-white border-gray-300 rounded-md p-2 text-left text-sm focus:outline-none focus:ring-2 focus:ring-[#09BD3C]"
+          >
+            {displayValue}
+          </button>
+        </div>
+        {open && createPortal(dropdownList, document.body)}
+      </>
     );
   };
 
@@ -244,7 +227,7 @@ const PackageCharacteristics: React.FC<ActDataProps> = ({ data, setData }) => {
         </label>
         <input
           type="text"
-          value={cargoCost}
+          value={data?.characteristic?.cargo_cost}
           onChange={(e) => setCargoCost(e.target.value)}
           placeholder="Укажите стоимость"
           className="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-[#09BD3C] text-sm"
@@ -265,30 +248,30 @@ const PackageCharacteristics: React.FC<ActDataProps> = ({ data, setData }) => {
             }}
             className="w-full border bg-white hover:bg-white border-gray-300 rounded-md p-2 text-left text-sm focus:outline-none focus:ring-2 focus:ring-[#09BD3C]"
           >
-            {
-              // If a sender city is selected, find its name.
-              uniqueSenderCities.find((city) => city.id === senderCity)?.name ||
-                "Выберите город отправителя"
-            }
+            {cities.find((city) => {
+              return typeof senderCity == "number"
+                ? city.id == data?.characteristic?.sender_city
+                : city.name_ru == senderCity;
+            })?.name_ru || "Выберите город отправителя"}
           </button>
           {senderDropdownOpen && (
             <ul className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-40 overflow-auto text-sm">
-              {uniqueSenderCities.map((city) => (
+              {cities.map((city) => (
                 <li
                   key={city.id}
                   onClick={() => {
-                    setSenderCity(city.id);
+                    setSenderCity(city.name_ru);
                     setSenderDropdownOpen(false);
-                    setReceiverCity(0); // reset receiver when sender changes
                   }}
                   className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
                 >
-                  {city.name}
+                  {city.name_ru}
                 </li>
               ))}
             </ul>
           )}
         </div>
+
         {/* Receiver City */}
         <div>
           <label className="block text-sm font-medium text-[#1D1B23] mb-1">
@@ -299,21 +282,24 @@ const PackageCharacteristics: React.FC<ActDataProps> = ({ data, setData }) => {
             disabled={!senderCity}
             className="w-full border bg-white hover:bg-white border-gray-300 rounded-md p-2 text-left text-sm focus:outline-none focus:ring-2 focus:ring-[#09BD3C]"
           >
-            {availableReceiverCities.find((city) => city.id === receiverCity)
-              ?.name || "Выберите город получателя"}
+            {cities.find((city) => {
+              return typeof receiverCity == "number"
+                ? city.id == data?.characteristic?.receiver_city
+                : city.name_ru == receiverCity;
+            })?.name_ru || "Выберите город получателя"}
           </button>
           {receiverDropdownOpen && (
             <ul className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-40 overflow-auto text-sm">
-              {availableReceiverCities.map((city: any) => (
+              {cities.map((city) => (
                 <li
                   key={city.id}
                   onClick={() => {
-                    setReceiverCity(city.id);
+                    setReceiverCity(city.name_ru);
                     setReceiverDropdownOpen(false);
                   }}
                   className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
                 >
-                  {city.name}
+                  {city.name_ru}
                 </li>
               ))}
             </ul>
@@ -327,7 +313,7 @@ const PackageCharacteristics: React.FC<ActDataProps> = ({ data, setData }) => {
           Дополнительно
         </label>
         <textarea
-          value={additionalInfo}
+          value={data?.characteristic?.additional_info}
           onChange={(e) => setAdditionalInfo(e.target.value)}
           placeholder="Любые дополнения относительно характера груза и веса товара"
           className="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-[#09BD3C] text-sm"
@@ -335,19 +321,38 @@ const PackageCharacteristics: React.FC<ActDataProps> = ({ data, setData }) => {
         />
       </div>
 
-      {/* Package (Cargo) Details as a Table */}
+      {/* Global Cargo Characteristics */}
+      <div className="mb-6">
+        <label className="block text-sm font-medium text-[#1D1B23] mb-1">
+          Характеристика груза
+        </label>
+        <GlobalPackageCharacteristicDropdown
+          currentValue={cargoCharacteristics}
+          onSelect={(val: number) => setCargoCharacteristics(val)}
+        />
+      </div>
+
+      {/* Global Cargo Slots */}
+      <div className="mb-6">
+        <label className="block text-sm font-medium text-[#1D1B23] mb-1">
+          Количество слотов
+        </label>
+        <input
+          type="number"
+          value={data?.cargo_slots}
+          onChange={(e) => setCargoSlots(Number(e.target.value))}
+          placeholder="Укажите слоты"
+          className="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-[#09BD3C] text-sm"
+        />
+      </div>
+
+      {/* Package Details Table */}
       <div className="overflow-x-auto mb-4 max-w-full md:max-w-3xl mx-auto">
         <table className="min-w-full divide-y divide-gray-200 text-sm">
           <thead className="bg-gray-50">
             <tr>
               <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 №
-              </th>
-              <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Характеристика груза
-              </th>
-              <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Слоты
               </th>
               <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Вес
@@ -367,37 +372,15 @@ const PackageCharacteristics: React.FC<ActDataProps> = ({ data, setData }) => {
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {data?.cargo.map((pkg: any, index: number) => (
+            {data?.cargo?.map((pkg, index) => (
               <tr key={index}>
                 <td className="px-4 py-2 whitespace-nowrap">{index + 1}</td>
-                <td className="px-4 py-2 whitespace-nowrap">
-                  <PackageCharacteristicDropdown
-                    index={index}
-                    currentValue={
-                      pkg.characteristics ? pkg.characteristics : null
-                    }
-                    onSelect={(val: number) =>
-                      handleChange(index, "characteristics", val)
-                    }
-                  />
-                </td>
-                <td className="px-4 py-2 whitespace-nowrap">
-                  <input
-                    type="number"
-                    value={pkg.slots}
-                    onChange={(e) =>
-                      handleChange(index, "slots", e.target.value)
-                    }
-                    placeholder="Слоты"
-                    className="border border-gray-300 rounded-md p-1 w-16 text-sm"
-                  />
-                </td>
                 <td className="px-4 py-2 whitespace-nowrap">
                   <input
                     type="number"
                     value={pkg.weight}
                     onChange={(e) =>
-                      handleChange(index, "weight", e.target.value)
+                      handleChange(index, "weight", Number(e.target.value))
                     }
                     placeholder="Вес"
                     className="border border-gray-300 rounded-md p-1 w-16 text-sm"
@@ -406,9 +389,13 @@ const PackageCharacteristics: React.FC<ActDataProps> = ({ data, setData }) => {
                 <td className="px-4 py-2 whitespace-nowrap">
                   <input
                     type="number"
-                    value={pkg.dimensions.length || ""}
+                    value={pkg.dimensions?.length || ""}
                     onChange={(e) =>
-                      handleChange(index, "dimensions.length", e.target.value)
+                      handleChange(
+                        index,
+                        "dimensions.length",
+                        Number(e.target.value)
+                      )
                     }
                     placeholder="Длина"
                     className="border border-gray-300 rounded-md p-1 w-16 text-sm"
@@ -417,9 +404,13 @@ const PackageCharacteristics: React.FC<ActDataProps> = ({ data, setData }) => {
                 <td className="px-4 py-2 whitespace-nowrap">
                   <input
                     type="number"
-                    value={pkg.dimensions.width || ""}
+                    value={pkg.dimensions?.width || ""}
                     onChange={(e) =>
-                      handleChange(index, "dimensions.width", e.target.value)
+                      handleChange(
+                        index,
+                        "dimensions.width",
+                        Number(e.target.value)
+                      )
                     }
                     placeholder="Ширина"
                     className="border border-gray-300 rounded-md p-1 w-16 text-sm"
@@ -428,9 +419,13 @@ const PackageCharacteristics: React.FC<ActDataProps> = ({ data, setData }) => {
                 <td className="px-4 py-2 whitespace-nowrap">
                   <input
                     type="number"
-                    value={pkg.dimensions.height || ""}
+                    value={pkg.dimensions?.height || ""}
                     onChange={(e) =>
-                      handleChange(index, "dimensions.height", e.target.value)
+                      handleChange(
+                        index,
+                        "dimensions.height",
+                        Number(e.target.value)
+                      )
                     }
                     placeholder="Высота"
                     className="border border-gray-300 rounded-md p-1 w-16 text-sm"
@@ -439,9 +434,7 @@ const PackageCharacteristics: React.FC<ActDataProps> = ({ data, setData }) => {
                 <td className="px-4 py-2 whitespace-nowrap">
                   <button
                     onClick={() =>
-                      setPackages((prev: any) =>
-                        prev.filter((_: any, i: number) => i !== index)
-                      )
+                      setPackages((prev) => prev.filter((_, i) => i !== index))
                     }
                     className="bg-transparent hover:bg-transparent text-red-500"
                   >

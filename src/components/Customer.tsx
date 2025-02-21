@@ -1,21 +1,24 @@
+"use client";
 import React, { useState, useEffect } from "react";
 import Checkbox from "./ui/CheckBox";
 import { axiosInstance } from "@/helper/utils";
 import { Act, ActDataProps } from "@/helper/types";
 
 const Customer: React.FC<ActDataProps> = ({ data, setData }) => {
+  // Local state for form fields.
   const [dropdownOpen, setDropdownOpen] = useState(false);
-  const [isPayer, setIsPayer] = useState(
+  // Use local state values that are always defined (defaulting to empty string).
+  const [isPayer, setIsPayer] = useState<boolean>(
     data?.customer_data?.customer_is_payer || false
   );
-  const [fullName, setFullName] = useState(
+  const [fullName, setFullName] = useState<string>(
     data?.customer_data?.full_name || ""
   );
-  const [phoneNumber, setPhoneNumber] = useState(
+  const [phoneNumber, setPhoneNumber] = useState<string>(
     data?.customer_data?.phone || ""
   );
-  const [customers, setCustomers] = useState<Array<any>>([]);
-  const [selectedCustomer, setSelectedCustomer] = useState("");
+  const [customers, setCustomers] = useState<any[]>([]);
+  const [selectedCustomer, setSelectedCustomer] = useState<string>(fullName);
 
   const toggleDropdown = () => {
     setDropdownOpen((prev) => !prev);
@@ -24,42 +27,49 @@ const Customer: React.FC<ActDataProps> = ({ data, setData }) => {
   const fetchCustomers = async () => {
     try {
       const response = await axiosInstance.get("/admin/users/search/");
-      setCustomers(response.data.results); // Assuming response.data.results is an array of customers
+      setCustomers(response.data.results); // Assuming response.data.results is an array of customer objects.
     } catch (error) {
       console.error("Error fetching customers:", error);
     }
   };
 
+  // When a customer is selected from the dropdown.
   const handleSelectCustomer = (customer: any) => {
     setSelectedCustomer(customer.full_name);
     setFullName(customer.full_name);
     setPhoneNumber(customer.phone || "");
     setDropdownOpen(false);
 
+    // Update parent's data with the selected customer (include id)
     setData((prevData: any) => ({
       ...prevData,
       customer_data: {
         ...prevData.customer_data,
-        id: Number(customer.id) || 0, // ensure id is a number
+        id: Number(customer.id) || "",
         full_name: customer.full_name,
+        phone: customer.phone || "",
         role: customer.role,
         customer_is_payer: isPayer,
       },
     }));
   };
 
+  // When the user types in the Full Name input manually.
   const handleFullNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newFullName = e.target.value;
     setFullName(newFullName);
+    // Clear the id if the user manually changes the name.
     setData((prevData: any) => ({
       ...prevData,
       customer_data: {
         ...prevData.customer_data,
+        id: "", // Remove id
         full_name: newFullName,
       },
     }));
   };
 
+  // When the user types in the Phone Number input manually.
   const handlePhoneNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newPhone = e.target.value;
     setPhoneNumber(newPhone);
@@ -67,6 +77,7 @@ const Customer: React.FC<ActDataProps> = ({ data, setData }) => {
       ...prevData,
       customer_data: {
         ...prevData.customer_data,
+        phone: newPhone,
       },
     }));
   };

@@ -1,62 +1,86 @@
+"use client";
 import React, { useState, useEffect } from "react";
-import Checkbox from "./ui/CheckBox";
 import { axiosInstance } from "@/helper/utils";
 import { ActDataProps } from "@/helper/types";
 
+interface CustomerOption {
+  id: string;
+  full_name: string;
+  phone?: string;
+  role?: string;
+}
+
 const CustomerReceiver: React.FC<ActDataProps> = ({ data, setData }) => {
+  // Local state for form fields.
   const [dropdownOpen, setDropdownOpen] = useState(false);
-  const [fullName, setFullName] = useState(
+  const [fullName, setFullName] = useState<string>(
     data?.receiver_data?.full_name || ""
   );
-  const [phoneNumber, setPhoneNumber] = useState(
+  const [phoneNumber, setPhoneNumber] = useState<string>(
     data?.receiver_data?.phone || ""
   );
-  const [customers, setCustomers] = useState<Array<any>>([]);
-  const [selectedCustomer, setSelectedCustomer] = useState("");
+  // Array of fetched customers.
+  const [customers, setCustomers] = useState<CustomerOption[]>([]);
+  // When a customer is selected via dropdown.
+  const [selectedCustomer, setSelectedCustomer] =
+    useState<CustomerOption | null>(null);
 
+  // Toggle the dropdown.
   const toggleDropdown = () => {
     setDropdownOpen((prev) => !prev);
   };
 
+  // Fetch customers from the API.
   const fetchCustomers = async () => {
     try {
       const response = await axiosInstance.get("/admin/users/search/");
-      setCustomers(response.data.results); // Assuming response.data.results is an array of customers
+      setCustomers(response.data.results || []);
     } catch (error) {
       console.error("Error fetching customers:", error);
     }
   };
 
-  const handleSelectCustomer = (customer: any) => {
-    setSelectedCustomer(customer.full_name);
+  useEffect(() => {
+    fetchCustomers();
+  }, []);
+
+  // When a customer is selected from the dropdown.
+  const handleSelectCustomer = (customer: CustomerOption) => {
+    setSelectedCustomer(customer);
     setFullName(customer.full_name);
     setPhoneNumber(customer.phone || "");
     setDropdownOpen(false);
 
-    // Update parent state with selected customer info including id and current isPayer flag.
+    // Update parent's data with the selected customer's info (include id).
     setData((prevData: any) => ({
       ...prevData,
       receiver_data: {
         ...prevData.receiver_data,
         id: customer.id,
         full_name: customer.full_name,
-        role: customer.role,
+        phone: customer.phone || "",
+        role: customer.role || "",
       },
     }));
   };
 
+  // When the user manually edits the Full Name.
   const handleFullNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newFullName = e.target.value;
     setFullName(newFullName);
+    // Clear any selected customer (i.e. clear id).
+    setSelectedCustomer(null);
     setData((prevData: any) => ({
       ...prevData,
       receiver_data: {
         ...prevData.receiver_data,
+        id: "", // Clear id if manually changed
         full_name: newFullName,
       },
     }));
   };
 
+  // When the user manually edits the Phone Number.
   const handlePhoneNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newPhone = e.target.value;
     setPhoneNumber(newPhone);
@@ -64,20 +88,14 @@ const CustomerReceiver: React.FC<ActDataProps> = ({ data, setData }) => {
       ...prevData,
       receiver_data: {
         ...prevData.receiver_data,
+        phone: newPhone,
       },
     }));
   };
 
-  useEffect(() => {
-    fetchCustomers();
-  }, []);
-
   return (
     <div className="bg-white p-6 rounded-lg shadow-md flex flex-col">
-      {/* Checkbox for "Заказчик является плательщиком?" */}
-      <div className="flex items-center md:flex-row flex-col gap-3 mb-4">
-        <h2 className="text-lg font-semibold mb-6 text-[#1D1B23]">Заказчик</h2>
-      </div>
+      <h2 className="text-lg font-semibold mb-6 text-[#1D1B23]">Получатель</h2>
 
       {/* Dropdown for Selecting Customer */}
       <div className="mb-4 relative">
@@ -88,17 +106,19 @@ const CustomerReceiver: React.FC<ActDataProps> = ({ data, setData }) => {
           onClick={toggleDropdown}
           className="w-full border border-gray-300 rounded-md p-2 text-left focus:outline-none bg-transparent hover:bg-transparent focus:ring-2 focus:ring-[#09BD3C] focus:border-transparent"
         >
-          {selectedCustomer || "Выберите заказчика"}
+          {selectedCustomer
+            ? selectedCustomer.full_name
+            : fullName || "Выберите заказчика"}
         </button>
         {dropdownOpen && (
           <ul className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-40 overflow-auto">
-            {customers.map((customer: any) => (
+            {customers.map((customer) => (
               <li
                 key={customer.id}
                 onClick={() => handleSelectCustomer(customer)}
                 className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
               >
-                {customer.full_name}
+                {customer.full_name} ({customer.phone})
               </li>
             ))}
           </ul>

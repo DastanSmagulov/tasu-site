@@ -1,5 +1,4 @@
-import Image from "next/image";
-import React, { useRef, useState } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import SignaturePadWrapper from "react-signature-pad-wrapper";
 
 interface SignatureProps {
@@ -20,6 +19,11 @@ const Signature: React.FC<SignatureProps> = ({
   const [submittedSignature, setSubmittedSignature] = useState<string | null>(
     initialDataUrl || null
   );
+
+  // Update submittedSignature when initialDataUrl prop changes.
+  useEffect(() => {
+    setSubmittedSignature(initialDataUrl || null);
+  }, [initialDataUrl]);
 
   const updateSignaturePadOptions = () => {
     const signaturePad = signaturePadRef.current?.instance;
@@ -80,11 +84,9 @@ const Signature: React.FC<SignatureProps> = ({
       <div className="border-2 border-gray-800 bg-white rounded-md w-full max-w-lg relative">
         {submittedSignature ? (
           <div className="relative">
-            <Image
+            <img
               src={submittedSignature}
               alt="Submitted Signature"
-              width={100}
-              height={100}
               className="w-full h-auto object-contain"
             />
             <button
@@ -96,11 +98,9 @@ const Signature: React.FC<SignatureProps> = ({
           </div>
         ) : uploadedImage ? (
           <div className="relative">
-            <Image
+            <img
               src={uploadedImage}
               alt="Uploaded Signature"
-              width={100}
-              height={100}
               className="w-full h-auto object-contain"
             />
             <button

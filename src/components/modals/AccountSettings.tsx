@@ -146,8 +146,8 @@ const AccountSettings: React.FC<AccountSettingsProps> = ({
   }, []);
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
-      <div className="w-full max-w-3xl p-6 bg-white shadow-md rounded-lg relative">
+    <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50 p-4">
+      <div className="w-full max-w-3xl md:max-w-4xl p-6 bg-white shadow-md rounded-lg relative overflow-y-auto max-h-full">
         <button
           onClick={closeModal}
           className="absolute top-4 right-4 p-2 rounded-full hover:bg-gray-100 bg-transparent"
@@ -166,18 +166,18 @@ const AccountSettings: React.FC<AccountSettingsProps> = ({
           enableReinitialize
         >
           {({ isSubmitting }) => (
-            <Form>
+            <Form className="space-y-6">
               {/* Profile Picture Section */}
               <div className="mb-6">
                 <h2 className="text-sm font-medium mb-2">Картинка профиля</h2>
-                <div className="flex items-center space-x-4">
+                <div className="flex flex-col sm:flex-row items-center sm:space-x-4 space-y-4 sm:space-y-0">
                   <div className="w-20 h-20 rounded-full bg-gray-200 flex items-center justify-center">
                     {profileImage ? (
                       <Image
                         src={
                           typeof profileImage === "string"
-                            ? profileImage // Display fetched URL
-                            : URL.createObjectURL(profileImage) // Display uploaded file preview
+                            ? profileImage
+                            : URL.createObjectURL(profileImage)
                         }
                         width={33}
                         height={33}
@@ -211,7 +211,7 @@ const AccountSettings: React.FC<AccountSettingsProps> = ({
                 <Field
                   name="full_name"
                   placeholder="Введите имя"
-                  className="w-full px-4 text-black py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
                 <ErrorMessage
                   name="full_name"
@@ -229,7 +229,7 @@ const AccountSettings: React.FC<AccountSettingsProps> = ({
                   <Field
                     name="phone"
                     placeholder="+7"
-                    className="w-full text-black px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                   <ErrorMessage
                     name="phone"
@@ -244,7 +244,7 @@ const AccountSettings: React.FC<AccountSettingsProps> = ({
                   <Field
                     name="email"
                     placeholder="@mail"
-                    className="w-full text-black px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                   <ErrorMessage
                     name="email"
@@ -260,7 +260,7 @@ const AccountSettings: React.FC<AccountSettingsProps> = ({
                 <Field
                   name="country"
                   placeholder="Введите страну"
-                  className="w-full text-black px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
                 <ErrorMessage
                   name="country"
@@ -276,7 +276,7 @@ const AccountSettings: React.FC<AccountSettingsProps> = ({
                   <Field
                     name="street"
                     placeholder="Введите улицу"
-                    className="w-full text-black px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                   <ErrorMessage
                     name="street"
@@ -291,7 +291,7 @@ const AccountSettings: React.FC<AccountSettingsProps> = ({
                   <Field
                     name="city"
                     placeholder="Введите город"
-                    className="w-full text-black px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                   <ErrorMessage
                     name="city"
@@ -308,7 +308,7 @@ const AccountSettings: React.FC<AccountSettingsProps> = ({
                   <Field
                     name="building_number"
                     placeholder="Введите номер дома/квартиры"
-                    className="w-full text-black px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                   <ErrorMessage
                     name="building_number"
@@ -323,7 +323,7 @@ const AccountSettings: React.FC<AccountSettingsProps> = ({
                   <Field
                     name="postal_code"
                     placeholder="Введите индекс"
-                    className="w-full text-black px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                   <ErrorMessage
                     name="postal_code"
@@ -334,17 +334,17 @@ const AccountSettings: React.FC<AccountSettingsProps> = ({
               </div>
 
               {/* Buttons */}
-              <div className="flex justify-between items-center sm:flex-row flex-col gap-4 sm:gap-0">
+              <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
                 <button
                   type="button"
-                  className="px-4 py-2 text-gray-500 bg-transparent hover:bg-gray-100 border border-gray-500 rounded-lg flex items-center"
+                  className="w-full sm:w-auto px-4 py-2 text-gray-500 bg-transparent hover:bg-gray-100 border border-gray-500 rounded-lg flex items-center justify-center"
                   onClick={handleSignOut}
                 >
                   <FaSignOutAlt className="h-5 w-5 mr-2" /> Выйти
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 rounded-lg flex items-center"
+                  className="w-full sm:w-auto px-4 py-2 rounded-lg flex items-center justify-center"
                   disabled={isSubmitting}
                 >
                   Сохранить изменения

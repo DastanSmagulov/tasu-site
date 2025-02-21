@@ -1,28 +1,46 @@
 import React, { useState, useEffect } from "react";
-import { ActDataProps } from "@/helper/types"; // Assumes this type is defined as: { data: Act, setData: React.Dispatch<React.SetStateAction<Act>> }
+import { ActDataProps } from "@/helper/types"; // { data: Act, setData: React.Dispatch<React.SetStateAction<Act>> }
 
 const PaymentPhoto: React.FC<ActDataProps> = ({ data, setData }) => {
-  const [photos, setPhotos] = useState<File[]>([]);
+  // photos can be File objects (newly uploaded) or strings (URLs of existing photos)
+  const [photos, setPhotos] = useState<any[]>([]);
 
-  // Whenever photos change, update the parent's actData.
+  // Initialize photos once when the component mounts.
   useEffect(() => {
-    setData((prev: any) => ({
-      ...prev,
-      // Save new photos under a key (e.g., payment_photos).
-      payment_photos: photos,
-    }));
-  }, [photos, setData]);
+    if (data?.accountant_photo) {
+      const initialPhotos = Array.isArray(data.accountant_photo)
+        ? data.accountant_photo
+        : [data.accountant_photo];
+      setPhotos(initialPhotos);
+    }
+    // Run only once on mount.
+  }, []);
 
   const handlePhotoUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
     if (files) {
       const newPhotos = Array.from(files);
-      setPhotos((prevPhotos) => [...prevPhotos, ...newPhotos]);
+      setPhotos((prevPhotos) => {
+        const updatedPhotos = [...prevPhotos, ...newPhotos];
+        // Update parent's state directly here.
+        setData((prev: any) => ({
+          ...prev,
+          accountant_photo: updatedPhotos,
+        }));
+        return updatedPhotos;
+      });
     }
   };
 
   const handleRemovePhoto = (index: number) => {
-    setPhotos((prevPhotos) => prevPhotos.filter((_, i) => i !== index));
+    setPhotos((prevPhotos) => {
+      const updatedPhotos = prevPhotos.filter((_, i) => i !== index);
+      setData((prev: any) => ({
+        ...prev,
+        accountant_photo: updatedPhotos,
+      }));
+      return updatedPhotos;
+    });
   };
 
   return (
@@ -53,7 +71,9 @@ const PaymentPhoto: React.FC<ActDataProps> = ({ data, setData }) => {
             className="relative bg-gray-100 h-32 rounded-md flex items-center justify-center"
           >
             <img
-              src={URL.createObjectURL(photo)}
+              src={
+                typeof photo === "string" ? photo : URL.createObjectURL(photo)
+              }
               alt={`Payment Photo ${index + 1}`}
               className="object-cover h-full w-full rounded-md"
             />

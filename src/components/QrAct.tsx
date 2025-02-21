@@ -22,14 +22,14 @@ const QrAct: React.FC<QrActProps> = ({ qrCodeUrl, actNumber, description }) => {
         <div className="mb-6">
           {qrCodeUrl ? (
             <img
-              src={qrCodeUrl ? qrCodeUrl : "../../public/images/qr-code.png"}
+              src={qrCodeUrl ? qrCodeUrl : "./images/qr-code.png"}
               alt="QR Code"
               // width={200}
               // height={200}
               className="mx-auto w-52 h-52"
             />
           ) : (
-            <img src="../../public/images/qr-code.png" alt="qr" />
+            <img src="./images/qr-code.png" alt="qr" />
           )}
         </div>
 

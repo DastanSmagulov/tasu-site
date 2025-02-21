@@ -106,11 +106,6 @@ const FilterPanel: React.FC<FilterPanelProps> = ({ filters, setFilters }) => {
               </ul>
             )}
           </div>
-
-          <div className="flex items-center gap-2">
-            <Checkbox />
-            <span className="text-sm font-medium">Мои</span>
-          </div>
         </div>
       </div>
 

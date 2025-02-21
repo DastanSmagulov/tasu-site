@@ -27,7 +27,7 @@ import "../../../styles/globals.css";
 import CustomerReceiver from "@/components/CustomerReceiver";
 
 // Initial actData (modify as needed)
-const initialActData: Act = {
+const initialActData: any = {
   number: "",
   qr_code: {
     qr: "",
@@ -57,10 +57,13 @@ const initialActData: Act = {
     full_name: "",
     id_card_number: "",
     technical_passport: "",
+    plane_id: "",
+    partner_id: "",
+    train_id: "",
   },
   vehicle_data: {
     auto_info: "",
-    state_number: "",
+    license_plate: "",
   },
   packaging_is_damaged: false,
   receiver_data: {
@@ -81,8 +84,8 @@ const initialActData: Act = {
     date: "",
   },
   transportation: {
-    sender: "1",
-    receiver: "5",
+    sender: "",
+    receiver: "",
     sender_is_payer: true,
   },
 };
@@ -143,7 +146,11 @@ export default function CreateActPage() {
         try {
           const response = await axiosInstance.get("/acts/get_act_data/");
           const { act_number, qr_code } = response.data;
-          setActData((prev) => ({ ...prev, number: act_number, qr_code }));
+          setActData((prev) => ({
+            ...prev,
+            number: act_number,
+            qr_code: { qr: qr_code },
+          }));
         } catch (error) {
           console.error("Error fetching new act data:", error);
         }
@@ -453,7 +460,11 @@ export default function CreateActPage() {
           <CargoPhoto data={actData} setData={setActData} />
           <TransportationTypes data={actData} setData={setActData} />
           <DriverInfo data={actData} setData={setActData} />
-          <TransportInfo data={actData} setData={setActData} />
+          {actData?.transportation_type === "AUTO_SINGLE" ? (
+            <TransportInfo data={actData} setData={setActData} />
+          ) : (
+            <></>
+          )}
           <div className="space-y-6">
             <div className="flex items-center gap-2 text-lg font-medium">
               <label className="flex items-center gap-1 cursor-pointer">

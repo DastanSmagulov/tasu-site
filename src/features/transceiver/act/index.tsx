@@ -113,7 +113,7 @@ const buildFormData = (data: any): FormData => {
     if (key === "transportation_services") {
       const services = Array.isArray(value) ? value : [];
       services.forEach((service: any) =>
-        formData.append("transportation_services", service.toString())
+        formData.append("transportation_service_ids", service.toString())
       );
       return;
     }
@@ -171,6 +171,7 @@ export default function ActPage() {
           );
           setActData(sanitizedData);
           originalDataRef.current = sanitizedData; // baseline for diffing
+          // Second fetch after 500ms.
         } catch (error) {
           console.error("Error fetching act data:", error);
         }
@@ -207,8 +208,6 @@ export default function ActPage() {
         console.log("No changes detected, nothing to update.");
         return;
       }
-
-      console.log("Changed data to be patched:", changedData);
 
       const formData = buildFormData(changedData);
 
@@ -255,6 +254,8 @@ export default function ActPage() {
   if (!actData) {
     return <div>Загрузка данных акта...</div>;
   }
+
+  console.log(actData.transportation);
 
   return (
     <>
@@ -304,7 +305,7 @@ export default function ActPage() {
           <CargoPhoto data={actData} setData={setActData} />
         </div>
         <div className="flex flex-col md:w-1/2 space-y-4">
-          {/* <Shipping data={actData} setData={setActData} /> */}
+          <Shipping data={actData} setData={setActData} />
           <InformationPackage
             title="О получении"
             data={actData}

@@ -8,11 +8,11 @@ import Table from "@/shared/Table";
 import Pagination from "@/shared/Pagination";
 import "../../styles/globals.css";
 import { axiosInstance } from "@/helper/utils";
-import { TableRow } from "@/helper/types";
+import { AccountantTableRow, TableRow } from "@/helper/types";
 import AccountantTable from "@/shared/AccountantTable";
 
 const AccountantPage = () => {
-  const [data, setData] = useState<TableRow[]>([]);
+  const [data, setData] = useState<AccountantTableRow[]>([]);
   const [totalCount, setTotalCount] = useState(0);
   const [nextPageUrl, setNextPageUrl] = useState<string | null>(null);
   const [prevPageUrl, setPrevPageUrl] = useState<string | null>(null);
