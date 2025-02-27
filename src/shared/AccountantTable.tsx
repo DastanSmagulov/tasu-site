@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import TrashIcon from "../../public/icons/trash.svg";
 import Checkbox from "@/components/ui/CheckBox";
-import { axiosInstance, formatDate } from "@/helper/utils";
+import { axiosInstance, formatDate, getStatusBadge } from "@/helper/utils";
 import { AccountantTableRow } from "@/helper/types";
 import Cookies from "js-cookie";
 
@@ -113,11 +113,7 @@ const AccountantTable: React.FC<TableProps> = ({
                   <Checkbox checked={!!row.invoice} />
                 </td>
                 <td className="p-3 border border-gray-300">
-                  <span
-                    className={`px-3 py-1 rounded-full text-sm font-medium ${row.statusColor}`}
-                  >
-                    {row.status}
-                  </span>
+                  {getStatusBadge(row.status)}{" "}
                 </td>
                 <td className="p-3 border border-gray-300">
                   {row.processed ? "-" : "-"}

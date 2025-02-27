@@ -111,7 +111,7 @@ const DriverInfo: FC<ActDataProps> = ({ data, setData }) => {
             <input
               type="text"
               name="full_name"
-              value={data?.driver_data?.full_name}
+              value={data?.driver_data?.full_name || ""}
               onChange={handleChange}
               className="w-full border border-gray-300 rounded-md px-4 py-2 text-gray-800 focus:outline-none focus:ring focus:ring-gray-300"
             />
@@ -124,7 +124,7 @@ const DriverInfo: FC<ActDataProps> = ({ data, setData }) => {
             <input
               type="text"
               name="id_card_number"
-              value={data?.driver_data?.id_card_number}
+              value={data?.driver_data?.id_card_number || ""}
               onChange={handleChange}
               className="w-full border border-gray-300 rounded-md px-4 py-2 text-gray-800 focus:outline-none focus:ring focus:ring-gray-300"
             />
@@ -137,7 +137,7 @@ const DriverInfo: FC<ActDataProps> = ({ data, setData }) => {
             <input
               type="text"
               name="technical_passport"
-              value={data?.driver_data?.technical_passport}
+              value={data?.driver_data?.technical_passport || ""}
               onChange={handleChange}
               className="w-full border border-gray-300 rounded-md px-4 py-2 text-gray-800 focus:outline-none focus:ring focus:ring-gray-300"
             />

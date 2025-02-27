@@ -149,7 +149,6 @@ export default function ActPage() {
       console.log("No changes detected, nothing to update.");
       return;
     }
-    console.log("Changed data to be patched:", changedData);
     try {
       const formData = buildFormData(changedData);
       const response = await axiosInstance.patch(

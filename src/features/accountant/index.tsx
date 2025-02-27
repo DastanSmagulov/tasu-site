@@ -83,7 +83,7 @@ const AccountantPage = () => {
       />
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center">
         <h1>
-          Показано {data.length} из {totalCount} данных
+          Показано {data?.length} из {totalCount} данных
         </h1>
         <Pagination
           totalCount={totalCount}

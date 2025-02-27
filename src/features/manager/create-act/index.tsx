@@ -252,46 +252,37 @@ export default function CreateActPage() {
     window.print();
   };
 
-  // Memoize the steps so that the reference does not change on every render.
+  // Memoize steps for mobile and desktop layouts.
   const stepsMemo = useMemo(
     () => [
       {
         id: 1,
-        name: "Данные о Заказчике",
-        component: (props: {
-          data: Act;
-          setData: React.Dispatch<React.SetStateAction<Act>>;
-        }) => <Customer data={props.data} setData={props.setData} />,
-      },
-      {
-        id: 2,
-        name: "Характеристики и вес груза",
-        component: (props: {
-          data: Act;
-          setData: React.Dispatch<React.SetStateAction<Act>>;
-        }) => (
-          <PackageCharacteristics data={props.data} setData={props.setData} />
-        ),
-      },
-      {
-        id: 3,
-        name: "Фотографии груза и информация о получении",
+        name: "Данные о Заказчике и Получателе",
         component: (props: {
           data: Act;
           setData: React.Dispatch<React.SetStateAction<Act>>;
         }) => (
           <>
-            <CargoPhoto data={props.data} setData={props.setData} />
-            <InformationPackage
-              title={"О получении"}
-              data={props.data}
-              setData={props.setData}
-            />
+            <Customer data={props.data} setData={props.setData} />
+            <CustomerReceiver data={props.data} setData={props.setData} />
           </>
         ),
       },
       {
-        id: 4,
+        id: 2,
+        name: "Характеристики и фотографии груза",
+        component: (props: {
+          data: Act;
+          setData: React.Dispatch<React.SetStateAction<Act>>;
+        }) => (
+          <>
+            <PackageCharacteristics data={props.data} setData={props.setData} />
+            <CargoPhoto data={props.data} setData={props.setData} />
+          </>
+        ),
+      },
+      {
+        id: 3,
         name: "Типы транспорта и информация о водителе",
         component: (props: {
           data: Act;
@@ -300,31 +291,48 @@ export default function CreateActPage() {
           <>
             <TransportationTypes data={props.data} setData={props.setData} />
             <DriverInfo data={props.data} setData={props.setData} />
+            {/* Пример условной отрисовки блока TransportInfo */}
+            {props.data?.transportation_type === "AUTO_SINGLE" && (
+              <TransportInfo data={props.data} setData={props.setData} />
+            )}
           </>
         ),
       },
       {
-        id: 5,
-        name: "Информация о транспортировке и ссылки для менеджера",
+        id: 4,
+        name: "Упаковка и ссылки для менеджера",
         component: (props: {
           data: Act;
           setData: React.Dispatch<React.SetStateAction<Act>>;
         }) => (
-          <>
-            <TransportInfo data={props.data} setData={props.setData} />
+          <div className="space-y-6">
+            <div className="flex items-center gap-2 text-lg font-medium">
+              <label className="flex items-center gap-1 cursor-pointer">
+                <Checkbox
+                  checked={!!props.data?.packaging_is_damaged}
+                  onChange={(e) =>
+                    props.setData((prev) => ({
+                      ...prev,
+                      packaging_is_damaged: e.target.checked,
+                    }))
+                  }
+                />
+                Нарушено ли состояние упаковки?
+              </label>
+            </div>
             <ManagerLink
               title="приема наемником"
-              link="https://tasu.kz/shortlive_reference_607/"
+              link="https://tasu-site.vercel.app/carrier"
             />
             <ManagerLink
               title="передачи наемником"
-              link="https://tasu.kz/shortlive_reference_148/"
+              link="https://tasu-site.vercel.app/carrier/packageInfo"
             />
-          </>
+          </div>
         ),
       },
       {
-        id: 6,
+        id: 5,
         name: "Договор и услуги",
         component: (props: {
           data: Act;
@@ -336,62 +344,70 @@ export default function CreateActPage() {
               data={props.data}
               setData={props.setData}
             />
+            {/* Второй вариант договора */}
+            <Agreement
+              original={false}
+              data={props.data}
+              setData={props.setData}
+            />
             <TransportationServicesTable
               availableTransportationServices={transportationQuantityServices}
-              data={actData}
+              data={props.data}
               onChange={(newSelectedIds: number[]) =>
-                setActData((prev) => ({
+                props.setData((prev) => ({
                   ...prev,
-                  transportation_services: newSelectedIds,
+                  transportation_service_ids: newSelectedIds,
                 }))
               }
-            />{" "}
+            />
+          </>
+        ),
+      },
+      {
+        id: 6,
+        name: "Информация о получении и выдаче",
+        component: (props: {
+          data: Act;
+          setData: React.Dispatch<React.SetStateAction<Act>>;
+        }) => (
+          <>
+            <InformationPackage
+              title={"О получении"}
+              data={props.data}
+              setData={props.setData}
+            />
             <InformationPackage
               title={"О выдаче"}
-              data={actData}
-              setData={setActData}
+              data={props.data}
+              setData={props.setData}
             />
           </>
         ),
       },
       {
         id: 7,
-        name: "Документы для отправки",
+        name: "Документы",
         component: (props: {
           data: Act;
           setData: React.Dispatch<React.SetStateAction<Act>>;
         }) => (
           <>
-            {/* <Shipping data={props.data} setData={props.setData} /> */}
             <AccountingEsf data={props.data} setData={props.setData} />
             <AccountingAvr data={props.data} setData={props.setData} />
-          </>
-        ),
-      },
-      {
-        id: 8,
-        name: "QR Код акта",
-        component: () => (
-          <>
-            {actData && actData.status === "готов к отправке" && (
+            {/* Если нужен QR-код */}
+            {props.data?.qr_code && (
               <QrAct
-                qrCodeUrl="/images/qr-code.png"
-                actNumber="1234"
+                qrCodeUrl={props.data?.qr_code + ""}
+                actNumber={props.data?.number + ""}
                 description="Lorem ipsum dolor sit amet consectetur. Dictum morbi ut lacus ultrices pulvinar lectus adipiscing sit."
               />
             )}
           </>
         ),
       },
-      {
-        id: 9,
-        name: "Подтверждение успешной отправки",
-        component: () => <CreateSuccessAct />,
-      },
     ],
-    [actData]
+    [transportationQuantityServices]
   );
-
   // Get the current step component (if needed, you could also render steps conditionally)
   const CurrentComponent = stepsMemo[currentStep].component as any;
 

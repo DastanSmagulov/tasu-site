@@ -7,6 +7,7 @@ import Pagination from "@/shared/Pagination";
 import { axiosInstance } from "@/helper/utils";
 import { TableRow } from "@/helper/types";
 import "../../styles/globals.css";
+import ManagerTable from "@/shared/ManagerTable";
 
 const ManagerPage = () => {
   const [data, setData] = useState<TableRow[]>([]);
@@ -107,7 +108,11 @@ const ManagerPage = () => {
   return (
     <div>
       <FilterPanel filters={filters} setFilters={setFilters} />
-      <Table data={data} fetchActsData={fetchActsData} loading={loading} />
+      <ManagerTable
+        data={data}
+        fetchActsData={fetchActsData}
+        loading={loading}
+      />
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mt-4">
         <h1 className="text-gray-700">
           Показано {data.length} из {totalCount} данных

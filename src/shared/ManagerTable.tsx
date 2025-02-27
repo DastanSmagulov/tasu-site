@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import TrashIcon from "../../public/icons/trash.svg";
 import Checkbox from "@/components/ui/CheckBox";
-import { axiosInstance, formatDate } from "@/helper/utils";
+import { axiosInstance, formatDate, getStatusBadge } from "@/helper/utils";
 import Cookies from "js-cookie";
 import { Act } from "@/helper/types";
 
@@ -82,12 +82,10 @@ const ManagerTable = ({ data, loading, fetchActsData }: any) => {
                 { label: "Номер", key: "id" },
                 { label: "Заказчик", key: "customer" },
                 { label: "Дата", key: "date" },
-                { label: "Мест", key: "places" },
+                { label: "Слоты", key: "places" },
                 { label: "ЭСФ", key: "esf" },
                 { label: "АВР", key: "abp" },
-                { label: "СЧЕТ", key: "bill" },
                 { label: "Статус", key: "status" },
-                { label: "Вид", key: "view" },
                 { label: "Сумма", key: "amount" },
               ].map((col) => (
                 <th key={col.key} className="p-3 text-left">
@@ -98,62 +96,67 @@ const ManagerTable = ({ data, loading, fetchActsData }: any) => {
             </tr>
           </thead>
           <tbody className="bg-white">
-            {data.map((act: any) => {
-              // Map act fields to table columns:
-              const actNumber = act.number || "-";
-              const actId = act.id || "-";
-              const customer = act.customer?.full_name || "-";
-              // Use receiving_cargo_info.date (or delivery_cargo_info.date) and format it:
-              const date = act.created_at ? act.created_at : "-";
-              const places = act.cargo ? act.cargo.slots : 0;
-              const weight = act.cargo.weight;
-              const volume = calculateTotalVolume(act.cargo.volume);
-              // For status, you might have a dedicated field; here we fallback to transportation_type
-              const status = act.status || "-";
-              // For view, we use transportation_type
-              const view = act.transportation_type || "-";
-              // For amount, we use characteristic.cargo_cost
-              const amount = act.total_cost || "-";
+            {data
+              ?.slice()
+              .sort((a: any, b: any) => {
+                const dateA = new Date(a.created_at).getTime();
+                const dateB = new Date(b.created_at).getTime();
+                console.log(dateA, dateB);
+                return dateB - dateA;
+              })
+              .map((act: any) => {
+                // Map act fields to table columns:
+                const actNumber = act.number || "-";
+                const actId = act.id || "-";
+                const customer = act.customer?.full_name || "-";
+                // Use receiving_cargo_info.date (or delivery_cargo_info.date) and format it:
+                const date = act.created_at ? act.created_at : "-";
+                const places = act.cargo ? act.cargo.slots : 0;
+                const has_esf = act.has_esf;
+                const has_avr = act.has_avr;
+                // For status, you might have a dedicated field; here we fallback to transportation_type
+                const status = act.status || "-";
+                // For view, we use transportation_type
+                const view = act.transportation_type || "-";
+                // For amount, we use characteristic.cargo_cost
+                const amount = act.total_cost || "-";
 
-              return (
-                <tr key={actId} className="text-sm text-gray-800">
-                  <td className="p-3 pl-10 border border-gray-300">
-                    <Checkbox
-                      id={`checkbox-${actId}`}
-                      checked={selectedRows.has(actId)}
-                      onChange={() => toggleSelection(Number(actId))}
-                    />
-                  </td>
-                  <td className="p-3 border border-gray-300">
-                    {role !== "admin" ? (
-                      <Link href={`${role}/act/${actId}`}>{actNumber}</Link>
-                    ) : (
-                      <h2>{actNumber}</h2>
-                    )}
-                  </td>
-                  <td className="p-3 border border-gray-300">{customer}</td>
-                  <td className="p-3 border border-gray-300">
-                    {formatDate(date)}
-                  </td>
-                  <td className="p-3 border border-gray-300">{places}</td>
-                  <td className="p-3 font-semibold border border-gray-300">
-                    {weight}
-                  </td>
-                  <td className="p-3 border border-gray-300">{volume}</td>
-                  <td className="p-3 border border-gray-300">
-                    <span className="px-3 py-1 rounded-full text-sm font-medium">
-                      {status}
-                    </span>
-                  </td>
-                  <td className="p-3 text-center border border-gray-300">
-                    {view}
-                  </td>
-                  <td className="p-3 text-center border border-gray-300">
-                    {amount}
-                  </td>
-                </tr>
-              );
-            })}
+                return (
+                  <tr key={actId} className="text-sm text-gray-800">
+                    <td className="p-3 pl-10 border border-gray-300">
+                      <Checkbox
+                        id={`checkbox-${actId}`}
+                        checked={selectedRows.has(actId)}
+                        onChange={() => toggleSelection(Number(actId))}
+                      />
+                    </td>
+                    <td className="p-3 border border-gray-300">
+                      {role !== "admin" ? (
+                        <Link href={`${role}/act/${actId}`}>{actNumber}</Link>
+                      ) : (
+                        <h2>{actNumber}</h2>
+                      )}
+                    </td>
+                    <td className="p-3 border border-gray-300">{customer}</td>
+                    <td className="p-3 border border-gray-300">
+                      {formatDate(date)}
+                    </td>
+                    <td className="p-3 border border-gray-300">{places}</td>
+                    <td className="p-3 border border-gray-300">
+                      <Checkbox checked={!!has_esf} />
+                    </td>
+                    <td className="p-3 border border-gray-300">
+                      <Checkbox checked={!!has_avr} />
+                    </td>
+                    <td className="p-3 border border-gray-300">
+                      {getStatusBadge(status)}
+                    </td>
+                    <td className="p-3 text-center border border-gray-300">
+                      {amount}
+                    </td>
+                  </tr>
+                );
+              })}
           </tbody>
         </table>
       </div>

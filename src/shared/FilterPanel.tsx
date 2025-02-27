@@ -57,7 +57,6 @@ const FilterPanel: React.FC<FilterPanelProps> = ({ filters, setFilters }) => {
       filters.sender_city__name_ru ||
       filters.receiver_city__name_ru ||
       filters.created_at ||
-      filters.closed_at ||
       filters.ordering
   );
 
@@ -162,19 +161,6 @@ const FilterPanel: React.FC<FilterPanelProps> = ({ filters, setFilters }) => {
             value={filters.created_at}
             onChange={(e) =>
               setFilters({ ...filters, created_at: e.target.value })
-            }
-            className="bg-white border-b border-gray-300 focus:outline-none focus:border-gray-500 px-2 py-1"
-          />
-        </div>
-
-        {/* End Date */}
-        <div className="flex flex-col">
-          <label className="font-medium mb-1">Дата окончание</label>
-          <input
-            type="date"
-            value={filters.closed_at}
-            onChange={(e) =>
-              setFilters({ ...filters, closed_at: e.target.value })
             }
             className="bg-white border-b border-gray-300 focus:outline-none focus:border-gray-500 px-2 py-1"
           />

@@ -29,6 +29,7 @@ interface GlobalPackageCharacteristicDropdownProps {
 }
 
 const PackageCharacteristics: FC<ActDataProps> = ({ data, setData }) => {
+  // console.log(data, setData);
   // Initialize local state from the parent's data only on mount.
   const [cargoCost, setCargoCost] = useState(
     data?.characteristic?.cargo_cost || ""
@@ -227,7 +228,7 @@ const PackageCharacteristics: FC<ActDataProps> = ({ data, setData }) => {
         </label>
         <input
           type="text"
-          value={data?.characteristic?.cargo_cost}
+          value={data?.characteristic?.cargo_cost || ""}
           onChange={(e) => setCargoCost(e.target.value)}
           placeholder="Укажите стоимость"
           className="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-[#09BD3C] text-sm"
@@ -251,7 +252,7 @@ const PackageCharacteristics: FC<ActDataProps> = ({ data, setData }) => {
             {cities.find((city) => {
               return typeof senderCity == "number"
                 ? city.id == data?.characteristic?.sender_city
-                : city.name_ru == senderCity;
+                : city.name_ru == data?.characteristic?.sender_city;
             })?.name_ru || "Выберите город отправителя"}
           </button>
           {senderDropdownOpen && (
@@ -285,7 +286,7 @@ const PackageCharacteristics: FC<ActDataProps> = ({ data, setData }) => {
             {cities.find((city) => {
               return typeof receiverCity == "number"
                 ? city.id == data?.characteristic?.receiver_city
-                : city.name_ru == receiverCity;
+                : city.name_ru == data?.characteristic?.receiver_city;
             })?.name_ru || "Выберите город получателя"}
           </button>
           {receiverDropdownOpen && (
@@ -327,7 +328,7 @@ const PackageCharacteristics: FC<ActDataProps> = ({ data, setData }) => {
           Характеристика груза
         </label>
         <GlobalPackageCharacteristicDropdown
-          currentValue={cargoCharacteristics}
+          currentValue={data?.cargo_characteristics || ""}
           onSelect={(val: number) => setCargoCharacteristics(val)}
         />
       </div>

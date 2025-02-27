@@ -46,10 +46,13 @@ const ForwarderPage = () => {
     setLoading(true);
     try {
       let finalUrl: string;
+      const queryString = buildQueryString();
       if (url) {
         finalUrl = url;
+      } else if (filters.created_at) {
+        // If a created_at filter is applied, use the dedicated endpoint
+        finalUrl = `/acts/filter_by_date?created_at=${filters.created_at}/?${queryString}`;
       } else {
-        const queryString = buildQueryString();
         finalUrl = `/acts/?${queryString}`;
       }
       const response = await axiosInstance.get(finalUrl);
@@ -75,7 +78,7 @@ const ForwarderPage = () => {
       <Table data={data} fetchActsData={fetchActsData} loading={loading} />
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center">
         <h1>
-          Показано {data.length} из {totalCount} данных
+          Показано {data?.length} из {totalCount} данных
         </h1>
         <Pagination
           totalCount={totalCount}

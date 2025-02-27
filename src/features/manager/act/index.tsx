@@ -9,7 +9,7 @@ import InformationPackage from "@/components/PackageInformation";
 import Shipping from "@/components/Shipping";
 import CreateSuccessAct from "@/components/modals/CreateSuccessAct";
 import { useParams } from "next/navigation";
-import { axiosInstance } from "@/helper/utils";
+import { axiosInstance, getStatusBadge } from "@/helper/utils";
 import { Act } from "@/helper/types";
 import CustomerReceiver from "@/components/CustomerReceiver";
 import TransportationTypes from "@/components/TransportationType";
@@ -173,7 +173,10 @@ function buildFormData(diff: Partial<Act>): FormData {
     if (value === null || value === undefined) return;
 
     // Special handling for transportation_services:
-    if (key === "transportation_services") {
+    if (
+      key === "transportation_services" ||
+      key === "transportation_service_ids"
+    ) {
       const services = Array.isArray(value) ? value : [];
       services.forEach((service: any) =>
         formData.append("transportation_service_ids", service.toString())
@@ -206,7 +209,7 @@ function buildFormData(diff: Partial<Act>): FormData {
         if (item instanceof File) {
           formData.append(`${key}`, item);
         } else {
-          formData.append(`${key}[]`, item + "");
+          formData.append(`${key}`, item + "");
         }
       });
     } else if (typeof value === "object") {
@@ -311,12 +314,10 @@ export default function ActPage() {
     try {
       const changedData = getChangedFields(originalActData, actData);
       const formData = buildFormData(changedData);
-      console.log(actData);
       const response = await axiosInstance.patch(
         `/acts/${params.id}/`,
         formData
       );
-      console.log(response.data);
       setIsModalOpen(true);
     } catch (error) {
       console.error("Error sending act data:", error);
@@ -329,41 +330,32 @@ export default function ActPage() {
     () => [
       {
         id: 1,
-        name: "Данные о Заказчике",
-        component: (props: {
-          data: Act;
-          setData: React.Dispatch<React.SetStateAction<Act>>;
-        }) => <Customer data={props.data} setData={props.setData} />,
-      },
-      {
-        id: 2,
-        name: "Характеристики и вес груза",
-        component: (props: {
-          data: Act;
-          setData: React.Dispatch<React.SetStateAction<Act>>;
-        }) => (
-          <PackageCharacteristics data={props.data} setData={props.setData} />
-        ),
-      },
-      {
-        id: 3,
-        name: "Фотографии груза и информация о получении",
+        name: "Данные о Заказчике и Получателе",
         component: (props: {
           data: Act;
           setData: React.Dispatch<React.SetStateAction<Act>>;
         }) => (
           <>
-            <CargoPhoto data={props.data} setData={props.setData} />
-            <InformationPackage
-              title={"О получении"}
-              data={props.data}
-              setData={props.setData}
-            />
+            <Customer data={props.data} setData={props.setData} />
+            <CustomerReceiver data={props.data} setData={props.setData} />
           </>
         ),
       },
       {
-        id: 4,
+        id: 2,
+        name: "Характеристики и фотографии груза",
+        component: (props: {
+          data: Act;
+          setData: React.Dispatch<React.SetStateAction<Act>>;
+        }) => (
+          <>
+            <PackageCharacteristics data={props.data} setData={props.setData} />
+            <CargoPhoto data={props.data} setData={props.setData} />
+          </>
+        ),
+      },
+      {
+        id: 3,
         name: "Типы транспорта и информация о водителе",
         component: (props: {
           data: Act;
@@ -372,18 +364,35 @@ export default function ActPage() {
           <>
             <TransportationTypes data={props.data} setData={props.setData} />
             <DriverInfo data={props.data} setData={props.setData} />
+            {/* Пример условной отрисовки блока TransportInfo */}
+            {props.data?.transportation_type === "AUTO_SINGLE" && (
+              <TransportInfo data={props.data} setData={props.setData} />
+            )}
           </>
         ),
       },
       {
-        id: 5,
-        name: "Информация о транспортировке и ссылки для менеджера",
+        id: 4,
+        name: "Упаковка и ссылки для менеджера",
         component: (props: {
           data: Act;
           setData: React.Dispatch<React.SetStateAction<Act>>;
         }) => (
-          <>
-            <TransportInfo data={props.data} setData={props.setData} />
+          <div className="space-y-6">
+            <div className="flex items-center gap-2 text-lg font-medium">
+              <label className="flex items-center gap-1 cursor-pointer">
+                <Checkbox
+                  checked={!!props.data?.packaging_is_damaged}
+                  onChange={(e) =>
+                    props.setData((prev) => ({
+                      ...prev,
+                      packaging_is_damaged: e.target.checked,
+                    }))
+                  }
+                />
+                Нарушено ли состояние упаковки?
+              </label>
+            </div>
             <ManagerLink
               title="приема наемником"
               link="https://tasu-site.vercel.app/carrier"
@@ -392,11 +401,11 @@ export default function ActPage() {
               title="передачи наемником"
               link="https://tasu-site.vercel.app/carrier/packageInfo"
             />
-          </>
+          </div>
         ),
       },
       {
-        id: 6,
+        id: 5,
         name: "Договор и услуги",
         component: (props: {
           data: Act;
@@ -408,60 +417,69 @@ export default function ActPage() {
               data={props.data}
               setData={props.setData}
             />
+            {/* Второй вариант договора */}
+            <Agreement
+              original={false}
+              data={props.data}
+              setData={props.setData}
+            />
             <TransportationServicesTable
               availableTransportationServices={transportationQuantityServices}
-              data={actData}
+              data={props.data}
               onChange={(newSelectedIds: number[]) =>
-                setActData((prev) => ({
+                props.setData((prev) => ({
                   ...prev,
                   transportation_service_ids: newSelectedIds,
                 }))
               }
             />
+          </>
+        ),
+      },
+      {
+        id: 6,
+        name: "Информация о получении и выдаче",
+        component: (props: {
+          data: Act;
+          setData: React.Dispatch<React.SetStateAction<Act>>;
+        }) => (
+          <>
+            <InformationPackage
+              title={"О получении"}
+              data={props.data}
+              setData={props.setData}
+            />
             <InformationPackage
               title={"О выдаче"}
-              data={actData}
-              setData={setActData}
+              data={props.data}
+              setData={props.setData}
             />
           </>
         ),
       },
       {
         id: 7,
-        name: "Документы для отправки",
+        name: "Документы",
         component: (props: {
           data: Act;
           setData: React.Dispatch<React.SetStateAction<Act>>;
         }) => (
           <>
-            {/* <Shipping data={props.data} setData={props.setData} /> */}
             <AccountingEsf data={props.data} setData={props.setData} />
             <AccountingAvr data={props.data} setData={props.setData} />
-          </>
-        ),
-      },
-      {
-        id: 8,
-        name: "QR Код акта",
-        component: () => (
-          <>
-            {actData && actData.status === "READY_FOR_SHIPMENT" && (
+            {/* Если нужен QR-код */}
+            {props.data?.qr_code && (
               <QrAct
-                qrCodeUrl="/images/qr-code.png"
-                actNumber={actData?.number + ""}
+                qrCodeUrl={props.data?.qr_code + ""}
+                actNumber={props.data?.number + ""}
                 description="Lorem ipsum dolor sit amet consectetur. Dictum morbi ut lacus ultrices pulvinar lectus adipiscing sit."
               />
             )}
           </>
         ),
       },
-      {
-        id: 9,
-        name: "Подтверждение успешной отправки",
-        component: () => <CreateSuccessAct />,
-      },
     ],
-    [actData, transportationQuantityServices]
+    [transportationQuantityServices]
   );
 
   const CurrentComponent = stepsMemo[currentStep].component as any;
@@ -474,7 +492,7 @@ export default function ActPage() {
     <>
       {/* Mobile Layout */}
       <div className="block min-[500px]:hidden p-4 max-w-md bg-yellow-50">
-        <h1 className="text-xl font-semibold text-center mb-4">ПриемСдатчик</h1>
+        <h1 className="text-xl font-semibold text-center mb-4">Менеджер</h1>
         <div className="w-full flex flex-col items-center">
           <div className="w-full bg-gray-200 rounded-full h-2.5 relative">
             <div
@@ -522,15 +540,15 @@ export default function ActPage() {
       </div>
 
       {/* Desktop Layout */}
-      <div className="flex flex-wrap items-center gap-2 sm:gap-4">
+      <div className="flex flex-wrap items-center max-[500px]:mt-4 gap-2 sm:gap-4">
         <h2 className="font-semibold text-base sm:text-lg">
           Номер акта {actData.number}
         </h2>
-        <span className="px-3 py-1 rounded-full text-sm font-medium bg-green-500 text-white">
-          {statuses.find((s) => s.key === actData.status)?.value ||
+        {getStatusBadge(
+          statuses.find((s) => s.key === actData.status)?.value ||
             actData.status ||
-            "Status"}
-        </span>
+            "Status"
+        )}
       </div>
       <div className="hidden min-[500px]:flex act-flex gap-4 mt-4 w-full">
         <div className="flex flex-col lg:w-1/2 space-y-4">

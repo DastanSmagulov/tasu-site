@@ -1,7 +1,7 @@
 "use client";
 
 import { useSession } from "next-auth/react";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import Customer from "@/components/Customer";
 import PackageCharacteristics from "@/components/PackageCharacteristics";
 import CargoPhoto from "@/components/CargoPhoto";
@@ -9,122 +9,132 @@ import InformationPackage from "@/components/PackageInformation";
 import Shipping from "@/components/Shipping";
 import CreateSuccessAct from "@/components/modals/CreateSuccessAct";
 import { useParams } from "next/navigation";
-import { axiosInstance } from "@/helper/utils";
-import { Act } from "@/helper/types";
+import { axiosInstance, getStatusBadge } from "@/helper/utils";
+import { Act, Status } from "@/helper/types";
 import QrAct from "@/components/QrAct";
 
-// --- Normalization & Deep Diff Utilities ---
-function normalize(val: any): any {
+function normalizeValue(val: any): any {
+  if (typeof val === "number" && isNaN(val)) return "";
   if (val === null || val === undefined) return "";
-  if (typeof val === "number" && Number.isNaN(val)) return "";
   return val;
 }
 
-function deepDiff(initial: any, current: any): any {
+function isEqualNormalized(val1: any, val2: any): boolean {
   if (
-    (typeof initial !== "object" || initial === null) &&
-    (typeof current !== "object" || current === null)
+    typeof val1 === "number" &&
+    isNaN(val1) &&
+    typeof val2 === "number" &&
+    isNaN(val2)
   ) {
-    const normInitial = normalize(initial);
-    const normCurrent = normalize(current);
-    if (normInitial === normCurrent) return undefined;
-    return normCurrent;
+    return true;
   }
-  if (JSON.stringify(initial) === JSON.stringify(current)) {
-    return undefined;
-  }
-  const diff: any = {};
-  const keys = new Set([
-    ...Object.keys(initial || {}),
-    ...Object.keys(current || {}),
-  ]);
-  keys.forEach((key) => {
-    const d = deepDiff(
-      initial ? initial[key] : undefined,
-      current ? current[key] : undefined
-    );
-    if (d !== undefined) {
-      diff[key] = d;
+  if (
+    typeof val1 === "object" &&
+    val1 !== null &&
+    typeof val2 === "object" &&
+    val2 !== null
+  ) {
+    if (Array.isArray(val1) && Array.isArray(val2)) {
+      return (
+        JSON.stringify(val1.map(normalizeValue)) ===
+        JSON.stringify(val2.map(normalizeValue))
+      );
     }
-  });
-  return Object.keys(diff).length === 0 ? undefined : diff;
+    return (
+      JSON.stringify(normalizeValue(val1)) ===
+      JSON.stringify(normalizeValue(val2))
+    );
+  }
+  return normalizeValue(val1) === normalizeValue(val2);
 }
 
 function getChangedFields<T>(initial: T, current: T): Partial<T> {
-  const diff: Partial<T> = {} as Partial<T>;
-  const initialRecord = initial as Record<string, any>;
-  const currentRecord = current as Record<string, any>;
+  const diff: Partial<T> = {};
   const keys = new Set([
-    ...Object.keys(initialRecord),
-    ...Object.keys(currentRecord),
+    ...Object.keys(initial as any),
+    ...Object.keys(current as any),
   ]);
   keys.forEach((key) => {
-    const changed = deepDiff(initialRecord[key], currentRecord[key]);
-    if (changed !== undefined) {
-      console.log(`Change detected for "${key}":`, {
-        before: initialRecord[key],
-        after: currentRecord[key],
-        diff: changed,
-      });
-      diff[key as keyof T] = changed;
+    const typedKey = key as keyof T;
+    const initVal = initial[typedKey];
+    const currVal = current[typedKey];
+    if (!isEqualNormalized(initVal, currVal)) {
+      if (
+        typeof initVal === "object" &&
+        initVal !== null &&
+        typeof currVal === "object" &&
+        currVal !== null &&
+        !Array.isArray(initVal) &&
+        !Array.isArray(currVal)
+      ) {
+        const nestedDiff = getChangedFields(initVal, currVal);
+        if (Object.keys(nestedDiff).length > 0) {
+          diff[typedKey] = nestedDiff as any;
+        }
+      } else {
+        diff[typedKey] = currVal;
+      }
     }
   });
   return diff;
 }
 
-function buildFormData(data: any): FormData {
+function buildFormData(diff: Partial<Act>): FormData {
   const formData = new FormData();
-  const jsonKeys = [
-    "customer_data",
-    "characteristic",
-    "cargo",
-    "cargo_images",
-    "driver_data",
-    "vehicle_data",
-    "receiver_data",
-    "receiving_cargo_info",
-    "delivery_cargo_info",
-    "transportation",
-  ];
-  Object.keys(data).forEach((key) => {
-    const value = data[key];
+  (Object.keys(diff) as (keyof Act)[]).forEach((key) => {
+    const value = diff[key];
+    if (value === null || value === undefined) return;
+
+    // Special handling for transportation_services:
     if (key === "transportation_services") {
       const services = Array.isArray(value) ? value : [];
       services.forEach((service: any) =>
-        formData.append("transportation_services", service.toString())
+        formData.append("transportation_service_ids", service.toString())
       );
       return;
     }
-    if (jsonKeys.includes(key)) {
+
+    // Special handling for file arrays (e.g. accountant_photo)
+    if (key === "accountant_photo") {
+      if (Array.isArray(value)) {
+        value.forEach((file: any) => {
+          if (file instanceof File) {
+            formData.append("accountant_photo", file);
+          }
+        });
+      }
+      return;
+    }
+
+    // Special handling for cargo and cargo_images: send as JSON
+    if (key === "cargo" || key === "cargo_images") {
       formData.append(key, JSON.stringify(value));
       return;
     }
-    if (typeof value === "boolean") {
-      formData.append(key, value ? "true" : "false");
-      return;
-    }
-    if (value !== undefined && value !== null) {
-      formData.append(key, value.toString());
+
+    if (value instanceof File) {
+      formData.append(key, value);
+    } else if (Array.isArray(value)) {
+      value.forEach((item) => {
+        if (item instanceof File) {
+          formData.append(`${key}`, item);
+        } else {
+          formData.append(`${key}`, item + "");
+        }
+      });
+    } else if (typeof value === "object") {
+      formData.append(key, JSON.stringify(value));
+    } else {
+      formData.append(key, value + "");
     }
   });
-  if (!data.transportation) {
-    formData.append("transportation", JSON.stringify({}));
-  }
   return formData;
 }
-
-const steps = [
-  { id: 1, name: "Данные о Заказчике", component: Customer },
-  { id: 2, name: "Характер и Вес Груза", component: PackageCharacteristics },
-  { id: 3, name: "Фотографии Груза", component: CargoPhoto },
-  { id: 4, name: "Данные о Получении Груза", component: InformationPackage },
-];
 
 // Ensure new acts always have a transportation object.
 const initialActData: any = {
   number: "",
   qr_code: { qr: "" },
-  cargo_status: "",
   customer_data: {
     id: 0,
     full_name: "",
@@ -152,8 +162,71 @@ export default function ActPage() {
   const { data: session, status: sessionStatus } = useSession();
   const [currentStep, setCurrentStep] = useState(0);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [actStatus, setActStatus] = useState("акт сформирован");
+  const [statuses, setStatuses] = useState<Status[]>([]);
   const params = useParams();
+  const steps = useMemo(
+    () => [
+      {
+        id: 1,
+        name: "Данные о Заказчике",
+        component: (props: {
+          data: Act;
+          setData: React.Dispatch<React.SetStateAction<Act>>;
+        }) => <Customer data={props.data} setData={props.setData} />,
+      },
+      {
+        id: 2,
+        name: "Характеристики и вес груза",
+        component: (props: {
+          data: Act;
+          setData: React.Dispatch<React.SetStateAction<Act>>;
+        }) => (
+          <PackageCharacteristics data={props.data} setData={props.setData} />
+        ),
+      },
+      {
+        id: 3,
+        name: "Фотографии груза и информация о получении",
+        component: (props: {
+          data: Act;
+          setData: React.Dispatch<React.SetStateAction<Act>>;
+        }) => (
+          <>
+            <CargoPhoto data={props.data} setData={props.setData} />
+          </>
+        ),
+      },
+      {
+        id: 4,
+        name: "Перевозка",
+        component: (props: {
+          data: Act;
+          setData: React.Dispatch<React.SetStateAction<Act>>;
+        }) => (
+          <>
+            <Shipping data={props.data} setData={props.setData} />
+          </>
+        ),
+      },
+      {
+        id: 5,
+        name: "Информация о получении груза",
+        component: (props: {
+          data: Act;
+          setData: React.Dispatch<React.SetStateAction<Act>>;
+        }) => (
+          <>
+            <InformationPackage
+              title={"О получении"}
+              data={props.data}
+              setData={props.setData}
+            />
+          </>
+        ),
+      },
+    ],
+    []
+  );
 
   // If editing, actData is null until fetched; if creating, use initialActData.
   const [actData, setActData] = useState<Act | null>(
@@ -182,6 +255,19 @@ export default function ActPage() {
       fetchActData();
     }
   }, [params.id]);
+
+  // Fetch statuses from /constants/cargo_statuses/
+  useEffect(() => {
+    const fetchStatuses = async () => {
+      try {
+        const response = await axiosInstance.get("/constants/cargo_statuses/");
+        setStatuses(response.data);
+      } catch (error) {
+        console.error("Error fetching statuses:", error);
+      }
+    };
+    fetchStatuses();
+  }, []);
 
   const handleNext = () => {
     if (currentStep < steps.length - 1) {
@@ -249,8 +335,6 @@ export default function ActPage() {
     return <div>Загрузка данных акта...</div>;
   }
 
-  console.log("Act transportation:", actData.transportation);
-
   return (
     <>
       {/* Mobile Layout */}
@@ -292,6 +376,18 @@ export default function ActPage() {
       </div>
 
       {/* Desktop Layout */}
+      <div className="flex flex-wrap items-center max-[500px]:mt-4 gap-2 sm:gap-4">
+        <h2 className="font-semibold text-base sm:text-lg">
+          Номер акта {actData.number}
+        </h2>
+        <span className="px-3 py-1 rounded-full text-sm font-medium bg-green-500 text-white">
+          {getStatusBadge(
+            statuses.find((s) => s.key === actData.status)?.value ||
+              actData.status ||
+              "Status"
+          )}
+        </span>
+      </div>
       <div className="hidden min-[500px]:flex act-flex gap-4 mt-4 w-full">
         <div className="flex flex-col md:w-1/2 space-y-4">
           <Customer data={actData} setData={setActData} />
@@ -318,40 +414,40 @@ export default function ActPage() {
       {/* Bottom Section for Desktop */}
       <div className="flex justify-between min-[1050px]:flex-row flex-col">
         <div className="flex flex-col space-y-4 mt-4">
-          <button
-            onClick={handlePrint}
-            className="font-semibold border border-gray-500 px-4 py-2 bg-white hover:bg-gray-100 text-black text-sm rounded-lg flex items-center gap-2 w-60"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              strokeWidth="1.5"
-              stroke="currentColor"
-              className="w-5 h-5"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M6.75 15.75v3.75h10.5v-3.75M4.5 9.75h15a1.5 1.5 0 011.5 1.5v6a1.5 1.5 0 01-1.5 1.5H4.5A1.5 1.5 0 013 17.25v-6a1.5 1.5 0 011.5-1.5zM15.75 3.75v6m-7.5-6v6"
-              />
-            </svg>
-            Распечатать Акт
-          </button>
           <div className="flex items-center space-x-4">
             <label className="text-sm font-semibold text-gray-700">
               Статус:
             </label>
             <select
-              value={actStatus}
-              onChange={(e) => setActStatus(e.target.value)}
+              value={
+                statuses.find((s) => s.value == actData.status)?.key ||
+                actData.status ||
+                "Status"
+              }
+              onChange={(e) =>
+                setActData((prev: any) => ({ ...prev, status: e.target.value }))
+              }
               className="border rounded-lg px-2 py-1 bg-white focus:ring-2 focus:ring-yellow-400"
             >
-              <option value="акт сформирован">акт сформирован</option>
-              <option value="на хранении">на хранении</option>
-              <option value="отправлен">отправлен</option>
+              {statuses.map((status) => (
+                <option key={status.key} value={status.key}>
+                  {status.value}
+                </option>
+              ))}
             </select>
           </div>
+          {/* Отправить на хранение button */}
+          <button
+            onClick={() =>
+              setActData((prev: any) => ({
+                ...prev,
+                status: "SENT_TO_STORAGE",
+              }))
+            }
+            className="font-semibold border border-gray-500 px-4 py-2 bg-white hover:bg-gray-100 text-black rounded-lg"
+          >
+            Отправить на хранение
+          </button>
         </div>
         <div className="flex gap-4 mt-4 text-[#000000] sm:h-10 min-[500px]:flex-row flex-col">
           <button

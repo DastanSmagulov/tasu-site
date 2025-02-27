@@ -1,13 +1,13 @@
 "use client";
+
 import React, { useState, useEffect } from "react";
 import Checkbox from "./ui/CheckBox";
 import { axiosInstance } from "@/helper/utils";
 import { Act, ActDataProps } from "@/helper/types";
 
 const Customer: React.FC<ActDataProps> = ({ data, setData }) => {
-  // Local state for form fields.
+  // Состояния для формы
   const [dropdownOpen, setDropdownOpen] = useState(false);
-  // Use local state values that are always defined (defaulting to empty string).
   const [isPayer, setIsPayer] = useState<boolean>(
     data?.customer_data?.customer_is_payer || false
   );
@@ -20,27 +20,48 @@ const Customer: React.FC<ActDataProps> = ({ data, setData }) => {
   const [customers, setCustomers] = useState<any[]>([]);
   const [selectedCustomer, setSelectedCustomer] = useState<string>(fullName);
 
+  // ---- Состояния и функции для валюты ----
+  const [currencyTypes, setCurrencyTypes] = useState<any[]>([]);
+  const [selectedCurrency, setSelectedCurrency] = useState<string>(
+    data?.customer_data?.customer_currency_type || ""
+  );
+
+  // Открытие/закрытие дропдауна с пользователями
   const toggleDropdown = () => {
     setDropdownOpen((prev) => !prev);
   };
 
+  // Загрузка списка пользователей (заказчиков)
   const fetchCustomers = async () => {
     try {
       const response = await axiosInstance.get("/admin/users/search/");
-      setCustomers(response.data.results); // Assuming response.data.results is an array of customer objects.
+      setCustomers(response.data.results || []);
     } catch (error) {
       console.error("Error fetching customers:", error);
     }
   };
 
-  // When a customer is selected from the dropdown.
+  // Загрузка списка типов валют
+  const fetchCurrencyTypes = async () => {
+    try {
+      const response = await axiosInstance.get(
+        "/constants/customer_currency_type/"
+      );
+      // Предположим, что сервер возвращает массив объектов вида: [{ key: "KZT", value: "Тенге" }, ...]
+      setCurrencyTypes(response.data || []);
+    } catch (error) {
+      console.error("Error fetching currency types:", error);
+    }
+  };
+
+  // Выбор пользователя из списка
   const handleSelectCustomer = (customer: any) => {
     setSelectedCustomer(customer.full_name);
     setFullName(customer.full_name);
     setPhoneNumber(customer.phone || "");
     setDropdownOpen(false);
 
-    // Update parent's data with the selected customer (include id)
+    // Обновляем данные в родительском стейте
     setData((prevData: any) => ({
       ...prevData,
       customer_data: {
@@ -50,26 +71,26 @@ const Customer: React.FC<ActDataProps> = ({ data, setData }) => {
         phone: customer.phone || "",
         role: customer.role,
         customer_is_payer: isPayer,
+        customer_currency_type: customer.customer_currency_type,
       },
     }));
   };
 
-  // When the user types in the Full Name input manually.
+  // Обработка изменения ФИО вручную
   const handleFullNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newFullName = e.target.value;
     setFullName(newFullName);
-    // Clear the id if the user manually changes the name.
     setData((prevData: any) => ({
       ...prevData,
       customer_data: {
         ...prevData.customer_data,
-        id: "", // Remove id
+        id: "", // Если пользователь ввёл что-то вручную, убираем ID
         full_name: newFullName,
       },
     }));
   };
 
-  // When the user types in the Phone Number input manually.
+  // Обработка изменения номера телефона вручную
   const handlePhoneNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newPhone = e.target.value;
     setPhoneNumber(newPhone);
@@ -82,6 +103,7 @@ const Customer: React.FC<ActDataProps> = ({ data, setData }) => {
     }));
   };
 
+  // Заказчик является плательщиком?
   const handlePayerChange = () => {
     const newValue = !isPayer;
     setIsPayer(newValue);
@@ -94,13 +116,28 @@ const Customer: React.FC<ActDataProps> = ({ data, setData }) => {
     }));
   };
 
+  // Обработка изменения выбранной валюты
+  const handleCurrencyChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const newCurrency = e.target.value;
+    setSelectedCurrency(newCurrency);
+    // Записываем в Act (основной объект), в поле customer_currency_type
+    setData((prevData: any) => ({
+      ...prevData,
+      customer_data: {
+        ...prevData.customer_data,
+        customer_currency_type: newCurrency,
+      },
+    }));
+  };
+
   useEffect(() => {
     fetchCustomers();
+    fetchCurrencyTypes();
   }, []);
 
   return (
     <div className="bg-white p-6 rounded-lg shadow-md flex flex-col">
-      {/* Checkbox for "Заказчик является плательщиком?" */}
+      {/* Checkbox: "Заказчик является плательщиком?" */}
       <div className="flex items-center md:flex-row flex-col gap-3 mb-4">
         <h2 className="text-lg font-semibold mb-6 text-[#1D1B23]">Заказчик</h2>
         <div className="flex items-start gap-3">
@@ -117,7 +154,7 @@ const Customer: React.FC<ActDataProps> = ({ data, setData }) => {
         </div>
       </div>
 
-      {/* Dropdown for Selecting Customer */}
+      {/* Dropdown (список пользователей) */}
       <div className="mb-4 relative">
         <label className="block text-sm font-medium text-gray-700 mb-1">
           Выберите заказчика
@@ -143,7 +180,7 @@ const Customer: React.FC<ActDataProps> = ({ data, setData }) => {
         )}
       </div>
 
-      {/* Full Name Input */}
+      {/* Поле ввода ФИО */}
       <div className="mb-4">
         <label className="block text-sm font-medium text-gray-700 mb-1">
           Укажите ФИО
@@ -157,7 +194,7 @@ const Customer: React.FC<ActDataProps> = ({ data, setData }) => {
         />
       </div>
 
-      {/* Phone Number Input */}
+      {/* Поле ввода телефона */}
       <div className="mb-4">
         <label className="block text-sm font-medium text-gray-700 mb-1">
           Телефон
@@ -169,6 +206,25 @@ const Customer: React.FC<ActDataProps> = ({ data, setData }) => {
           placeholder="Укажите номер телефона"
           className="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-[#09BD3C] focus:border-transparent"
         />
+      </div>
+
+      {/* Селект выбора валюты */}
+      <div className="mb-4">
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          Валюта
+        </label>
+        <select
+          value={data?.customer_data?.customer_currency_type}
+          onChange={handleCurrencyChange}
+          className="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-[#09BD3C] focus:border-transparent"
+        >
+          <option value="">Выберите валюту</option>
+          {currencyTypes.map((currency: any) => (
+            <option key={currency.key} value={currency.key}>
+              {currency.value}
+            </option>
+          ))}
+        </select>
       </div>
     </div>
   );

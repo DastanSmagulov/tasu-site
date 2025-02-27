@@ -27,6 +27,7 @@ interface Customer {
   signature: string;
   customer_is_payer: boolean;
   role?: string;
+  customer_currency_type?: string;
 }
 
 interface Receiver {
@@ -148,4 +149,9 @@ export interface AccountantTableRow {
   avr?: string;
   invoice?: string;
   processed?: boolean;
+}
+
+export interface Status {
+  key: string;
+  value: string;
 }

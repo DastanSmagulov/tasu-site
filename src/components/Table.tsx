@@ -71,7 +71,7 @@ const Table: React.FC<TableProps> = ({
       {}
     );
     setTableData((prevData) => [...prevData, newRow]);
-    setEditingRowIndex(tableData.length); // Set the new row as editable
+    setEditingRowIndex(tableData?.length); // Set the new row as editable
     setErrorMessage(null);
   };
 

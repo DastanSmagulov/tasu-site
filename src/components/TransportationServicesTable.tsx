@@ -31,6 +31,14 @@ interface ServicesTablesProps {
   data: Act; // Act should have a field: transportation_services: number[]
 }
 
+// Helper function to compute total price for given services and price field.
+const computeTotal = (services: any[], priceField: string) => {
+  return services?.reduce((total, service) => {
+    const price = parseFloat(service[priceField]);
+    return total + (isNaN(price) ? 0 : price);
+  }, 0);
+};
+
 const ServicesTables: React.FC<ServicesTablesProps> = ({
   availableTransportationServices,
   onChange,
@@ -237,13 +245,18 @@ const ServicesTables: React.FC<ServicesTablesProps> = ({
     setNewId("");
   };
 
-  // Compute total price based on the given field name.
-  const computeTotal = (services: any[], priceField: string) => {
-    return services?.reduce((total, service) => {
-      const price = parseFloat(service[priceField]);
-      return total + (isNaN(price) ? 0 : price);
-    }, 0);
-  };
+  // Compute totals for each type of service
+  const transportationTotal = computeTotal(
+    selectedTransportationServices,
+    "price"
+  );
+  const packagingTotal = computeTotal(selectedPackagingServices, "info3");
+  const warehouseTotal = computeTotal(selectedWarehouseServices, "info2");
+  // Combined total for all services
+  const servicesTotal = transportationTotal + packagingTotal + warehouseTotal;
+
+  const cargoCost =
+    parseFloat(data?.characteristic?.cargo_cost?.toString() || "0") || 0;
 
   return (
     <div>
@@ -251,62 +264,66 @@ const ServicesTables: React.FC<ServicesTablesProps> = ({
       <section>
         <h2 className="text-xl font-bold mb-4">Транспортные услуги</h2>
         {selectedTransportationServices?.length > 0 ? (
-          <table className="table-auto w-full border-collapse border text-gray-900 font-normal border-gray-300 mb-4">
-            <thead>
-              <tr className="bg-gray-100">
-                <th className="p-2 border border-gray-300">
-                  <Checkbox
-                    onChange={(e) =>
-                      toggleSelectAll(
-                        selectedTransportationServices,
-                        setSelectedTransportationRows,
-                        e.target.checked
-                      )
-                    }
-                    checked={
-                      selectedTransportationRows.size ===
-                        selectedTransportationServices?.length &&
-                      selectedTransportationServices?.length > 0
-                    }
-                  />
-                </th>
-                <th className="p-2 border border-gray-300 text-left font-semibold">
-                  Наименование
-                </th>
-                <th className="p-2 border border-gray-300 text-left font-semibold">
-                  Количество
-                </th>
-                <th className="p-2 border border-gray-300 text-left font-semibold">
-                  Цена
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {selectedTransportationServices?.map((service) => (
-                <tr key={service.id}>
-                  <td className="p-2 border border-gray-300">
+          <div className="overflow-x-auto">
+            <table className="table-auto w-full border-collapse border text-gray-900 font-normal border-gray-300 mb-4">
+              <thead>
+                <tr className="bg-gray-100">
+                  <th className="p-2 border border-gray-300">
                     <Checkbox
-                      checked={selectedTransportationRows.has(service.id)}
-                      onChange={() =>
-                        toggleRowSelection(
-                          service.id,
-                          selectedTransportationRows,
-                          setSelectedTransportationRows
+                      onChange={(e) =>
+                        toggleSelectAll(
+                          selectedTransportationServices,
+                          setSelectedTransportationRows,
+                          e.target.checked
                         )
                       }
+                      checked={
+                        selectedTransportationRows.size ===
+                          selectedTransportationServices?.length &&
+                        selectedTransportationServices?.length > 0
+                      }
                     />
-                  </td>
-                  <td className="p-2 border border-gray-300">{service.name}</td>
-                  <td className="p-2 border border-gray-300">
-                    {service.quantity}
-                  </td>
-                  <td className="p-2 border border-gray-300">
-                    {service.price}
-                  </td>
+                  </th>
+                  <th className="p-2 border border-gray-300 text-left font-semibold">
+                    Наименование
+                  </th>
+                  <th className="p-2 border border-gray-300 text-left font-semibold">
+                    Количество
+                  </th>
+                  <th className="p-2 border border-gray-300 text-left font-semibold">
+                    Цена
+                  </th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {selectedTransportationServices?.map((service) => (
+                  <tr key={service.id}>
+                    <td className="p-2 border border-gray-300">
+                      <Checkbox
+                        checked={selectedTransportationRows.has(service.id)}
+                        onChange={() =>
+                          toggleRowSelection(
+                            service.id,
+                            selectedTransportationRows,
+                            setSelectedTransportationRows
+                          )
+                        }
+                      />
+                    </td>
+                    <td className="p-2 border border-gray-300">
+                      {service.name}
+                    </td>
+                    <td className="p-2 border border-gray-300">
+                      {service.quantity}
+                    </td>
+                    <td className="p-2 border border-gray-300">
+                      {service.price}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         ) : (
           <p>Нет выбранных транспортных услуг.</p>
         )}
@@ -324,7 +341,7 @@ const ServicesTables: React.FC<ServicesTablesProps> = ({
         )}
         <div className="mt-4">
           {showAddTransportation ? (
-            <div className="flex items-center gap-2">
+            <div className="flex max-[500px]:flex-col min-[500px]:items-center gap-2">
               {availableTransportationOptions?.length > 0 ? (
                 <>
                   <select
@@ -373,11 +390,20 @@ const ServicesTables: React.FC<ServicesTablesProps> = ({
             </button>
           )}
         </div>
-        <div className="flex justify-end mt-4 font-bold">
-          <span>Итого: </span>
-          <span className="ml-2">
-            {computeTotal(selectedTransportationServices, "price")} тг.
-          </span>
+        {/* Combined services total */}
+        <div className="flex justify-end mt-4 font-bold flex-col items-end">
+          <div className="mb-1">
+            <span>Итого за услуги: </span>
+            <span>{servicesTotal.toFixed(2)} тг.</span>
+          </div>
+          <div className="mb-1">
+            <span>Стоимость груза: </span>
+            <span>{cargoCost.toFixed(2)} тг.</span>
+          </div>
+          <div>
+            <span>Общая сумма: </span>
+            <span>{(servicesTotal + cargoCost).toFixed(2)} тг.</span>
+          </div>
         </div>
       </section>
 
@@ -403,70 +429,72 @@ const ServicesTables: React.FC<ServicesTablesProps> = ({
                 {loadingPackaging ? (
                   <p>Загрузка упаковочных услуг...</p>
                 ) : selectedPackagingServices?.length > 0 ? (
-                  <table className="table-auto w-full border-collapse border text-gray-900 font-normal border-gray-300 mb-4">
-                    <thead>
-                      <tr className="bg-gray-100">
-                        <th className="p-2 border border-gray-300">
-                          <Checkbox
-                            onChange={(e) =>
-                              toggleSelectAll(
-                                selectedPackagingServices,
-                                setSelectedPackagingRows,
-                                e.target.checked
-                              )
-                            }
-                            checked={
-                              selectedPackagingRows.size ===
-                                selectedPackagingServices?.length &&
-                              selectedPackagingServices?.length > 0
-                            }
-                          />
-                        </th>
-                        <th className="p-2 border border-gray-300 text-left font-semibold">
-                          Тип
-                        </th>
-                        <th className="p-2 border border-gray-300 text-left font-semibold">
-                          Низкий тариф
-                        </th>
-                        <th className="p-2 border border-gray-300 text-left font-semibold">
-                          Средний тариф
-                        </th>
-                        <th className="p-2 border border-gray-300 text-left font-semibold">
-                          Цена
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {selectedPackagingServices?.map((service) => (
-                        <tr key={service.id}>
-                          <td className="p-2 border border-gray-300">
+                  <div className="overflow-x-auto">
+                    <table className="table-auto w-full border-collapse border text-gray-900 font-normal border-gray-300 mb-4">
+                      <thead>
+                        <tr className="bg-gray-100">
+                          <th className="p-2 border border-gray-300">
                             <Checkbox
-                              checked={selectedPackagingRows.has(service.id)}
-                              onChange={() =>
-                                toggleRowSelection(
-                                  service.id,
-                                  selectedPackagingRows,
-                                  setSelectedPackagingRows
+                              onChange={(e) =>
+                                toggleSelectAll(
+                                  selectedPackagingServices,
+                                  setSelectedPackagingRows,
+                                  e.target.checked
                                 )
                               }
+                              checked={
+                                selectedPackagingRows.size ===
+                                  selectedPackagingServices?.length &&
+                                selectedPackagingServices?.length > 0
+                              }
                             />
-                          </td>
-                          <td className="p-2 border border-gray-300">
-                            {service.type}
-                          </td>
-                          <td className="p-2 border border-gray-300">
-                            {service.info1}
-                          </td>
-                          <td className="p-2 border border-gray-300">
-                            {service.info2}
-                          </td>
-                          <td className="p-2 border border-gray-300">
-                            {service.info3}
-                          </td>
+                          </th>
+                          <th className="p-2 border border-gray-300 text-left font-semibold">
+                            Тип
+                          </th>
+                          <th className="p-2 border border-gray-300 text-left font-semibold">
+                            Низкий тариф
+                          </th>
+                          <th className="p-2 border border-gray-300 text-left font-semibold">
+                            Средний тариф
+                          </th>
+                          <th className="p-2 border border-gray-300 text-left font-semibold">
+                            Цена
+                          </th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                      </thead>
+                      <tbody>
+                        {selectedPackagingServices?.map((service) => (
+                          <tr key={service.id}>
+                            <td className="p-2 border border-gray-300">
+                              <Checkbox
+                                checked={selectedPackagingRows.has(service.id)}
+                                onChange={() =>
+                                  toggleRowSelection(
+                                    service.id,
+                                    selectedPackagingRows,
+                                    setSelectedPackagingRows
+                                  )
+                                }
+                              />
+                            </td>
+                            <td className="p-2 border border-gray-300">
+                              {service.type}
+                            </td>
+                            <td className="p-2 border border-gray-300">
+                              {service.info1}
+                            </td>
+                            <td className="p-2 border border-gray-300">
+                              {service.info2}
+                            </td>
+                            <td className="p-2 border border-gray-300">
+                              {service.info3}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                 ) : (
                   <p>Нет выбранных упаковочных услуг.</p>
                 )}
@@ -484,7 +512,7 @@ const ServicesTables: React.FC<ServicesTablesProps> = ({
                 )}
                 <div className="mt-4">
                   {showAddPackaging ? (
-                    <div className="flex items-center gap-2">
+                    <div className="flex max-[500px]:flex-col min-[500px]:items-center gap-2">
                       {availablePackagingOptions?.length > 0 ? (
                         <>
                           <select
@@ -534,12 +562,6 @@ const ServicesTables: React.FC<ServicesTablesProps> = ({
                     </button>
                   )}
                 </div>
-                <div className="flex justify-end mt-4 font-bold">
-                  <span>Итого: </span>
-                  <span className="ml-2">
-                    {computeTotal(selectedPackagingServices, "info3")} тг.
-                  </span>
-                </div>
               </section>
 
               {/* Warehouse Services Section */}
@@ -548,64 +570,67 @@ const ServicesTables: React.FC<ServicesTablesProps> = ({
                 {loadingWarehouse ? (
                   <p>Загрузка складских услуг...</p>
                 ) : selectedWarehouseServices?.length > 0 ? (
-                  <table className="table-auto w-full border-collapse border text-gray-900 font-normal border-gray-300 mb-4">
-                    <thead>
-                      <tr className="bg-gray-100">
-                        <th className="p-2 border border-gray-300">
-                          <Checkbox
-                            onChange={(e) =>
-                              toggleSelectAll(
-                                selectedWarehouseServices,
-                                setSelectedWarehouseRows,
-                                e.target.checked
-                              )
-                            }
-                            checked={
-                              selectedWarehouseRows.size ===
-                                selectedWarehouseServices?.length &&
-                              selectedWarehouseServices?.length > 0
-                            }
-                          />
-                        </th>
-                        <th className="p-2 border border-gray-300 text-left font-semibold">
-                          Тип
-                        </th>
-                        <th className="p-2 border border-gray-300 text-left font-semibold">
-                          Информация
-                        </th>
-                        <th className="p-2 border border-gray-300 text-left font-semibold">
-                          Цена
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {selectedWarehouseServices?.map((service) => (
-                        <tr key={service.id}>
-                          <td className="p-2 border border-gray-300">
+                  <div className="overflow-x-auto">
+                    <table className="table-auto w-full border-collapse border text-gray-900 font-normal border-gray-300 mb-4">
+                      {" "}
+                      <thead>
+                        <tr className="bg-gray-100">
+                          <th className="p-2 border border-gray-300">
                             <Checkbox
-                              checked={selectedWarehouseRows.has(service.id)}
-                              onChange={() =>
-                                toggleRowSelection(
-                                  service.id,
-                                  selectedWarehouseRows,
-                                  setSelectedWarehouseRows
+                              onChange={(e) =>
+                                toggleSelectAll(
+                                  selectedWarehouseServices,
+                                  setSelectedWarehouseRows,
+                                  e.target.checked
                                 )
                               }
+                              checked={
+                                selectedWarehouseRows.size ===
+                                  selectedWarehouseServices?.length &&
+                                selectedWarehouseServices?.length > 0
+                              }
                             />
-                          </td>
-                          <td className="p-2 border border-gray-300">
-                            {service.type}
-                          </td>
-                          <td className="p-2 border border-gray-300">
-                            {service.info1}
-                          </td>
-                          <td className="p-2 border border-gray-300">
-                            {service.info2}
-                          </td>
+                          </th>
+                          <th className="p-2 border border-gray-300 text-left font-semibold">
+                            Тип
+                          </th>
+                          <th className="p-2 border border-gray-300 text-left font-semibold">
+                            Информация
+                          </th>
+                          <th className="p-2 border border-gray-300 text-left font-semibold">
+                            Цена
+                          </th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                      </thead>
+                      <tbody>
+                        {selectedWarehouseServices?.map((service) => (
+                          <tr key={service.id}>
+                            <td className="p-2 border border-gray-300">
+                              <Checkbox
+                                checked={selectedWarehouseRows.has(service.id)}
+                                onChange={() =>
+                                  toggleRowSelection(
+                                    service.id,
+                                    selectedWarehouseRows,
+                                    setSelectedWarehouseRows
+                                  )
+                                }
+                              />
+                            </td>
+                            <td className="p-2 border border-gray-300">
+                              {service.type}
+                            </td>
+                            <td className="p-2 border border-gray-300">
+                              {service.info1}
+                            </td>
+                            <td className="p-2 border border-gray-300">
+                              {service.info2}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                 ) : (
                   <p>Нет выбранных складских услуг.</p>
                 )}
@@ -623,7 +648,7 @@ const ServicesTables: React.FC<ServicesTablesProps> = ({
                 )}
                 <div className="mt-4">
                   {showAddWarehouse ? (
-                    <div className="flex items-center gap-2">
+                    <div className="flex max-[500px]:flex-col min-[500px]:items-center gap-2">
                       {availableWarehouseOptions?.length > 0 ? (
                         <>
                           <select
@@ -671,12 +696,6 @@ const ServicesTables: React.FC<ServicesTablesProps> = ({
                       Добавить новую услугу
                     </button>
                   )}
-                </div>
-                <div className="flex justify-end mt-4 font-bold">
-                  <span>Итого: </span>
-                  <span className="ml-2">
-                    {computeTotal(selectedWarehouseServices, "info2")} тг.
-                  </span>
                 </div>
               </section>
             </>

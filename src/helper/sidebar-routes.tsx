@@ -40,14 +40,8 @@ const routes: Route[] = [
     roles: ["courier"],
   },
   {
-    path: "/manager/requests",
-    name: "Заявки",
-    icon: "requests",
-    roles: ["manager"],
-  },
-  {
     path: "/manager/cmp",
-    name: "CMP",
+    name: "CMP и Заявки",
     icon: "cmp",
     roles: ["manager"],
   },

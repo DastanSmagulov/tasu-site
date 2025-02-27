@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import TrashIcon from "../../public/icons/trash.svg";
 import Checkbox from "@/components/ui/CheckBox";
-import { axiosInstance, formatDate } from "@/helper/utils";
+import { axiosInstance, formatDate, getStatusBadge } from "@/helper/utils";
 import Cookies from "js-cookie";
 
 const Table = ({ data, loading, fetchActsData }: any) => {
@@ -38,9 +38,9 @@ const Table = ({ data, loading, fetchActsData }: any) => {
 
   const toggleSelectAll = () => {
     setSelectedRows(
-      selectedRows.size === data.length
+      selectedRows.size === data?.length
         ? new Set()
-        : new Set(data.map((row: any) => row.id))
+        : new Set(data?.map((row: any) => row.id))
     );
   };
 
@@ -73,7 +73,7 @@ const Table = ({ data, loading, fetchActsData }: any) => {
               <th className="p-3 pl-10">
                 <Checkbox
                   id="select-all"
-                  checked={selectedRows.size === data.length}
+                  checked={selectedRows.size === data?.length}
                   onChange={toggleSelectAll}
                 />
               </th>
@@ -96,7 +96,7 @@ const Table = ({ data, loading, fetchActsData }: any) => {
             </tr>
           </thead>
           <tbody className="bg-white">
-            {data.map((act: any) => {
+            {data?.map((act: any) => {
               // Map act fields to table columns:
               const actNumber = act.number || "-";
               const actId = act.id || "-";
@@ -124,7 +124,7 @@ const Table = ({ data, loading, fetchActsData }: any) => {
                   </td>
                   <td className="p-3 border border-gray-300">
                     {role !== "admin" ? (
-                      <Link href={`${role}/act/${actId}`}>{actNumber}</Link>
+                      <Link href={`/${role}/act/${actId}`}>{actNumber}</Link>
                     ) : (
                       <h2>{actNumber}</h2>
                     )}
@@ -139,9 +139,7 @@ const Table = ({ data, loading, fetchActsData }: any) => {
                   </td>
                   <td className="p-3 border border-gray-300">{volume}</td>
                   <td className="p-3 border border-gray-300">
-                    <span className="px-3 py-1 rounded-full text-sm font-medium">
-                      {status}
-                    </span>
+                    {getStatusBadge(status)}
                   </td>
                   <td className="p-3 text-center border border-gray-300">
                     {view}

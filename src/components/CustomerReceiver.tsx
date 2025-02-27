@@ -95,7 +95,11 @@ const CustomerReceiver: React.FC<ActDataProps> = ({ data, setData }) => {
 
   return (
     <div className="bg-white p-6 rounded-lg shadow-md flex flex-col">
-      <h2 className="text-lg font-semibold mb-6 text-[#1D1B23]">Получатель</h2>
+      <div className="flex items-center md:flex-row flex-col gap-3 mb-4">
+        <h2 className="text-lg font-semibold mb-6 text-[#1D1B23]">
+          Получатель
+        </h2>
+      </div>
 
       {/* Dropdown for Selecting Customer */}
       <div className="mb-4 relative">
