@@ -46,12 +46,6 @@ const routes: Route[] = [
     roles: ["manager"],
   },
   {
-    path: "/manager/statistics",
-    name: "Статистика",
-    icon: "statistics",
-    roles: ["manager"],
-  },
-  {
     path: "/manager/users",
     name: "Пользователи",
     icon: "users",

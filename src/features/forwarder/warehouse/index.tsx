@@ -51,7 +51,7 @@ const WarehousePage = () => {
 
   return (
     <div>
-      <FilterPanel filters={filters} setFilters={setFilters} />
+      <FilterPanel warehouse={true} filters={filters} setFilters={setFilters} />
       {!loading && data.length === 0 ? (
         <p className="text-center text-lg text-gray-700">
           Нет актов на складе.

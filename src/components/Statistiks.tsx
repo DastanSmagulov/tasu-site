@@ -1,4 +1,6 @@
-import React from "react";
+"use client";
+
+import React, { useEffect, useState } from "react";
 import { Line, Pie } from "react-chartjs-2";
 import {
   Chart as ChartJS,
@@ -11,6 +13,7 @@ import {
   Legend,
   ArcElement,
 } from "chart.js";
+import { axiosInstance } from "@/helper/utils";
 
 ChartJS.register(
   CategoryScale,
@@ -23,7 +26,49 @@ ChartJS.register(
   ArcElement
 );
 
+// Mapping of status to colors (you can adjust these to your liking)
+const STATUS_COLORS: Record<string, string> = {
+  "Акт сформирован": "#4F9EFF",
+  "Отправлен на хранение": "#FFB347",
+  "Заявка сформирована": "#D891EF",
+  "Ожидание оплаты": "#FF6961",
+  "У перевозчика": "#77DD77",
+  CREATED: "#AAAAAA",
+};
+
 const StatisticsComponent = () => {
+  // State for API data
+  const [baseStatistic, setBaseStatistic] = useState({
+    total_income: 0,
+    revenue: 0,
+    transportation_count: 0,
+    users_count: 0,
+  });
+  const [statusStatistic, setStatusStatistic] = useState<Record<string, any>>(
+    {}
+  );
+
+  useEffect(() => {
+    const fetchStatistics = async () => {
+      try {
+        const response = await axiosInstance.get("/acts/statistics/");
+        setBaseStatistic(response.data.base_statistic);
+        setStatusStatistic(response.data.status_statistic);
+      } catch (error) {
+        console.error("Error fetching statistics:", error);
+      }
+    };
+
+    fetchStatistics();
+  }, []);
+
+  // Build pie chart data from statusStatistic
+  const pieLabels = Object.keys(statusStatistic);
+  const pieDataValues = pieLabels.map(
+    (key) => statusStatistic[key]?.total || 0
+  );
+  const pieColors = pieLabels.map((key) => STATUS_COLORS[key] || "#CCCCCC");
+
   const lineData = {
     labels: [
       "Янв",
@@ -53,57 +98,50 @@ const StatisticsComponent = () => {
   };
 
   const pieData = {
-    labels: [
-      "Акт сформирован",
-      "В пути",
-      "Готов к отправке",
-      "Не готов",
-      "Доставлен",
-    ],
+    labels: pieLabels,
     datasets: [
       {
-        data: [32, 28, 9, 14, 17],
-        backgroundColor: [
-          "#4F9EFF",
-          "#FFB347",
-          "#D891EF",
-          "#FF6961",
-          "#77DD77",
-        ],
+        data: pieDataValues,
+        backgroundColor: pieColors,
         borderWidth: 0,
       },
     ],
   };
 
+  // Build stats for summary cards using baseStatistic values.
   const stats = [
-    { title: "Общий доход", value: "46 млн ₸", trend: "↓ 16%", color: "red" },
+    {
+      title: "Общий доход",
+      value: `${baseStatistic.total_income} тг.`,
+      trend: "-",
+      color: "green",
+    },
     {
       title: "Общая выручка",
-      value: "3 млн ₸",
-      trend: "↑ 16%",
+      value: `${baseStatistic.revenue} тг.`,
+      trend: "-",
       color: "green",
     },
     {
       title: "Количество рейсов",
-      value: "124 рейсов",
-      trend: "↑ 16%",
+      value: `${baseStatistic.transportation_count} рейсов`,
+      trend: "-",
       color: "green",
     },
     {
       title: "Количество пользователей",
-      value: "1,643",
-      trend: "↑ 16%",
+      value: baseStatistic.users_count,
+      trend: "-",
       color: "green",
     },
   ];
 
-  const pieLegend = [
-    { label: "Акт сформирован", value: "32 000", color: "#4F9EFF" },
-    { label: "В пути", value: "28 000", color: "#FFB347" },
-    { label: "Готов к отправке", value: "9 000", color: "#D891EF" },
-    { label: "Не готов", value: "14 000", color: "#FF6961" },
-    { label: "Доставлен", value: "17 000", color: "#77DD77" },
-  ];
+  // Build pie chart legend data
+  const pieLegend = pieLabels.map((key) => ({
+    label: key,
+    value: `${statusStatistic[key]?.total || 0}`,
+    color: STATUS_COLORS[key] || "#CCCCCC",
+  }));
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">

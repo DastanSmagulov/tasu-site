@@ -83,9 +83,9 @@ const Table = ({ data, loading, fetchActsData }: any) => {
                 { label: "Дата", key: "date" },
                 { label: "Мест", key: "places" },
                 { label: "Вес", key: "weight" },
-                { label: "Куб", key: "volume" },
+                // { label: "Куб", key: "volume" },
                 { label: "Статус", key: "status" },
-                { label: "Вид", key: "view" },
+                // { label: "Вид", key: "view" },
                 { label: "Сумма", key: "amount" },
               ].map((col) => (
                 <th key={col.key} className="p-3 text-left">
@@ -137,13 +137,13 @@ const Table = ({ data, loading, fetchActsData }: any) => {
                   <td className="p-3 font-semibold border border-gray-300">
                     {weight}
                   </td>
-                  <td className="p-3 border border-gray-300">{volume}</td>
+                  {/* <td className="p-3 border border-gray-300">{volume}</td> */}
                   <td className="p-3 border border-gray-300">
                     {getStatusBadge(status)}
                   </td>
-                  <td className="p-3 text-center border border-gray-300">
+                  {/* <td className="p-3 text-center border border-gray-300">
                     {view}
-                  </td>
+                  </td> */}
                   <td className="p-3 text-center border border-gray-300">
                     {amount}
                   </td>

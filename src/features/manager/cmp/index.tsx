@@ -66,7 +66,7 @@ const CMPPage = () => {
 
   return (
     <div>
-      <FilterPanel filters={filters} setFilters={setFilters} />
+      <FilterPanel warehouse={false} filters={filters} setFilters={setFilters} />
       <Table data={data} fetchActsData={fetchActsData} loading={loading} />
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mt-4">
         <h1 className="text-gray-700">

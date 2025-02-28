@@ -23,7 +23,8 @@ const AccountantPage = () => {
     consignment__cargo_status: "",
     sender_city__name_ru: "",
     receiver_city__name_ru: "",
-    created_at: "",
+    created_at_gte: "",
+    created_at_lte: "",
     closed_at: "",
     ordering: "",
     limit: "10",
@@ -40,6 +41,7 @@ const AccountantPage = () => {
       }
     });
     // Reset offset to 0 on filters change.
+    params.set("ordering", "-created_at");
     params.set("offset", "0");
     return params.toString();
   };
@@ -48,13 +50,19 @@ const AccountantPage = () => {
   const fetchActsData = async (url?: string | null) => {
     setLoading(true);
     try {
-      let finalUrl: string;
-      if (url) {
-        finalUrl = url;
-      } else {
-        const queryString = buildQueryString();
-        finalUrl = `/acts/?${queryString}`;
+      const queryString = buildQueryString();
+
+      // Log the date filters if provided
+      if (filters.created_at_gte || filters.created_at_lte) {
+        console.log(
+          "Date filters - From:",
+          filters.created_at_gte,
+          "To:",
+          filters.created_at_lte
+        );
       }
+
+      const finalUrl = url ? url : `/acts/?${queryString}`;
       const response = await axiosInstance.get(finalUrl);
       setData(response.data.results);
       setTotalCount(response.data.count);
@@ -75,7 +83,11 @@ const AccountantPage = () => {
   return (
     <div>
       <TabsNavigation role="accountant" />
-      <FilterPanel filters={filters} setFilters={setFilters} />
+      <FilterPanel
+        warehouse={false}
+        filters={filters}
+        setFilters={setFilters}
+      />
       <AccountantTable
         data={data}
         fetchActsData={fetchActsData}

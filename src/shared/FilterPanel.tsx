@@ -14,9 +14,14 @@ interface Status {
 interface FilterPanelProps {
   filters: any;
   setFilters: (filters: any) => void;
+  warehouse: boolean;
 }
 
-const FilterPanel: React.FC<FilterPanelProps> = ({ filters, setFilters }) => {
+const FilterPanel: React.FC<FilterPanelProps> = ({
+  warehouse,
+  filters,
+  setFilters,
+}) => {
   const [showStatusDropdown, setShowStatusDropdown] = useState(false);
   const [cities, setCities] = useState<City[]>([]);
   const [statuses, setStatuses] = useState<Status[]>([]);
@@ -56,7 +61,8 @@ const FilterPanel: React.FC<FilterPanelProps> = ({ filters, setFilters }) => {
       filters.consignment__cargo_status ||
       filters.sender_city__name_ru ||
       filters.receiver_city__name_ru ||
-      filters.created_at ||
+      filters.created_at_lte ||
+      filters.created_at_gte ||
       filters.ordering
   );
 
@@ -80,62 +86,64 @@ const FilterPanel: React.FC<FilterPanelProps> = ({ filters, setFilters }) => {
 
         {/* Filters */}
         <div className="flex flex-wrap items-center gap-6">
-          <div className="relative">
-            {/* Dropdown Toggle */}
-            <button
-              className="flex items-center gap-1 text-sm font-medium text-gray-700 hover:text-gray-900 bg-transparent hover:bg-transparent"
-              onClick={() => setShowStatusDropdown(!showStatusDropdown)}
-            >
-              Статус
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className={`h-4 w-4 transition-transform ${
-                  showStatusDropdown ? "rotate-180" : ""
-                }`}
-                viewBox="0 0 20 20"
-                fill="currentColor"
+          {!warehouse && (
+            <div className="relative">
+              {/* Dropdown Toggle */}
+              <button
+                className="flex items-center gap-1 text-sm font-medium text-gray-700 hover:text-gray-900 bg-transparent hover:bg-transparent"
+                onClick={() => setShowStatusDropdown(!showStatusDropdown)}
               >
-                <path
-                  fillRule="evenodd"
-                  d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
-                  clipRule="evenodd"
-                />
-              </svg>
-            </button>
-
-            {/* Dropdown Menu */}
-            {showStatusDropdown && (
-              <ul className="absolute z-10 mt-1 bg-white border border-gray-200 rounded-md shadow-md w-40 text-sm">
-                <li
-                  onClick={() => {
-                    setFilters({
-                      ...filters,
-                      consignment__cargo_status: "",
-                    });
-                    setShowStatusDropdown(false);
-                  }}
-                  className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                Статус
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className={`h-4 w-4 transition-transform ${
+                    showStatusDropdown ? "rotate-180" : ""
+                  }`}
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
                 >
-                  Все
-                </li>
-                {statuses.map((status) => (
+                  <path
+                    fillRule="evenodd"
+                    d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+              </button>
+
+              {/* Dropdown Menu */}
+              {showStatusDropdown && (
+                <ul className="absolute z-10 mt-2 w-48 bg-white rounded-md shadow-lg border border-gray-200 transition-all duration-300 transform origin-top">
                   <li
-                    key={status.key}
                     onClick={() => {
                       setFilters({
                         ...filters,
-                        consignment__cargo_status: status.key,
+                        consignment__cargo_status: "",
                       });
                       setShowStatusDropdown(false);
                     }}
-                    className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                    className="block px-4 py-2 text-xs text-gray-700 cursor-pointer hover:bg-blue-100 transition-colors duration-200"
                   >
-                    {status.value}
+                    Все
                   </li>
-                ))}
-              </ul>
-            )}
-          </div>
+                  {statuses.map((status) => (
+                    <li
+                      key={status.key}
+                      onClick={() => {
+                        setFilters({
+                          ...filters,
+                          consignment__cargo_status: status.key,
+                        });
+                        setShowStatusDropdown(false);
+                      }}
+                      className="block px-4 py-2 text-xs text-gray-700 cursor-pointer hover:bg-blue-100 transition-colors duration-200"
+                    >
+                      {status.value}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
@@ -158,9 +166,21 @@ const FilterPanel: React.FC<FilterPanelProps> = ({ filters, setFilters }) => {
           <label className="font-medium mb-1">Дата начало</label>
           <input
             type="date"
-            value={filters.created_at}
+            value={filters.created_at_gte}
             onChange={(e) =>
-              setFilters({ ...filters, created_at: e.target.value })
+              setFilters({ ...filters, created_at_gte: e.target.value })
+            }
+            className="bg-white border-b border-gray-300 focus:outline-none focus:border-gray-500 px-2 py-1"
+          />
+        </div>
+
+        <div className="flex flex-col">
+          <label className="font-medium mb-1">Дата конца</label>
+          <input
+            type="date"
+            value={filters.created_at_lte}
+            onChange={(e) =>
+              setFilters({ ...filters, created_at_lte: e.target.value })
             }
             className="bg-white border-b border-gray-300 focus:outline-none focus:border-gray-500 px-2 py-1"
           />
@@ -168,7 +188,7 @@ const FilterPanel: React.FC<FilterPanelProps> = ({ filters, setFilters }) => {
 
         {/* Sender City */}
         <div className="flex flex-col">
-          <label className="font-medium mb-1">Город отправителя</label>
+          <label className="font-medium mb-2">Город отправителя</label>
           <select
             value={filters.sender_city__name_ru}
             onChange={(e) =>
@@ -187,7 +207,7 @@ const FilterPanel: React.FC<FilterPanelProps> = ({ filters, setFilters }) => {
 
         {/* Receiver City */}
         <div className="flex flex-col">
-          <label className="font-medium mb-1">Город получателя</label>
+          <label className="font-medium mb-2">Город получателя</label>
           <select
             value={filters.receiver_city__name_ru}
             onChange={(e) =>
@@ -218,8 +238,8 @@ const FilterPanel: React.FC<FilterPanelProps> = ({ filters, setFilters }) => {
                   consignment__cargo_status: "",
                   sender_city__name_ru: "",
                   receiver_city__name_ru: "",
-                  created_at: "",
-                  closed_at: "",
+                  created_at_lte: "",
+                  created_at_gte: "",
                   ordering: "",
                   limit: "10",
                 })

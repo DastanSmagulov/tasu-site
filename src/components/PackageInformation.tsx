@@ -1,7 +1,6 @@
-import React, { useState, useEffect, FC, CSSProperties, useRef } from "react";
+import React, { useState, useEffect, FC } from "react";
 import { axiosInstance } from "@/helper/utils";
 import { ActDataProps } from "@/helper/types";
-import { createPortal } from "react-dom";
 import Signature from "./Signature";
 
 interface CustomerOption {
@@ -23,14 +22,18 @@ const InformationPackage: React.FC<ActDataProps & { title: string }> = ({
   // Local states for "Выдал" and "Принял"
   const [issuedBy, setIssuedBy] = useState<CustomerOption | null>(null);
   const [receivedBy, setReceivedBy] = useState<CustomerOption | null>(null);
-  const [dateTime, setDateTime] = useState(
-    title.toLowerCase().includes("выдаче")
+
+  // Initialize dateTime state:
+  // If parent's data exists, use it; otherwise, default to current date/time.
+  const [dateTime, setDateTime] = useState(() => {
+    const initial = title.toLowerCase().includes("выдаче")
       ? data?.delivery_cargo_info?.date
-      : data?.receiving_cargo_info?.date
-  ); // datetime-local string
+      : data?.receiving_cargo_info?.date;
+    // If no date provided, default to current datetime in "YYYY-MM-DDTHH:mm" format
+    return initial || new Date().toISOString().slice(0, 16);
+  });
 
   // Signature states.
-  // Initialize from parent's data if available.
   const [signatureDataUrl, setSignatureDataUrl] = useState<string | null>(
     title.toLowerCase().includes("выдаче")
       ? data?.customer_data?.signature || null
@@ -95,11 +98,11 @@ const InformationPackage: React.FC<ActDataProps & { title: string }> = ({
         }
       }
     }
-    // Only depend on data and title (not local state) to avoid loops.
-  }, [data, title]);
+  }, [data, title, issuedBy, receivedBy]);
 
+  // Update parent's data when local state changes.
   useEffect(() => {
-    const formatDateToBackend = (date: string | null) => {
+    const formatDateToBackend = (date: string) => {
       if (!date) return null;
       const parsedDate = new Date(date);
       return `${parsedDate.getFullYear()}-${String(
@@ -112,6 +115,8 @@ const InformationPackage: React.FC<ActDataProps & { title: string }> = ({
       ).padStart(2, "0")}:${String(parsedDate.getSeconds()).padStart(2, "0")}`;
     };
 
+    const formattedDate = dateTime ? formatDateToBackend(dateTime) : null;
+
     let newData;
     if (title.toLowerCase().includes("получении")) {
       newData = {
@@ -119,7 +124,7 @@ const InformationPackage: React.FC<ActDataProps & { title: string }> = ({
         receiving_cargo_info: {
           issued: issuedBy ? issuedBy.id : null,
           accepted: receivedBy ? receivedBy.id : null,
-          date: formatDateToBackend(dateTime+""),
+          date: formattedDate,
         },
         receiver_data: {
           ...data?.receiver_data,
@@ -132,7 +137,7 @@ const InformationPackage: React.FC<ActDataProps & { title: string }> = ({
         delivery_cargo_info: {
           issued: issuedBy ? issuedBy.id : null,
           accepted: receivedBy ? receivedBy.id : null,
-          date: formatDateToBackend(dateTime+""),
+          date: formattedDate,
         },
         customer_data: {
           ...data?.customer_data,
@@ -152,6 +157,7 @@ const InformationPackage: React.FC<ActDataProps & { title: string }> = ({
     setData,
     signatureDataUrl,
     receiverSignatureDataUrl,
+    data,
   ]);
 
   // Update dateTime state on input change.
@@ -286,21 +292,11 @@ const InformationPackage: React.FC<ActDataProps & { title: string }> = ({
           <div className="mt-2 flex items-center gap-4">
             <input
               type="datetime-local"
-              value={
-                title.toLowerCase().includes("получении")
-                  ? data?.receiving_cargo_info?.date + ""
-                  : data?.delivery_cargo_info?.date + ""
-              }
+              value={dateTime}
               onChange={handleDateTimeChange}
               className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
-            <span className="text-gray-700">
-              {formatDateTime(
-                title.toLowerCase().includes("получении")
-                  ? data?.receiving_cargo_info?.date + ""
-                  : data?.delivery_cargo_info?.date + ""
-              )}
-            </span>{" "}
+            <span className="text-gray-700">{formatDateTime(dateTime)}</span>
           </div>
         </div>
 

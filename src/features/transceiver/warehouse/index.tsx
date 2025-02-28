@@ -56,7 +56,7 @@ const WarehousePage = () => {
 
   return (
     <div>
-      <FilterPanel filters={filters} setFilters={setFilters} />
+      <FilterPanel warehouse={true} filters={filters} setFilters={setFilters} />
       {/* Display message if no acts are found and loading is complete */}
       {!loading && data.length === 0 ? (
         <p className="text-center text-lg text-gray-700">

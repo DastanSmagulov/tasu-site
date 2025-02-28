@@ -380,13 +380,11 @@ export default function ActPage() {
         <h2 className="font-semibold text-base sm:text-lg">
           Номер акта {actData.number}
         </h2>
-        <span className="px-3 py-1 rounded-full text-sm font-medium bg-green-500 text-white">
-          {getStatusBadge(
-            statuses.find((s) => s.key === actData.status)?.value ||
-              actData.status ||
-              "Status"
-          )}
-        </span>
+        {getStatusBadge(
+          statuses.find((s) => s.key === actData.status)?.value ||
+            actData.status ||
+            "Status"
+        )}
       </div>
       <div className="hidden min-[500px]:flex act-flex gap-4 mt-4 w-full">
         <div className="flex flex-col md:w-1/2 space-y-4">

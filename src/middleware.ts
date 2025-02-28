@@ -63,6 +63,7 @@ export const config = {
     "/forwarder/:path*",
     "/transceiver/:path*",
     "/accountant/:path*",
+    // "/act/:path*",
     "/unauthorized",
   ],
 };
