@@ -544,7 +544,15 @@ export default function TariffPage() {
             }}
             width="full"
           />
-          <Insurance />
+          {/* <Insurance
+            cargoValue={calculationData.insurance_cost_cargo}
+            onChange={(value) =>
+              setCalculationData((prev: any) => ({
+                ...prev,
+                insurance_cost_cargo: value,
+              }))
+            }
+          />{" "} */}
           <Table
             text="Услуги по количеству"
             columns={transportationQuantityColumns}

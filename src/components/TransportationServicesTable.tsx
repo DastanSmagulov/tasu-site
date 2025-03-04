@@ -390,21 +390,6 @@ const ServicesTables: React.FC<ServicesTablesProps> = ({
             </button>
           )}
         </div>
-        {/* Combined services total */}
-        <div className="flex justify-end mt-4 font-bold flex-col items-end">
-          <div className="mb-1">
-            <span>Итого за услуги: </span>
-            <span>{servicesTotal.toFixed(2)} тг.</span>
-          </div>
-          <div className="mb-1">
-            <span>Стоимость груза: </span>
-            <span>{cargoCost.toFixed(2)} тг.</span>
-          </div>
-          <div>
-            <span>Общая сумма: </span>
-            <span>{(servicesTotal + cargoCost).toFixed(2)} тг.</span>
-          </div>
-        </div>
       </section>
 
       {/* Доп услуги Checkbox */}
@@ -704,6 +689,21 @@ const ServicesTables: React.FC<ServicesTablesProps> = ({
           )}
         </>
       )}
+      {/* Combined services total */}
+      <div className="flex justify-end mt-4 font-bold flex-col items-end">
+        <div className="mb-1">
+          <span>Итого за услуги: </span>
+          <span>{servicesTotal.toFixed(2)} тг.</span>
+        </div>
+        <div className="mb-1">
+          <span>Стоимость груза: </span>
+          <span>{cargoCost.toFixed(2)} тг.</span>
+        </div>
+        <div>
+          <span>Общая сумма: </span>
+          <span>{(servicesTotal + cargoCost).toFixed(2)} тг.</span>
+        </div>
+      </div>
     </div>
   );
 };

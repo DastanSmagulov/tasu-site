@@ -32,8 +32,8 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     headerText = "Заявки";
   } else if (pathname === "/manager/cmp") {
     headerText = "CMP";
-  } else if (pathname === "/manager/statistics") {
-    headerText = "Статистика";
+  } else if (pathname === "/manager/warehouse") {
+    headerText = "На складе";
   } else if (pathname === "/manager/users") {
     headerText = "Пользователи";
   } else if (pathname === "/manager/cost-calculation") {

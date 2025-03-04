@@ -104,13 +104,13 @@ const AccountantTable: React.FC<TableProps> = ({
                   {row.customer?.full_name}
                 </td>
                 <td className="p-3 border border-gray-300">
-                  <Checkbox checked={!!row.has_esf} />
+                  <Checkbox checked={!!row.has_esf} readOnly={true} />
                 </td>
                 <td className="p-3 border border-gray-300">
-                  <Checkbox checked={!!row.has_avr} />
+                  <Checkbox checked={!!row.has_avr} readOnly={true} />
                 </td>
                 <td className="p-3 border border-gray-300">
-                  <Checkbox checked={!!row.invoice} />
+                  <Checkbox checked={!!row.accountant_photo} />
                 </td>
                 <td className="p-3 border border-gray-300">
                   {getStatusBadge(row.status)}{" "}

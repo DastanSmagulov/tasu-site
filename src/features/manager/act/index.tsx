@@ -251,7 +251,7 @@ export default function ActPage() {
       // Second fetch after 500ms.
       const timer = setTimeout(() => {
         fetchActData();
-      }, 500);
+      }, 1000);
 
       return () => clearTimeout(timer);
     }
@@ -318,10 +318,27 @@ export default function ActPage() {
         `/acts/${params.id}/`,
         formData
       );
+      // await axiosInstance.patch(`/acts/${params.id}/`, {
+      //   smr_document:
+      //     "/media/uploads/contract_mercenary_and_warehouse/FX_retake_instructions_2024-2025_D8MjQm4.pdf",
+      // });
       setIsModalOpen(true);
     } catch (error) {
       console.error("Error sending act data:", error);
       alert("Ошибка при отправке акта");
+    }
+  };
+
+  // NEW: Function to immediately trigger patch API for sending to storage.
+  const handleSendToStorage = async () => {
+    try {
+      await axiosInstance.patch(`/acts/${params.id}/`, {
+        status: "SENT_TO_STORAGE",
+      });
+      setIsModalOpen(true);
+    } catch (error) {
+      console.error("Error sending act to storage:", error);
+      alert("Ошибка при отправке на хранение");
     }
   };
 
@@ -395,11 +412,7 @@ export default function ActPage() {
             </div>
             <ManagerLink
               title="приема наемником"
-              link="https://tasu-site.vercel.app/carrier"
-            />
-            <ManagerLink
-              title="передачи наемником"
-              link="https://tasu-site.vercel.app/carrier/packageInfo"
+              link={`https://tasu-site.vercel.app/carrier/${params.id}`}
             />
           </div>
         ),
@@ -577,12 +590,12 @@ export default function ActPage() {
             </div>
             <ManagerLink
               title="приема наемником"
-              link="https://tasu-site.vercel.app/carrier"
+              link={`https://tasu-site.vercel.app/carrier/${params.id}`}
             />
-            <ManagerLink
+            {/* <ManagerLink
               title="передачи наемником"
               link="https://tasu-site.vercel.app/carrier/packageInfo"
-            />
+            /> */}
           </div>
           <Agreement original={true} data={actData} setData={setActData} />
         </div>
@@ -666,9 +679,7 @@ export default function ActPage() {
           </div>
           {/* Отправить на хранение button */}
           <button
-            onClick={() =>
-              setActData((prev) => ({ ...prev, status: "SENT_TO_STORAGE" }))
-            }
+            onClick={handleSendToStorage}
             className="font-semibold border border-gray-500 px-4 py-2 bg-white hover:bg-gray-100 text-black rounded-lg"
           >
             Отправить на хранение

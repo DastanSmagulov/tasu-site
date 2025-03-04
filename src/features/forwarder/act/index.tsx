@@ -239,7 +239,6 @@ export default function ActPage() {
       const fetchActData = async () => {
         try {
           const response = await axiosInstance.get(`/acts/${params.id}/`);
-          // Optional sanitization if needed.
           const sanitizedData = JSON.parse(
             JSON.stringify(response.data, (key, value) =>
               typeof value === "number" && isNaN(value) ? "" : value
@@ -247,7 +246,6 @@ export default function ActPage() {
           );
           setActData(sanitizedData);
           originalDataRef.current = sanitizedData;
-          // Second fetch after 500ms.
         } catch (error) {
           console.error("Error fetching act data:", error);
         }
@@ -306,6 +304,19 @@ export default function ActPage() {
     } catch (error) {
       console.error("Error sending act data:", error);
       alert("Ошибка при отправке акта");
+    }
+  };
+
+  // NEW: Function to immediately trigger patch API for sending to storage.
+  const handleSendToStorage = async () => {
+    try {
+      await axiosInstance.patch(`/acts/${params.id}/`, {
+        status: "SENT_TO_STORAGE",
+      });
+      setIsModalOpen(true);
+    } catch (error) {
+      console.error("Error sending act to storage:", error);
+      alert("Ошибка при отправке на хранение");
     }
   };
 
@@ -434,14 +445,9 @@ export default function ActPage() {
               ))}
             </select>
           </div>
-          {/* Отправить на хранение button */}
+          {/* Отправить на хранение button now triggers PATCH API immediately */}
           <button
-            onClick={() =>
-              setActData((prev: any) => ({
-                ...prev,
-                status: "SENT_TO_STORAGE",
-              }))
-            }
+            onClick={handleSendToStorage}
             className="font-semibold border border-gray-500 px-4 py-2 bg-white hover:bg-gray-100 text-black rounded-lg"
           >
             Отправить на хранение

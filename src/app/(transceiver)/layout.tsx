@@ -30,7 +30,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   } else if (/^\/act\/[^/]+$/.test(pathname)) {
     headerText = "Акт";
   } else if (pathname === "/transceiver/warehouse") {
-    headerText = "Склад";
+    headerText = "На складе";
   }
 
   let roleValue = "приемсдатчик";

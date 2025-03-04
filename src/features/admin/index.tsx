@@ -40,6 +40,8 @@ export default function AdminPage() {
     // Reset offset to 0 on filters change.
     params.set("ordering", "-created_at");
     params.set("offset", "0");
+    params.append("is_smr", "false");
+    params.append("consignment__cargo_status__ne", "SENT_TO_STORAGE");
     return params.toString();
   };
 

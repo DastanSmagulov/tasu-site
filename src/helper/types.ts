@@ -43,6 +43,7 @@ interface Characteristic {
   sender_city: any;
   receiver_city: any;
   additional_info: string;
+  receiver_address: string;
 }
 
 interface Dimension {
@@ -81,6 +82,8 @@ interface VehicleData {
 interface CargoInfo {
   issued: string | number;
   accepted: string | number;
+  issued_phone: string;
+  accepted_phone: string;
   date: string; // ISO Date string
 }
 
@@ -132,6 +135,7 @@ export interface TableRow {
   avr?: string;
   invoice?: string;
   processed?: boolean;
+  is_smr?: boolean;
 }
 
 export interface AccountantTableRow {
@@ -147,7 +151,7 @@ export interface AccountantTableRow {
   total_cost: string;
   esf?: string;
   avr?: string;
-  invoice?: string;
+  accountant_photo?: string;
   processed?: boolean;
 }
 

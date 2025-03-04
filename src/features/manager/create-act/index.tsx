@@ -19,7 +19,7 @@ import AccountingEsf from "@/features/accountant/AccountingEsf";
 import AccountingAvr from "@/features/accountant/AccountingAvr";
 import TransportationServicesTable from "@/components/TransportationServicesTable";
 import { Act, CargoImage } from "@/helper/types";
-import { useParams } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
 import { axiosInstance } from "@/helper/utils";
 import Checkbox from "@/components/ui/CheckBox";
 
@@ -104,7 +104,50 @@ export default function CreateActPage() {
   const [actData, setActData] = useState<Act>(initialActData);
   const [transportationQuantityServices, setTransportationQuantityServices] =
     useState<TransportationQuantityService[]>([]);
+  const searchParams = useSearchParams();
   const params = useParams();
+
+  useEffect(() => {
+    const dataParam = searchParams.get("data");
+    if (dataParam) {
+      try {
+        const decodedData = JSON.parse(decodeURIComponent(dataParam));
+
+        // Combine service_package and service_warehouse into one array.
+        const combinedServices = [
+          ...(decodedData.service_package || []),
+          ...(decodedData.service_warehouse || []),
+        ];
+
+        const transportationServiceIds = combinedServices.map((service) =>
+          typeof service === "object" ? service.id : service
+        );
+
+        // Compute cargo cost from the combined services.
+        const cargoCost = decodedData.warehouse_service_cost_cargo;
+
+        // Map sender_city and receiver_city to characteristic.
+        const updatedCharacteristic = {
+          ...decodedData.characteristic,
+          sender_city: decodedData.sender_city,
+          receiver_city: decodedData.receiver_city,
+          cargo_cost: cargoCost,
+        };
+
+        // Build the new actData with the transformed fields.
+        const newActData = {
+          ...decodedData,
+          transportation_services: transportationServiceIds,
+          characteristic: updatedCharacteristic,
+        };
+
+        setActData(newActData);
+        console.log(actData);
+      } catch (error) {
+        console.error("Error parsing act data:", error);
+      }
+    }
+  }, [searchParams]);
 
   // Define our helper function BEFORE we use it
   const fetchTransportationQuantityServices = async () => {
@@ -322,11 +365,7 @@ export default function CreateActPage() {
             </div>
             <ManagerLink
               title="приема наемником"
-              link="https://tasu-site.vercel.app/carrier"
-            />
-            <ManagerLink
-              title="передачи наемником"
-              link="https://tasu-site.vercel.app/carrier/packageInfo"
+              link={`https://tasu-site.vercel.app/carrier/${params.id}`}
             />
           </div>
         ),
@@ -496,11 +535,7 @@ export default function CreateActPage() {
             </div>
             <ManagerLink
               title="приема наемником"
-              link="https://tasu.kz/shortlive_reference_607/"
-            />
-            <ManagerLink
-              title="передачи наемником"
-              link="https://tasu.kz/shortlive_reference_148/"
+              link={`https://tasu-site.vercel.app/carrier/${params.id}`}
             />
           </div>
           <Agreement original={true} data={actData} setData={setActData} />

@@ -1,7 +1,9 @@
 import React from "react";
 import Link from "next/link";
+import Cookies from "js-cookie";
 
-const CreateSuccessAct = ({ title, setIsModalOpen }: any) => {
+const CreateSuccessAct = ({ title, setIsModalOpen, description }: any) => {
+  const role = Cookies.get("role");
   // Закрытие модального окна
   const handleClose = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -54,16 +56,24 @@ const CreateSuccessAct = ({ title, setIsModalOpen }: any) => {
 
         {/* Description */}
         <p className="text-gray-600 mb-8">
-          Ваш акт документ успешно передан. Ожидайте подтверждения или
-          дополнительную информацию в ближайшее время.
+          {description
+            ? ""
+            : "Ваш акт документ успешно передан. Ожидайте подтверждения или дополнительную информацию в ближайшее время."}
         </p>
 
-        {/* Button to Go Back to Main Page */}
-        <Link href={`/`}>
-          <button className="bg-green-500 text-white px-6 py-2 rounded-md hover:bg-green-600 transition-colors">
-            На главную страницу
-          </button>
-        </Link>
+        {description ? (
+          <Link href={`/${role}/cost-calculation/saved`}>
+            <button className="bg-green-500 text-white px-6 py-2 rounded-md hover:bg-green-600 transition-colors">
+              К сохраненным расчетам
+            </button>
+          </Link>
+        ) : (
+          <Link href={`/`}>
+            <button className="bg-green-500 text-white px-6 py-2 rounded-md hover:bg-green-600 transition-colors">
+              На главную страницу
+            </button>
+          </Link>
+        )}
       </div>
     </div>
   );

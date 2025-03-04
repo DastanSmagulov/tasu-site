@@ -1,12 +1,10 @@
 import React, { useState } from "react";
-import axios from "axios";
 import Image from "next/image";
 import Link from "next/link";
 import TrashIcon from "../../public/icons/trash.svg";
 import Checkbox from "@/components/ui/CheckBox";
 import { axiosInstance, formatDate, getStatusBadge } from "@/helper/utils";
 import Cookies from "js-cookie";
-import { Act } from "@/helper/types";
 
 const ManagerTable = ({ data, loading, fetchActsData }: any) => {
   const [selectedRows, setSelectedRows] = useState(new Set());
@@ -47,24 +45,6 @@ const ManagerTable = ({ data, loading, fetchActsData }: any) => {
 
   if (loading) return <p>Загрузка...</p>;
 
-  // Helper to compute total cargo weight
-  const calculateTotalWeight = (cargo: any) => {
-    if (!cargo || !Array.isArray(cargo)) return 0;
-    return cargo.reduce((sum, item) => sum + (item.weight || 0), 0);
-  };
-
-  // Helper to compute total cargo volume.
-  // Here we assume that each cargo item has a "dimensions" array and we use the first element's "amount".
-  const calculateTotalVolume = (cargo: any) => {
-    if (!cargo || !Array.isArray(cargo)) return 0;
-    return cargo.reduce((sum, item) => {
-      if (item.dimensions && item.dimensions.length > 0) {
-        return sum + (item.dimensions[0].amount || 0);
-      }
-      return sum;
-    }, 0);
-  };
-
   return (
     <div className="mt-8">
       <div className="overflow-x-auto">
@@ -82,9 +62,10 @@ const ManagerTable = ({ data, loading, fetchActsData }: any) => {
                 { label: "Номер", key: "id" },
                 { label: "Заказчик", key: "customer" },
                 { label: "Дата", key: "date" },
-                { label: "Слоты", key: "places" },
+                { label: "Места", key: "places" },
                 { label: "ЭСФ", key: "esf" },
                 { label: "АВР", key: "abp" },
+                { label: "Счёт", key: "accountant_photo" },
                 { label: "Статус", key: "status" },
                 { label: "Сумма", key: "amount" },
               ].map((col) => (
@@ -106,6 +87,7 @@ const ManagerTable = ({ data, loading, fetchActsData }: any) => {
               const places = act.cargo ? act.cargo.slots : 0;
               const has_esf = act.has_esf;
               const has_avr = act.has_avr;
+              const has_check = act.has_check;
               // For status, you might have a dedicated field; here we fallback to transportation_type
               const status = act.status || "-";
               // For view, we use transportation_type
@@ -135,10 +117,13 @@ const ManagerTable = ({ data, loading, fetchActsData }: any) => {
                   </td>
                   <td className="p-3 border border-gray-300">{places}</td>
                   <td className="p-3 border border-gray-300">
-                    <Checkbox checked={!!has_esf} />
+                    <Checkbox checked={!!has_esf} readOnly={true} />
                   </td>
                   <td className="p-3 border border-gray-300">
-                    <Checkbox checked={!!has_avr} />
+                    <Checkbox checked={!!has_avr} readOnly={true} />
+                  </td>
+                  <td className="p-3 border border-gray-300">
+                    <Checkbox checked={!!has_check} readOnly={true} />
                   </td>
                   <td className="p-3 border border-gray-300">
                     {getStatusBadge(status)}

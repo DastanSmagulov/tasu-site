@@ -151,6 +151,19 @@ export default function ActPage() {
     }
   };
 
+  // NEW: Function to immediately trigger patch API for sending to storage.
+  const handleSendToStorage = async () => {
+    try {
+      await axiosInstance.patch(`/acts/${params.id}/`, {
+        status: "SENT_TO_STORAGE",
+      });
+      setIsModalOpen(true);
+    } catch (error) {
+      console.error("Error sending act to storage:", error);
+      alert("Ошибка при отправке на хранение");
+    }
+  };
+
   const ProgressBar = ({ step }: { step: number }) => {
     const percentage = Math.round(((step + 1) / steps.length) * 100);
     return (
@@ -211,13 +224,11 @@ export default function ActPage() {
         <h2 className="font-semibold text-base sm:text-lg">
           Номер акта {actData?.number}
         </h2>
-        <span className="px-3 py-1 rounded-full text-sm font-medium bg-green-500 text-white">
-          {getStatusBadge(
-            statuses.find((s) => s.key === actData?.status)?.value ||
-              actData?.status ||
-              "Status"
-          )}
-        </span>
+        {getStatusBadge(
+          statuses.find((s) => s.key === actData?.status)?.value ||
+            actData?.status ||
+            "Status"
+        )}
       </div>
       {/* Desktop Layout */}
       <div className="hidden min-[500px]:flex act-flex gap-4 mt-4 w-full">
@@ -263,12 +274,7 @@ export default function ActPage() {
           </div>
           {/* Отправить на хранение button */}
           <button
-            onClick={() =>
-              setActData((prev: any) => ({
-                ...prev,
-                status: "SENT_TO_STORAGE",
-              }))
-            }
+            onClick={handleSendToStorage}
             className="font-semibold border border-gray-500 px-4 py-2 bg-white hover:bg-gray-100 text-black rounded-lg"
           >
             Отправить на хранение

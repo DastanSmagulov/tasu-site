@@ -13,15 +13,19 @@ const getFullUrl = (url: any): string => {
 const CargoPhoto: React.FC<ActDataProps> = ({ data, setData }) => {
   const [cargoPhotos, setCargoPhotos] = useState<string[]>([]);
 
-  // Sync with parent data (only runs once when component mounts)
+  // Sync with parent's data on mount or when parent's cargo_images change externally.
   useEffect(() => {
     if (data?.cargo_images && Array.isArray(data.cargo_images)) {
       const updatedPhotos = data.cargo_images
         .map((img: any) => (img?.image ? getFullUrl(img.image) : ""))
         .filter((url: string) => url !== "");
-
-      setCargoPhotos(updatedPhotos);
+      // Only update local state if the computed photos differ.
+      if (JSON.stringify(updatedPhotos) !== JSON.stringify(cargoPhotos)) {
+        setCargoPhotos(updatedPhotos);
+      }
     }
+    // We intentionally omit cargoPhotos from dependencies to prevent loops.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data?.cargo_images]);
 
   // Convert a file to a Base64 string.
@@ -34,7 +38,7 @@ const CargoPhoto: React.FC<ActDataProps> = ({ data, setData }) => {
     });
   };
 
-  // Handle file uploads.
+  // Handle file uploads and update both local and parent state.
   const handlePhotoUpload = async (
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
@@ -45,50 +49,26 @@ const CargoPhoto: React.FC<ActDataProps> = ({ data, setData }) => {
         const base64Strings = await Promise.all(
           fileArray.map((file) => convertFileToBase64(file))
         );
-
-        setCargoPhotos((prevPhotos) => {
-          const updatedPhotos = [...prevPhotos, ...base64Strings];
-
-          // Update parent state **only if different**
-          setData((prev: any) => {
-            const newCargoImages = updatedPhotos.map((photo) => ({
-              image: photo,
-            }));
-            if (
-              JSON.stringify(prev.cargo_images) !==
-              JSON.stringify(newCargoImages)
-            ) {
-              return { ...prev, cargo_images: newCargoImages };
-            }
-            return prev;
-          });
-
-          return updatedPhotos;
-        });
+        const newCargoPhotos = [...cargoPhotos, ...base64Strings];
+        setCargoPhotos(newCargoPhotos);
+        setData((prev: any) => ({
+          ...prev,
+          cargo_images: newCargoPhotos.map((photo) => ({ image: photo })),
+        }));
       } catch (error) {
         console.error("Error converting file to Base64:", error);
       }
     }
   };
 
-  // Remove a photo.
+  // Remove a photo and update both local and parent state.
   const handleRemovePhoto = (index: number) => {
-    setCargoPhotos((prevPhotos) => {
-      const updatedPhotos = prevPhotos.filter((_, i) => i !== index);
-
-      // Update parent state **only if different**
-      setData((prev: any) => {
-        const newCargoImages = updatedPhotos.map((photo) => ({ image: photo }));
-        if (
-          JSON.stringify(prev.cargo_images) !== JSON.stringify(newCargoImages)
-        ) {
-          return { ...prev, cargo_images: newCargoImages };
-        }
-        return prev;
-      });
-
-      return updatedPhotos;
-    });
+    const newCargoPhotos = cargoPhotos.filter((_, i) => i !== index);
+    setCargoPhotos(newCargoPhotos);
+    setData((prev: any) => ({
+      ...prev,
+      cargo_images: newCargoPhotos.map((photo) => ({ image: photo })),
+    }));
   };
 
   return (

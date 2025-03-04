@@ -2,10 +2,14 @@
 
 import DeliveryQRCard from "@/components/DeliveryQrCode";
 
-export default function CarrierPage() {
+interface CarrierPageProps {
+  id: string | string[];
+}
+
+export default function CarrierPage({ id }: CarrierPageProps) {
   return (
     <>
-      <DeliveryQRCard />
+      <DeliveryQRCard id={id} />
     </>
   );
 }

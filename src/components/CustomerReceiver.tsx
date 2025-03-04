@@ -11,7 +11,7 @@ interface CustomerOption {
 }
 
 const CustomerReceiver: React.FC<ActDataProps> = ({ data, setData }) => {
-  // Local state for form fields.
+  // Local state for form fields with fallbacks.
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [fullName, setFullName] = useState<string>(
     data?.receiver_data?.full_name || ""
@@ -116,7 +116,7 @@ const CustomerReceiver: React.FC<ActDataProps> = ({ data, setData }) => {
         </button>
         {dropdownOpen && (
           <ul className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-40 overflow-auto">
-            {customers.map((customer) => (
+            {customers.map((customer: CustomerOption) => (
               <li
                 key={customer.id}
                 onClick={() => handleSelectCustomer(customer)}
@@ -136,7 +136,7 @@ const CustomerReceiver: React.FC<ActDataProps> = ({ data, setData }) => {
         </label>
         <input
           type="text"
-          value={data?.receiver_data?.full_name}
+          value={data?.receiver_data?.full_name || ""}
           onChange={handleFullNameChange}
           placeholder="Введите ФИО"
           className="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-[#09BD3C] focus:border-transparent"
@@ -150,7 +150,7 @@ const CustomerReceiver: React.FC<ActDataProps> = ({ data, setData }) => {
         </label>
         <input
           type="tel"
-          value={data?.receiver_data?.phone}
+          value={data?.receiver_data?.phone || ""}
           onChange={handlePhoneNumberChange}
           placeholder="Укажите номер телефона"
           className="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-[#09BD3C] focus:border-transparent"

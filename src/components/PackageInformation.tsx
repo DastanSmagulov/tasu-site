@@ -1,35 +1,18 @@
-import React, { useState, useEffect, FC } from "react";
+import React, { useState, useEffect } from "react";
 import { axiosInstance } from "@/helper/utils";
 import { ActDataProps } from "@/helper/types";
 import Signature from "./Signature";
-
-interface CustomerOption {
-  id: string;
-  full_name: string;
-  phone?: string;
-}
-
-interface PackageOption {
-  id: number;
-  name_ru: string;
-}
 
 const InformationPackage: React.FC<ActDataProps & { title: string }> = ({
   title,
   data,
   setData,
 }) => {
-  // Local states for "Выдал" and "Принял"
-  const [issuedBy, setIssuedBy] = useState<CustomerOption | null>(null);
-  const [receivedBy, setReceivedBy] = useState<CustomerOption | null>(null);
-
-  // Initialize dateTime state:
-  // If parent's data exists, use it; otherwise, default to current date/time.
+  // Initialize dateTime state.
   const [dateTime, setDateTime] = useState(() => {
     const initial = title.toLowerCase().includes("выдаче")
       ? data?.delivery_cargo_info?.date
       : data?.receiving_cargo_info?.date;
-    // If no date provided, default to current datetime in "YYYY-MM-DDTHH:mm" format
     return initial || new Date().toISOString().slice(0, 16);
   });
 
@@ -47,25 +30,29 @@ const InformationPackage: React.FC<ActDataProps & { title: string }> = ({
       : null
   );
 
-  // Dropdown states for "Выдал" and "Принял"
-  const [customers, setCustomers] = useState<CustomerOption[]>([]);
-  const [issuedDropdownOpen, setIssuedDropdownOpen] = useState(false);
-  const [receivedDropdownOpen, setReceivedDropdownOpen] = useState(false);
+  // Instead of dropdowns, we now use plain text input fields.
+  const [issued, setIssued] = useState<string | number>(() => {
+    return title.toLowerCase().includes("получении")
+      ? data?.receiving_cargo_info?.issued || ""
+      : data?.delivery_cargo_info?.issued || "";
+  });
+  const [accepted, setAccepted] = useState<string | number>(() => {
+    return title.toLowerCase().includes("получении")
+      ? data?.receiving_cargo_info?.accepted || ""
+      : data?.delivery_cargo_info?.accepted || "";
+  });
+  const [issuedPhone, setIssuedPhone] = useState<string>(() => {
+    return title.toLowerCase().includes("получении")
+      ? data?.receiving_cargo_info?.issued_phone || ""
+      : data?.delivery_cargo_info?.issued_phone || "";
+  });
+  const [acceptedPhone, setAcceptedPhone] = useState<string>(() => {
+    return title.toLowerCase().includes("получении")
+      ? data?.receiving_cargo_info?.accepted_phone || ""
+      : data?.delivery_cargo_info?.accepted_phone || "";
+  });
 
-  // Fetch customers for dropdown options
-  useEffect(() => {
-    const fetchCustomers = async () => {
-      try {
-        const response = await axiosInstance.get("/admin/users/search/");
-        setCustomers(response.data.results);
-      } catch (error) {
-        console.error("Error fetching customers:", error);
-      }
-    };
-    fetchCustomers();
-  }, []);
-
-  // Initialize local state from parent's data (run only when data or title change)
+  // Update local state if parent's data changes.
   useEffect(() => {
     if (data) {
       if (
@@ -73,32 +60,22 @@ const InformationPackage: React.FC<ActDataProps & { title: string }> = ({
         data.receiving_cargo_info
       ) {
         const info = data.receiving_cargo_info;
-        if (!issuedBy && info.issued) {
-          setIssuedBy({ id: info.issued + "", full_name: info.issued + "" });
-        }
-        if (!receivedBy && info.accepted) {
-          setReceivedBy({
-            id: info.accepted + "",
-            full_name: info.accepted + "",
-          });
-        }
+        setIssued(info.issued + "" || "");
+        setAccepted(info.accepted + "" || "");
+        setIssuedPhone(info.issued_phone + "" || "");
+        setAcceptedPhone(info.accepted_phone + "" || "");
       } else if (
         title.toLowerCase().includes("выдаче") &&
         data.delivery_cargo_info
       ) {
         const info = data.delivery_cargo_info;
-        if (!issuedBy && info.issued) {
-          setIssuedBy({ id: info.issued + "", full_name: info.issued + "" });
-        }
-        if (!receivedBy && info.accepted) {
-          setReceivedBy({
-            id: info.accepted + "",
-            full_name: info.accepted + "",
-          });
-        }
+        setIssued(info.issued + "" || "");
+        setAccepted(info.accepted + "" || "");
+        setIssuedPhone(info.issued_phone || "");
+        setAcceptedPhone(info.accepted_phone || "");
       }
     }
-  }, [data, title, issuedBy, receivedBy]);
+  }, [data, title]);
 
   // Update parent's data when local state changes.
   useEffect(() => {
@@ -117,47 +94,58 @@ const InformationPackage: React.FC<ActDataProps & { title: string }> = ({
 
     const formattedDate = dateTime ? formatDateToBackend(dateTime) : null;
 
-    let newData;
     if (title.toLowerCase().includes("получении")) {
-      newData = {
-        ...data,
-        receiving_cargo_info: {
-          issued: issuedBy ? issuedBy.id : null,
-          accepted: receivedBy ? receivedBy.id : null,
-          date: formattedDate,
-        },
-        receiver_data: {
-          ...data?.receiver_data,
-          signature: receiverSignatureDataUrl,
-        },
-      };
+      setData((prevData: any) => {
+        const newData = {
+          ...prevData,
+          receiving_cargo_info: {
+            issued,
+            accepted,
+            issued_phone: issuedPhone,
+            accepted_phone: acceptedPhone,
+            date: formattedDate,
+          },
+          receiver_data: {
+            ...prevData?.receiver_data,
+            signature: receiverSignatureDataUrl,
+          },
+        };
+        // Only update if there is a change (using JSON.stringify for a deep compare)
+        return JSON.stringify(newData) === JSON.stringify(prevData)
+          ? prevData
+          : newData;
+      });
     } else if (title.toLowerCase().includes("выдаче")) {
-      newData = {
-        ...data,
-        delivery_cargo_info: {
-          issued: issuedBy ? issuedBy.id : null,
-          accepted: receivedBy ? receivedBy.id : null,
-          date: formattedDate,
-        },
-        customer_data: {
-          ...data?.customer_data,
-          signature: signatureDataUrl,
-        },
-      };
-    }
-
-    if (JSON.stringify(newData) !== JSON.stringify(data)) {
-      setData(newData);
+      setData((prevData: any) => {
+        const newData = {
+          ...prevData,
+          delivery_cargo_info: {
+            issued,
+            accepted,
+            issued_phone: issuedPhone,
+            accepted_phone: acceptedPhone,
+            date: formattedDate,
+          },
+          customer_data: {
+            ...prevData?.customer_data,
+            signature: signatureDataUrl,
+          },
+        };
+        return JSON.stringify(newData) === JSON.stringify(prevData)
+          ? prevData
+          : newData;
+      });
     }
   }, [
-    issuedBy,
-    receivedBy,
+    issued,
+    accepted,
+    issuedPhone,
+    acceptedPhone,
     dateTime,
     title,
-    setData,
     signatureDataUrl,
     receiverSignatureDataUrl,
-    data,
+    setData,
   ]);
 
   // Update dateTime state on input change.
@@ -194,25 +182,6 @@ const InformationPackage: React.FC<ActDataProps & { title: string }> = ({
     reader.readAsDataURL(file);
   };
 
-  // Handlers for dropdown toggling.
-  const toggleIssuedDropdown = () => {
-    setIssuedDropdownOpen((prev) => !prev);
-  };
-
-  const toggleReceivedDropdown = () => {
-    setReceivedDropdownOpen((prev) => !prev);
-  };
-
-  const selectIssuedCustomer = (customer: CustomerOption) => {
-    setIssuedBy(customer);
-    setIssuedDropdownOpen(false);
-  };
-
-  const selectReceivedCustomer = (customer: CustomerOption) => {
-    setReceivedBy(customer);
-    setReceivedDropdownOpen(false);
-  };
-
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     // Additional submission logic if needed.
@@ -227,59 +196,51 @@ const InformationPackage: React.FC<ActDataProps & { title: string }> = ({
           <label className="block text-sm font-medium text-gray-700">
             Выдал
           </label>
-          <div className="mt-2 relative">
-            <input
-              type="text"
-              value={issuedBy ? issuedBy.full_name : ""}
-              readOnly
-              onClick={toggleIssuedDropdown}
-              className="w-full px-4 py-2 border rounded-md focus:outline-none cursor-pointer"
-              placeholder="Выберите из списка"
-            />
-            {issuedDropdownOpen && (
-              <ul className="absolute top-full left-0 z-10 w-full max-h-40 overflow-auto border border-gray-300 bg-white">
-                {customers.map((customer) => (
-                  <li
-                    key={customer.id}
-                    onClick={() => selectIssuedCustomer(customer)}
-                    className="px-4 py-2 hover:bg-gray-200 cursor-pointer"
-                  >
-                    {customer.full_name}
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
+          <input
+            type="text"
+            value={issued || ""}
+            onChange={(e) => setIssued(e.target.value)}
+            placeholder="Введите имя выдавшего"
+            className="w-full px-4 py-2 border rounded-md focus:outline-none"
+          />
+        </div>
+        <div className="mb-6">
+          <label className="block text-sm font-medium text-gray-700">
+            Телефон выдавшего
+          </label>
+          <input
+            type="text"
+            value={issuedPhone || ""}
+            onChange={(e) => setIssuedPhone(e.target.value)}
+            placeholder="Введите телефон выдавшего"
+            className="w-full px-4 py-2 border rounded-md focus:outline-none"
+          />
         </div>
 
-        {/* Received By Section */}
+        {/* Accepted By Section */}
         <div className="mb-6">
           <label className="block text-sm font-medium text-gray-700">
             Принял
           </label>
-          <div className="mt-2 relative">
-            <input
-              type="text"
-              value={receivedBy ? receivedBy.full_name : ""}
-              readOnly
-              onClick={toggleReceivedDropdown}
-              className="w-full px-4 py-2 border rounded-md focus:outline-none cursor-pointer"
-              placeholder="Выберите из списка"
-            />
-            {receivedDropdownOpen && (
-              <ul className="absolute top-full left-0 z-10 w-full max-h-40 overflow-auto border border-gray-300 bg-white">
-                {customers.map((customer) => (
-                  <li
-                    key={customer.id}
-                    onClick={() => selectReceivedCustomer(customer)}
-                    className="px-4 py-2 hover:bg-gray-200 cursor-pointer"
-                  >
-                    {customer.full_name}
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
+          <input
+            type="text"
+            value={accepted || ""}
+            onChange={(e) => setAccepted(e.target.value)}
+            placeholder="Введите имя принявшего"
+            className="w-full px-4 py-2 border rounded-md focus:outline-none"
+          />
+        </div>
+        <div className="mb-6">
+          <label className="block text-sm font-medium text-gray-700">
+            Телефон принявшего
+          </label>
+          <input
+            type="text"
+            value={acceptedPhone || ""}
+            onChange={(e) => setAcceptedPhone(e.target.value)}
+            placeholder="Введите телефон принявшего"
+            className="w-full px-4 py-2 border rounded-md focus:outline-none"
+          />
         </div>
 
         {/* Date and Time Section */}
@@ -292,7 +253,7 @@ const InformationPackage: React.FC<ActDataProps & { title: string }> = ({
           <div className="mt-2 flex items-center gap-4">
             <input
               type="datetime-local"
-              value={dateTime}
+              value={dateTime || ""}
               onChange={handleDateTimeChange}
               className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
@@ -308,7 +269,7 @@ const InformationPackage: React.FC<ActDataProps & { title: string }> = ({
               <Signature
                 onSubmit={setSignatureDataUrl}
                 onUpload={handleCustomerSignatureUpload}
-                initialDataUrl={data?.customer_data?.signature}
+                initialDataUrl={signatureDataUrl}
               />
             </>
           ) : (
@@ -317,7 +278,7 @@ const InformationPackage: React.FC<ActDataProps & { title: string }> = ({
               <Signature
                 onSubmit={setReceiverSignatureDataUrl}
                 onUpload={handleReceiverSignatureUpload}
-                initialDataUrl={data?.receiver_data?.signature}
+                initialDataUrl={receiverSignatureDataUrl}
               />
             </>
           )}

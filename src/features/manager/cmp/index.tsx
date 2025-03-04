@@ -29,11 +29,13 @@ const CMPPage = () => {
   const [prevPageUrl, setPrevPageUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState({
+    number: "",
     search: "",
     consignment__cargo_status: "",
-    sender_city: "",
-    receiver_city: "",
-    created_at: "",
+    sender_city__name_ru: "",
+    receiver_city__name_ru: "",
+    created_at_gte: "",
+    created_at_lte: "",
     closed_at: "",
     ordering: "",
     limit: "10",
@@ -41,12 +43,39 @@ const CMPPage = () => {
 
   const limit = parseInt(filters.limit, 10);
 
+  /** Build a URL query string from filters **/
+  const buildQueryString = () => {
+    const params = new URLSearchParams();
+    Object.entries(filters).forEach(([key, value]) => {
+      if (value) {
+        params.append(key, value);
+      }
+    });
+    // Reset offset to 0 on filters change.
+    params.set("ordering", "-created_at");
+    params.set("offset", "0");
+    params.append("is_smr", "true");
+    params.append("consignment__cargo_status__ne", "SENT_TO_STORAGE");
+    return params.toString();
+  };
+
   /** Fetch data from API **/
   const fetchActsData = async (url?: string | null) => {
     setLoading(true);
     try {
-      let finalUrl = url || `/acts/?limit=${limit}&offset=0`; // Default to first page if no URL
+      const queryString = buildQueryString();
 
+      // Log the date filters if provided
+      if (filters.created_at_gte || filters.created_at_lte) {
+        console.log(
+          "Date filters - From:",
+          filters.created_at_gte,
+          "To:",
+          filters.created_at_lte
+        );
+      }
+
+      const finalUrl = url ? url : `/acts/?${queryString}`;
       const response = await axiosInstance.get(finalUrl);
       setData(response.data.results);
       setTotalCount(response.data.count);
@@ -66,7 +95,11 @@ const CMPPage = () => {
 
   return (
     <div>
-      <FilterPanel warehouse={false} filters={filters} setFilters={setFilters} />
+      <FilterPanel
+        warehouse={false}
+        filters={filters}
+        setFilters={setFilters}
+      />
       <Table data={data} fetchActsData={fetchActsData} loading={loading} />
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mt-4">
         <h1 className="text-gray-700">

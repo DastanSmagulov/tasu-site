@@ -81,7 +81,7 @@ const Table = ({ data, loading, fetchActsData }: any) => {
                 { label: "Номер", key: "id" },
                 { label: "Заказчик", key: "customer" },
                 { label: "Дата", key: "date" },
-                { label: "Мест", key: "places" },
+                { label: "Места", key: "places" },
                 { label: "Вес", key: "weight" },
                 // { label: "Куб", key: "volume" },
                 { label: "Статус", key: "status" },

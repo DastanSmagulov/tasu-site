@@ -1,12 +1,19 @@
+"use client";
 import React from "react";
 
-const CalculationDescription = () => {
-  return (
-    <div className="w-full max-w-4xl bg-white p-6 rounded-lg shadow-md">
-      {/* Header */}
-      <h2 className="text-2xl font-bold mb-6">Описание расчета</h2>
+interface CalculationDescriptionProps {
+  calculationData: { name: string; additional_info: string } | null;
+  setCalculationData: React.Dispatch<React.SetStateAction<any>>;
+}
 
-      {/* Input: Название расчета */}
+const CalculationDescription: React.FC<CalculationDescriptionProps> = ({
+  calculationData,
+  setCalculationData,
+}) => {
+  return (
+    <div className="w-full max-w-4xl bg-white p-6 rounded-lg shadow-md mb-6">
+      <h2 className="text-2xl font-bold mb-6">Описание расчета</h2>
+      {/* Название расчета */}
       <div className="mb-4">
         <label
           htmlFor="calculationName"
@@ -17,13 +24,17 @@ const CalculationDescription = () => {
         <input
           id="calculationName"
           type="text"
-          value="Расчет №132"
+          value={calculationData?.name || ""}
+          onChange={(e) =>
+            setCalculationData((prev: any) => ({
+              ...prev,
+              name: e.target.value,
+            }))
+          }
           className="w-full border rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          readOnly
         />
       </div>
-
-      {/* Input: Дополнительная информация о расчете */}
+      {/* Дополнительная информация */}
       <div>
         <label
           htmlFor="additionalInfo"
@@ -34,9 +45,14 @@ const CalculationDescription = () => {
         <input
           id="additionalInfo"
           type="text"
-          value="Асылбекова Алина Ерлановна"
+          value={calculationData?.additional_info || ""}
+          onChange={(e) =>
+            setCalculationData((prev: any) => ({
+              ...prev,
+              additional_info: e.target.value,
+            }))
+          }
           className="w-full border rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          readOnly
         />
       </div>
     </div>

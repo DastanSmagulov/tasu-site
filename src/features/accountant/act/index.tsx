@@ -165,6 +165,19 @@ export default function ActPage() {
     }
   };
 
+  // NEW: Function to immediately trigger patch API for sending to storage.
+  const handleSendToStorage = async () => {
+    try {
+      await axiosInstance.patch(`/acts/${params.id}/`, {
+        status: "SENT_TO_STORAGE",
+      });
+      setIsModalOpen(true);
+    } catch (error) {
+      console.error("Error sending act to storage:", error);
+      alert("Ошибка при отправке на хранение");
+    }
+  };
+
   const openExpenses = () => {
     router.push("/accountant/expenses");
   };

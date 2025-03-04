@@ -11,8 +11,8 @@ const TransportInfo: React.FC<ActDataProps> = ({ data, setData }) => {
   useEffect(() => {
     if (data?.vehicle_data) {
       setVehicleInfo({
-        auto_info: data.vehicle_data.auto_info || "",
-        license_plate: data.vehicle_data.license_plate || "",
+        auto_info: data?.vehicle_data?.auto_info || "",
+        license_plate: data?.vehicle_data?.license_plate || "",
       });
     }
   }, [data]);
@@ -39,7 +39,7 @@ const TransportInfo: React.FC<ActDataProps> = ({ data, setData }) => {
             type="text"
             name="auto_info"
             placeholder="Введите авто"
-            value={data?.vehicle_data.auto_info || ""}
+            value={data?.vehicle_data?.auto_info || ""}
             onChange={handleChange}
             className="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-[#09BD3C] focus:border-transparent"
           />
@@ -53,7 +53,7 @@ const TransportInfo: React.FC<ActDataProps> = ({ data, setData }) => {
             type="text"
             name="license_plate"
             placeholder="Введите госномер"
-            value={data?.vehicle_data.license_plate || ""}
+            value={data?.vehicle_data?.license_plate || ""}
             onChange={handleChange}
             className="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-[#09BD3C] focus:border-transparent"
           />

@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { useSession } from "next-auth/react";
+import Cookies from "js-cookie";
 import { axiosInstance } from "@/helper/utils";
 import CalculationDescription from "@/components/CalculationDescription";
 import DeliveryCity from "@/components/DeliveryCity";
@@ -10,6 +11,7 @@ import CalculatorServicesTable from "@/components/CalculatorServicesTable";
 import CreateSuccessAct from "@/components/modals/CreateSuccessAct";
 
 export default function CalculatorPage() {
+  const role = Cookies.get("role");
   const { data: session, status } = useSession();
   const router = useRouter();
   const params = useParams();
@@ -18,8 +20,15 @@ export default function CalculatorPage() {
 
   const calculationId = params?.id;
 
+  // Shared state for calculation data.
   const [calculationData, setCalculationData] = useState<any>(null);
 
+  // Lifted state for service details.
+  const [packagingServices, setPackagingServices] = useState<any[]>([]);
+  const [warehouseServices, setWarehouseServices] = useState<any[]>([]);
+  const [additionalServices, setAdditionalServices] = useState<any[]>([]);
+
+  // Fetch calculation data.
   useEffect(() => {
     if (calculationId) {
       const fetchCalculationById = async () => {
@@ -60,20 +69,128 @@ export default function CalculatorPage() {
           pickup_cargo: 0,
           colloquial_cargo: 0,
         },
+        // These arrays store the IDs that will be sent.
         packaging_services: [],
         additional_services: [],
+        warehouse_services: [],
         warehouse_service_cost_cargo: "",
         transportation_services: [],
-        warehouse_services: [],
       });
     }
   }, [calculationId]);
+
+  // Fetch packaging services from API.
+  useEffect(() => {
+    const fetchPackagingServices = async () => {
+      try {
+        const response = await axiosInstance.get("admin/packaging-services/");
+        // Map API data to our PackagingService shape.
+        setPackagingServices(
+          response.data.results.map((service: any) => ({
+            id: service.id,
+            name: service.name,
+            // Map quantity to small (or empty if null)
+            small: service.quantity || "",
+            medium: service.middle_tariff,
+            large: Number(service.price),
+          }))
+        );
+      } catch (error) {
+        console.error("Error fetching packaging services:", error);
+      }
+    };
+    fetchPackagingServices();
+  }, []);
+
+  // Fetch warehouse services from API.
+  useEffect(() => {
+    const fetchWarehouseServices = async () => {
+      try {
+        const response = await axiosInstance.get("/admin/warehouse-services/");
+        setWarehouseServices(
+          response.data.results.map((ws: any) => ({
+            id: ws.id,
+            name: ws.name,
+            type: ws.type,
+            price: ws.price,
+          }))
+        );
+      } catch (error) {
+        console.error("Error fetching warehouse services:", error);
+      }
+    };
+    fetchWarehouseServices();
+  }, []);
+
+  // Fetch additional services from API.
+  useEffect(() => {
+    const fetchAdditionalServices = async () => {
+      try {
+        const response = await axiosInstance.get("/admin/additional-services/");
+        setAdditionalServices(response.data.results);
+      } catch (error) {
+        console.error("Error fetching additional services:", error);
+      }
+    };
+    fetchAdditionalServices();
+  }, []);
 
   if (status === "loading" || !calculationData) {
     return <div>Загрузка...</div>;
   }
 
-  // Build payload in the required shape.
+  // Calculate overall total cost.
+  const calculateTotalCost = () => {
+    // Transportation total: sum all fields
+    const trans = calculationData.service_transportation;
+    const transportationTotal =
+      (Number(trans.cost_transportation) || 0) +
+      (Number(trans.delivery_in_other_city) || 0) +
+      (Number(trans.pickup_cargo) || 0) +
+      (Number(trans.colloquial_cargo) || 0) +
+      Number(calculationData.insurance_cost_cargo);
+
+    // For packaging services, look up the price from the fetched packagingServices array.
+    const packagesTotal = calculationData.packaging_services.reduce(
+      (sum: number, id: number) => {
+        const service = packagingServices.find((s) => s.id === id);
+        return sum + (service ? service.large : 0);
+      },
+      0
+    );
+
+    // Warehouse services total.
+    const warehouseTotal = calculationData.warehouse_services.reduce(
+      (sum: number, id: number) => {
+        const service = warehouseServices.find((s) => s.id === id);
+        return sum + (service ? Number(service.price) : 0);
+      },
+      0
+    );
+
+    // Additional services total.
+    const additionalTotal = calculationData.additional_services.reduce(
+      (sum: number, id: number) => {
+        const service = additionalServices.find((s) => s.id === id);
+        return sum + (service ? Number(service.price) : 0);
+      },
+      0
+    );
+
+    // Warehouse service cost (as a number).
+    const warehouseServiceCost =
+      Number(calculationData.warehouse_service_cost_cargo) || 0;
+
+    return (
+      transportationTotal +
+      packagesTotal +
+      warehouseTotal +
+      additionalTotal +
+      warehouseServiceCost
+    );
+  };
+
+  // Build payload merging the service arrays into a single "services" field.
   const buildPayload = () => {
     return {
       name: calculationData.name,
@@ -96,13 +213,14 @@ export default function CalculatorPage() {
     const payload = buildPayload();
     try {
       setLoading(true);
-      console.log(payload);
-      const response = await axiosInstance.post(
-        "/calculator/cost-calculation/",
+      const response = await axiosInstance.patch(
+        `/calculator/cost-calculation/${calculationId}/`,
         payload
       );
+      console.log("Расчет успешно обновлен:", response.data);
       setIsSuccessModalOpen(true);
     } catch (error) {
+      console.error("Ошибка при отправке расчета:", error);
       alert("Ошибка при отправке расчета");
     } finally {
       setLoading(false);
@@ -242,22 +360,36 @@ export default function CalculatorPage() {
           }))
         }
       />
+      {/* Display overall total cost */}
+      <div className="mt-4 text-right font-bold">
+        <span>Общая стоимость услуг: </span>
+        <span>{calculateTotalCost().toFixed(2)} тг.</span>
+      </div>
       <div className="flex flex-wrap justify-end gap-4 mt-8">
         <button
           onClick={handleSubmitCalculation}
           className="font-semibold px-4 py-2 rounded-lg bg-blue-500 hover:bg-blue-600 text-white"
           disabled={loading}
         >
-          {loading ? "Отправка..." : "Сформировать расчет"}
+          {loading ? "Отправка..." : "Сохранить"}
+        </button>
+        <button
+          onClick={() => {
+            const encodedData = encodeURIComponent(
+              JSON.stringify(calculationData)
+            );
+            router.push(`/${role}/create-act?data=${encodedData}`);
+          }}
+          className="font-semibold px-4 py-2 rounded-lg bg-green-500 hover:bg-green-600 text-white"
+        >
+          Сформировать акт
         </button>
       </div>
       {isSuccessModalOpen && (
         <CreateSuccessAct
-          title="Расчет успешно создан"
+          title="Расчет успешно обновлен"
+          description="f"
           setIsModalOpen={setIsSuccessModalOpen}
-          description={
-            "Расчет успешно передан. Ожидайте подтверждения или дополнительную информацию в ближайшее время."
-          }
         />
       )}
     </div>

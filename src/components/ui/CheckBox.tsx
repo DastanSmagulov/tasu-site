@@ -2,11 +2,18 @@ export interface CheckboxProps {
   disabled?: boolean;
   defaultChecked?: boolean;
   id?: string;
-  checked?: boolean | undefined;
+  checked?: boolean;
   onChange?: (event: React.ChangeEvent<HTMLInputElement>) => void;
+  readOnly?: boolean;
 }
 
-const Checkbox = ({ checked, onChange, id, disabled }: CheckboxProps) => (
+const Checkbox = ({
+  checked,
+  onChange,
+  id,
+  disabled,
+  readOnly,
+}: CheckboxProps) => (
   <div className="flex gap-2">
     <input
       type="checkbox"
@@ -14,6 +21,7 @@ const Checkbox = ({ checked, onChange, id, disabled }: CheckboxProps) => (
       disabled={disabled}
       checked={checked}
       onChange={onChange}
+      readOnly={readOnly || (!onChange ? true : false)}
       className="checkbox border-gray-400 [--chkbg:theme(colors.customYellow)] checkbox-sm checked:border-none"
     />
   </div>

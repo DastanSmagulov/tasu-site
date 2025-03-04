@@ -1,3 +1,4 @@
+"use client";
 import React, {
   useState,
   useEffect,
@@ -29,25 +30,27 @@ interface GlobalPackageCharacteristicDropdownProps {
 }
 
 const PackageCharacteristics: FC<ActDataProps> = ({ data, setData }) => {
-  // console.log(data, setData);
-  // Initialize local state from the parent's data only on mount.
+  // Use local state with fallbacks so that inputs are always controlled.
   const [cargoCost, setCargoCost] = useState(
-    data?.characteristic?.cargo_cost || ""
+    data?.characteristic?.cargo_cost ?? ""
   );
   const [senderCity, setSenderCity] = useState<number | string>(
-    data?.characteristic?.sender_city
+    data?.characteristic?.sender_city ?? ""
   );
   const [receiverCity, setReceiverCity] = useState<number | string>(
-    data?.characteristic?.receiver_city
+    data?.characteristic?.receiver_city ?? ""
+  );
+  const [receiverAddress, setReceiverAddress] = useState(
+    data?.characteristic?.receiver_address ?? ""
   );
   const [additionalInfo, setAdditionalInfo] = useState(
-    data?.characteristic?.additional_info || ""
+    data?.characteristic?.additional_info ?? ""
   );
   const [cargoCharacteristics, setCargoCharacteristics] = useState<
     number | string | null
-  >(data?.cargo_characteristics || null);
+  >(data?.cargo_characteristics ?? "");
   const [cargoSlots, setCargoSlots] = useState<number>(
-    Number(data?.cargo_slots)
+    Number(data?.cargo_slots) || 0
   );
   const [packages, setPackages] = useState<any[]>(data?.cargo || []);
 
@@ -92,6 +95,7 @@ const PackageCharacteristics: FC<ActDataProps> = ({ data, setData }) => {
         cargo_cost: cargoCost,
         sender_city: senderCity,
         receiver_city: receiverCity,
+        receiver_address: receiverAddress, // New field added here
         additional_info: additionalInfo,
       },
       cargo_characteristics: cargoCharacteristics,
@@ -102,6 +106,7 @@ const PackageCharacteristics: FC<ActDataProps> = ({ data, setData }) => {
     cargoCost,
     senderCity,
     receiverCity,
+    receiverAddress,
     additionalInfo,
     cargoCharacteristics,
     cargoSlots,
@@ -109,7 +114,7 @@ const PackageCharacteristics: FC<ActDataProps> = ({ data, setData }) => {
     setData,
   ]);
 
-  // --- Handlers ---
+  // --- Helper Functions for Package Details ---
   const handleAddPackage = useCallback(() => {
     setPackages((prev) => [
       ...prev,
@@ -250,9 +255,9 @@ const PackageCharacteristics: FC<ActDataProps> = ({ data, setData }) => {
             className="w-full border bg-white hover:bg-white border-gray-300 rounded-md p-2 text-left text-sm focus:outline-none focus:ring-2 focus:ring-[#09BD3C]"
           >
             {cities.find((city) => {
-              return typeof senderCity == "number"
-                ? city.id == data?.characteristic?.sender_city
-                : city.name_ru == data?.characteristic?.sender_city;
+              return typeof senderCity === "number"
+                ? city.id === senderCity
+                : city.name_ru === data?.characteristic?.sender_city || "";
             })?.name_ru || "Выберите город отправителя"}
           </button>
           {senderDropdownOpen && (
@@ -284,9 +289,9 @@ const PackageCharacteristics: FC<ActDataProps> = ({ data, setData }) => {
             className="w-full border bg-white hover:bg-white border-gray-300 rounded-md p-2 text-left text-sm focus:outline-none focus:ring-2 focus:ring-[#09BD3C]"
           >
             {cities.find((city) => {
-              return typeof receiverCity == "number"
-                ? city.id == data?.characteristic?.receiver_city
-                : city.name_ru == data?.characteristic?.receiver_city;
+              return typeof receiverCity === "number"
+                ? city.id === receiverCity
+                : city.name_ru === data?.characteristic?.receiver_city || "";
             })?.name_ru || "Выберите город получателя"}
           </button>
           {receiverDropdownOpen && (
@@ -308,13 +313,27 @@ const PackageCharacteristics: FC<ActDataProps> = ({ data, setData }) => {
         </div>
       </div>
 
+      {/* Receiver Address Input */}
+      <div className="mb-4">
+        <label className="block text-sm font-medium text-[#1D1B23] mb-1">
+          Адрес получателя
+        </label>
+        <input
+          type="text"
+          value={data?.characteristic?.receiver_address || ""}
+          onChange={(e) => setReceiverAddress(e.target.value)}
+          placeholder="Введите адрес получателя"
+          className="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-[#09BD3C] text-sm"
+        />
+      </div>
+
       {/* Additional Information */}
       <div className="mb-6">
         <label className="block text-sm font-medium text-[#1D1B23] mb-1">
           Дополнительно
         </label>
         <textarea
-          value={data?.characteristic?.additional_info}
+          value={data?.characteristic?.additional_info || ""}
           onChange={(e) => setAdditionalInfo(e.target.value)}
           placeholder="Любые дополнения относительно характера груза и веса товара"
           className="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-[#09BD3C] text-sm"
@@ -336,18 +355,17 @@ const PackageCharacteristics: FC<ActDataProps> = ({ data, setData }) => {
       {/* Global Cargo Slots */}
       <div className="mb-6">
         <label className="block text-sm font-medium text-[#1D1B23] mb-1">
-          Количество слотов
+          Количество мест
         </label>
         <input
           type="number"
-          value={data?.cargo_slots}
+          value={data?.cargo_slots || ""}
           onChange={(e) => setCargoSlots(Number(e.target.value))}
-          placeholder="Укажите слоты"
+          placeholder="Укажите места"
           className="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-[#09BD3C] text-sm"
         />
       </div>
 
-      {/* Package Details Table */}
       <div className="overflow-x-auto mb-4 max-w-full md:max-w-3xl mx-auto">
         <table className="min-w-full divide-y divide-gray-200 text-sm">
           <thead className="bg-gray-50">
@@ -368,6 +386,11 @@ const PackageCharacteristics: FC<ActDataProps> = ({ data, setData }) => {
                 Высота
               </th>
               <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                {data?.transportation_type == "AVIATION"
+                  ? "Объемный вес"
+                  : "Объем"}
+              </th>
+              <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Действия
               </th>
             </tr>
@@ -379,7 +402,7 @@ const PackageCharacteristics: FC<ActDataProps> = ({ data, setData }) => {
                 <td className="px-4 py-2 whitespace-nowrap">
                   <input
                     type="number"
-                    value={pkg.weight}
+                    value={pkg.weight || ""}
                     onChange={(e) =>
                       handleChange(index, "weight", Number(e.target.value))
                     }
@@ -431,6 +454,17 @@ const PackageCharacteristics: FC<ActDataProps> = ({ data, setData }) => {
                     placeholder="Высота"
                     className="border border-gray-300 rounded-md p-1 w-16 text-sm"
                   />
+                </td>
+                <td className="px-4 py-2 whitespace-nowrap">
+                  {(() => {
+                    const length = Number(pkg.dimensions?.length) || 0;
+                    const width = Number(pkg.dimensions?.width) || 0;
+                    const height = Number(pkg.dimensions?.height) || 0;
+                    const volume = length * width * height;
+                    return data?.transportation_type == "AVIATION"
+                      ? (volume / 6000).toFixed(2)
+                      : volume.toFixed(2);
+                  })()}
                 </td>
                 <td className="px-4 py-2 whitespace-nowrap">
                   <button
