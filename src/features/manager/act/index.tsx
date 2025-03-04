@@ -318,10 +318,9 @@ export default function ActPage() {
         `/acts/${params.id}/`,
         formData
       );
-      // await axiosInstance.patch(`/acts/${params.id}/`, {
-      //   smr_document:
-      //     "/media/uploads/contract_mercenary_and_warehouse/FX_retake_instructions_2024-2025_D8MjQm4.pdf",
-      // });
+      await axiosInstance.patch(`/acts/${params.id}/`, {
+        is_smr: true,
+      });
       setIsModalOpen(true);
     } catch (error) {
       console.error("Error sending act data:", error);
@@ -431,11 +430,11 @@ export default function ActPage() {
               setData={props.setData}
             />
             {/* Второй вариант договора */}
-            <Agreement
+            {/* <Agreement
               original={false}
               data={props.data}
               setData={props.setData}
-            />
+            /> */}
             <TransportationServicesTable
               availableTransportationServices={transportationQuantityServices}
               data={props.data}
@@ -606,7 +605,7 @@ export default function ActPage() {
             data={actData}
             setData={setActData}
           />
-          <Agreement original={false} data={actData} setData={setActData} />
+          {/* <Agreement original={false} data={actData} setData={setActData} /> */}
           <TransportationServicesTable
             availableTransportationServices={transportationQuantityServices}
             data={actData}

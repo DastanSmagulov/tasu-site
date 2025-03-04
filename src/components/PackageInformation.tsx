@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { axiosInstance } from "@/helper/utils";
 import { ActDataProps } from "@/helper/types";
 import Signature from "./Signature";
@@ -31,30 +31,31 @@ const InformationPackage: React.FC<ActDataProps & { title: string }> = ({
   );
 
   // Instead of dropdowns, we now use plain text input fields.
-  const [issued, setIssued] = useState<string | number>(() => {
+  const [issued, setIssued] = useState<string>(() => {
     return title.toLowerCase().includes("получении")
-      ? data?.receiving_cargo_info?.issued || ""
-      : data?.delivery_cargo_info?.issued || "";
+      ? data?.receiving_cargo_info?.issued + "" || ""
+      : data?.delivery_cargo_info?.issued + "" || "";
   });
-  const [accepted, setAccepted] = useState<string | number>(() => {
+  const [accepted, setAccepted] = useState<string>(() => {
     return title.toLowerCase().includes("получении")
-      ? data?.receiving_cargo_info?.accepted || ""
-      : data?.delivery_cargo_info?.accepted || "";
+      ? data?.receiving_cargo_info?.accepted + "" || ""
+      : data?.delivery_cargo_info?.accepted + "" || "";
   });
   const [issuedPhone, setIssuedPhone] = useState<string>(() => {
     return title.toLowerCase().includes("получении")
-      ? data?.receiving_cargo_info?.issued_phone || ""
-      : data?.delivery_cargo_info?.issued_phone || "";
+      ? data?.receiving_cargo_info?.issued_phone + "" || ""
+      : data?.delivery_cargo_info?.issued_phone + "" || "";
   });
   const [acceptedPhone, setAcceptedPhone] = useState<string>(() => {
     return title.toLowerCase().includes("получении")
-      ? data?.receiving_cargo_info?.accepted_phone || ""
-      : data?.delivery_cargo_info?.accepted_phone || "";
+      ? data?.receiving_cargo_info?.accepted_phone + "" || ""
+      : data?.delivery_cargo_info?.accepted_phone + "" || "";
   });
 
-  // Update local state if parent's data changes.
+  // Use a ref to run the initialization effect only once.
+  const isInitialized = useRef(false);
   useEffect(() => {
-    if (data) {
+    if (!isInitialized.current && data) {
       if (
         title.toLowerCase().includes("получении") &&
         data.receiving_cargo_info
@@ -71,10 +72,12 @@ const InformationPackage: React.FC<ActDataProps & { title: string }> = ({
         const info = data.delivery_cargo_info;
         setIssued(info.issued + "" || "");
         setAccepted(info.accepted + "" || "");
-        setIssuedPhone(info.issued_phone || "");
-        setAcceptedPhone(info.accepted_phone || "");
+        setIssuedPhone(info.issued_phone + "" || "");
+        setAcceptedPhone(info.accepted_phone + "" || "");
       }
+      isInitialized.current = true;
     }
+    // Note: we intentionally run this effect only once.
   }, [data, title]);
 
   // Update parent's data when local state changes.
@@ -110,7 +113,6 @@ const InformationPackage: React.FC<ActDataProps & { title: string }> = ({
             signature: receiverSignatureDataUrl,
           },
         };
-        // Only update if there is a change (using JSON.stringify for a deep compare)
         return JSON.stringify(newData) === JSON.stringify(prevData)
           ? prevData
           : newData;

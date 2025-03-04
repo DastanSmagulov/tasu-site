@@ -7,6 +7,7 @@ import Table from "@/shared/Table";
 import Pagination from "@/shared/Pagination";
 import { axiosInstance } from "@/helper/utils";
 import { TableRow } from "@/helper/types";
+import ManagerTable from "@/shared/ManagerTable";
 ("./globals.css");
 
 type DocumentData = {
@@ -100,7 +101,7 @@ const CMPPage = () => {
         filters={filters}
         setFilters={setFilters}
       />
-      <Table data={data} fetchActsData={fetchActsData} loading={loading} />
+      <ManagerTable data={data} fetchActsData={fetchActsData} loading={loading} />
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mt-4">
         <h1 className="text-gray-700">
           Показано {data.length} из {totalCount} данных

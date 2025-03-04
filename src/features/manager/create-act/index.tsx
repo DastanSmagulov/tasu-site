@@ -384,11 +384,11 @@ export default function CreateActPage() {
               setData={props.setData}
             />
             {/* Второй вариант договора */}
-            <Agreement
+            {/* <Agreement
               original={false}
               data={props.data}
               setData={props.setData}
-            />
+            /> */}
             <TransportationServicesTable
               availableTransportationServices={transportationQuantityServices}
               data={props.data}
@@ -548,7 +548,7 @@ export default function CreateActPage() {
             data={actData}
             setData={setActData}
           />
-          <Agreement original={false} data={actData} setData={setActData} />
+          {/* <Agreement original={false} data={actData} setData={setActData} /> */}
           <TransportationServicesTable
             availableTransportationServices={transportationQuantityServices}
             data={actData}
