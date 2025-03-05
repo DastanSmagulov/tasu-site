@@ -106,7 +106,7 @@ const ManagerTable = ({ data, loading, fetchActsData }: any) => {
                   </td>
                   <td className="p-3 border border-gray-300">
                     {role !== "admin" ? (
-                      <Link href={`${role}/act/${actId}`}>{actNumber}</Link>
+                      <Link href={`/${role}/act/${actId}`}>{actNumber}</Link>
                     ) : (
                       <h2>{actNumber}</h2>
                     )}

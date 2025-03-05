@@ -1,46 +1,33 @@
 import React, { useState, useEffect } from "react";
-import { ActDataProps } from "@/helper/types"; // { data: Act, setData: React.Dispatch<React.SetStateAction<Act>> }
+import { ActDataProps } from "@/helper/types";
 
 const PaymentPhoto: React.FC<ActDataProps> = ({ data, setData }) => {
-  // photos can be File objects (newly uploaded) or strings (URLs of existing photos)
-  const [photos, setPhotos] = useState<any[]>([]);
+  // Initialize photos once from parent's data
+  const initialPhotos = data?.accountant_photo
+    ? Array.isArray(data.accountant_photo)
+      ? data.accountant_photo
+      : [data.accountant_photo]
+    : [];
+  const [photos, setPhotos] = useState<any[]>(initialPhotos);
 
-  // Initialize photos once when the component mounts.
+  // Synchronize parent's state with local photos.
   useEffect(() => {
-    if (data?.accountant_photo) {
-      const initialPhotos = Array.isArray(data.accountant_photo)
-        ? data.accountant_photo
-        : [data.accountant_photo];
-      setPhotos(initialPhotos);
-    }
-    // Run only once on mount.
-  }, []);
+    setData((prev: any) => ({
+      ...prev,
+      accountant_photo: photos,
+    }));
+  }, [photos, setData]);
 
   const handlePhotoUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
     if (files) {
       const newPhotos = Array.from(files);
-      setPhotos((prevPhotos) => {
-        const updatedPhotos = [...prevPhotos, ...newPhotos];
-        // Update parent's state directly here.
-        setData((prev: any) => ({
-          ...prev,
-          accountant_photo: updatedPhotos,
-        }));
-        return updatedPhotos;
-      });
+      setPhotos((prevPhotos) => [...prevPhotos, ...newPhotos]);
     }
   };
 
   const handleRemovePhoto = (index: number) => {
-    setPhotos((prevPhotos) => {
-      const updatedPhotos = prevPhotos.filter((_, i) => i !== index);
-      setData((prev: any) => ({
-        ...prev,
-        accountant_photo: updatedPhotos,
-      }));
-      return updatedPhotos;
-    });
+    setPhotos((prevPhotos) => prevPhotos.filter((_, i) => i !== index));
   };
 
   return (

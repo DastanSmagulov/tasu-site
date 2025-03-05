@@ -29,8 +29,8 @@ const routes: Route[] = [
   },
   {
     path: "/accountant",
-    name: "Акт",
-    icon: "act",
+    name: "СМР и Заявки",
+    icon: "cmp",
     roles: ["accountant"],
   },
   {

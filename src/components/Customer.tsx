@@ -184,13 +184,13 @@ const Customer: React.FC<ActDataProps> = ({ data, setData }) => {
       {/* Full Name Input */}
       <div className="mb-4">
         <label className="block text-sm font-medium text-gray-700 mb-1">
-          Укажите ФИО
+          Укажите ФИО/Организацию
         </label>
         <input
           type="text"
           value={data?.customer_data?.full_name || ""}
           onChange={handleFullNameChange}
-          placeholder="Введите ФИО"
+          placeholder="Введите ФИО/Организацию"
           className="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-[#09BD3C] focus:border-transparent"
         />
       </div>

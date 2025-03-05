@@ -95,9 +95,9 @@ const AccountantTable: React.FC<TableProps> = ({
                 </td>
                 <td className="p-3 border border-gray-300">
                   {role !== "admin" ? (
-                    <Link href={`${role}/act/${row.id}`}>{row.id}</Link>
+                    <Link href={`${role}/act/${row.id}`}>{row.number}</Link>
                   ) : (
-                    <h2>{row.id}</h2>
+                    <h2>{row.number}</h2>
                   )}
                 </td>
                 <td className="p-3 border border-gray-300">

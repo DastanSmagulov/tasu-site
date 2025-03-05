@@ -39,7 +39,7 @@ const TransportationTypes: React.FC<ActDataProps> = ({ data, setData }) => {
 
     // If parent's data already has a transportation_type, use it.
     if (data?.transportation_type) {
-      setSelectedOption(data.transportation_type);
+      setSelectedOption(data?.transportation_type);
     }
 
     fetchTransportTypes();

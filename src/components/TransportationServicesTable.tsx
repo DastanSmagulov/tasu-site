@@ -52,7 +52,7 @@ const ServicesTables: React.FC<ServicesTablesProps> = ({
   // When parent's data changes, update our local state.
   useEffect(() => {
     setSelectedIds(data?.transportation_services || []);
-  }, [data.transportation_services]);
+  }, [data?.transportation_services]);
 
   /*** TRANSPORTATION SERVICES ***/
   const [selectedTransportationRows, setSelectedTransportationRows] = useState<
@@ -557,7 +557,6 @@ const ServicesTables: React.FC<ServicesTablesProps> = ({
                 ) : selectedWarehouseServices?.length > 0 ? (
                   <div className="overflow-x-auto">
                     <table className="table-auto w-full border-collapse border text-gray-900 font-normal border-gray-300 mb-4">
-                      {" "}
                       <thead>
                         <tr className="bg-gray-100">
                           <th className="p-2 border border-gray-300">

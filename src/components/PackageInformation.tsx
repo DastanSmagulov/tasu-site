@@ -8,77 +8,65 @@ const InformationPackage: React.FC<ActDataProps & { title: string }> = ({
   data,
   setData,
 }) => {
-  // Initialize dateTime state.
+  const isReceiving = title.toLowerCase().includes("получении");
+  const isDelivery = title.toLowerCase().includes("выдаче");
+
+  // Initialize state from data or default to an empty string.
   const [dateTime, setDateTime] = useState(() => {
-    const initial = title.toLowerCase().includes("выдаче")
+    const initial = isDelivery
       ? data?.delivery_cargo_info?.date
       : data?.receiving_cargo_info?.date;
     return initial || new Date().toISOString().slice(0, 16);
   });
 
-  // Signature states.
   const [signatureDataUrl, setSignatureDataUrl] = useState<string | null>(
-    title.toLowerCase().includes("выдаче")
-      ? data?.customer_data?.signature || null
-      : null
+    isDelivery ? data?.customer_data?.signature || null : null
   );
   const [receiverSignatureDataUrl, setReceiverSignatureDataUrl] = useState<
     string | null
-  >(
-    title.toLowerCase().includes("получении")
-      ? data?.receiver_data?.signature || null
-      : null
-  );
+  >(isReceiving ? data?.receiver_data?.signature || null : null);
 
-  // Instead of dropdowns, we now use plain text input fields.
   const [issued, setIssued] = useState<string>(() => {
-    return title.toLowerCase().includes("получении")
-      ? data?.receiving_cargo_info?.issued + "" || ""
-      : data?.delivery_cargo_info?.issued + "" || "";
+    return isReceiving
+      ? (data?.receiving_cargo_info?.issued ?? "") + ""
+      : (data?.delivery_cargo_info?.issued ?? "") + "";
   });
   const [accepted, setAccepted] = useState<string>(() => {
-    return title.toLowerCase().includes("получении")
-      ? data?.receiving_cargo_info?.accepted + "" || ""
-      : data?.delivery_cargo_info?.accepted + "" || "";
+    return isReceiving
+      ? (data?.receiving_cargo_info?.accepted ?? "") + ""
+      : (data?.delivery_cargo_info?.accepted ?? "") + "";
   });
   const [issuedPhone, setIssuedPhone] = useState<string>(() => {
-    return title.toLowerCase().includes("получении")
-      ? data?.receiving_cargo_info?.issued_phone + "" || ""
-      : data?.delivery_cargo_info?.issued_phone + "" || "";
+    return isReceiving
+      ? (data?.receiving_cargo_info?.issued_phone ?? "") + ""
+      : (data?.delivery_cargo_info?.issued_phone ?? "") + "";
   });
   const [acceptedPhone, setAcceptedPhone] = useState<string>(() => {
-    return title.toLowerCase().includes("получении")
-      ? data?.receiving_cargo_info?.accepted_phone + "" || ""
-      : data?.delivery_cargo_info?.accepted_phone + "" || "";
+    return isReceiving
+      ? (data?.receiving_cargo_info?.accepted_phone ?? "") + ""
+      : (data?.delivery_cargo_info?.accepted_phone ?? "") + "";
   });
 
-  // Use a ref to run the initialization effect only once.
+  // Only run the initialization effect once when data is loaded.
   const isInitialized = useRef(false);
   useEffect(() => {
     if (!isInitialized.current && data) {
-      if (
-        title.toLowerCase().includes("получении") &&
-        data.receiving_cargo_info
-      ) {
+      if (isReceiving && data.receiving_cargo_info) {
         const info = data.receiving_cargo_info;
-        setIssued(info.issued + "" || "");
-        setAccepted(info.accepted + "" || "");
-        setIssuedPhone(info.issued_phone + "" || "");
-        setAcceptedPhone(info.accepted_phone + "" || "");
-      } else if (
-        title.toLowerCase().includes("выдаче") &&
-        data.delivery_cargo_info
-      ) {
+        setIssued(info.issued ? info.issued + "" : "");
+        setAccepted(info.accepted ? info.accepted + "" : "");
+        setIssuedPhone(info.issued_phone ? info.issued_phone + "" : "");
+        setAcceptedPhone(info.accepted_phone ? info.accepted_phone + "" : "");
+      } else if (isDelivery && data.delivery_cargo_info) {
         const info = data.delivery_cargo_info;
-        setIssued(info.issued + "" || "");
-        setAccepted(info.accepted + "" || "");
-        setIssuedPhone(info.issued_phone + "" || "");
-        setAcceptedPhone(info.accepted_phone + "" || "");
+        setIssued(info.issued ? info.issued + "" : "");
+        setAccepted(info.accepted ? info.accepted + "" : "");
+        setIssuedPhone(info.issued_phone ? info.issued_phone + "" : "");
+        setAcceptedPhone(info.accepted_phone ? info.accepted_phone + "" : "");
       }
       isInitialized.current = true;
     }
-    // Note: we intentionally run this effect only once.
-  }, [data, title]);
+  }, [data, isReceiving, isDelivery]);
 
   // Update parent's data when local state changes.
   useEffect(() => {
@@ -97,7 +85,7 @@ const InformationPackage: React.FC<ActDataProps & { title: string }> = ({
 
     const formattedDate = dateTime ? formatDateToBackend(dateTime) : null;
 
-    if (title.toLowerCase().includes("получении")) {
+    if (isReceiving) {
       setData((prevData: any) => {
         const newData = {
           ...prevData,
@@ -117,7 +105,7 @@ const InformationPackage: React.FC<ActDataProps & { title: string }> = ({
           ? prevData
           : newData;
       });
-    } else if (title.toLowerCase().includes("выдаче")) {
+    } else if (isDelivery) {
       setData((prevData: any) => {
         const newData = {
           ...prevData,
@@ -144,18 +132,17 @@ const InformationPackage: React.FC<ActDataProps & { title: string }> = ({
     issuedPhone,
     acceptedPhone,
     dateTime,
-    title,
+    isReceiving,
+    isDelivery,
     signatureDataUrl,
     receiverSignatureDataUrl,
     setData,
   ]);
 
-  // Update dateTime state on input change.
   const handleDateTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setDateTime(e.target.value);
   };
 
-  // Format datetime for display.
   const formatDateTime = (dateTime: string) => {
     if (!dateTime) return "";
     const date = new Date(dateTime);
@@ -200,7 +187,7 @@ const InformationPackage: React.FC<ActDataProps & { title: string }> = ({
           </label>
           <input
             type="text"
-            value={issued || ""}
+            value={issued}
             onChange={(e) => setIssued(e.target.value)}
             placeholder="Введите имя выдавшего"
             className="w-full px-4 py-2 border rounded-md focus:outline-none"
@@ -212,7 +199,7 @@ const InformationPackage: React.FC<ActDataProps & { title: string }> = ({
           </label>
           <input
             type="text"
-            value={issuedPhone || ""}
+            value={issuedPhone}
             onChange={(e) => setIssuedPhone(e.target.value)}
             placeholder="Введите телефон выдавшего"
             className="w-full px-4 py-2 border rounded-md focus:outline-none"
@@ -226,7 +213,7 @@ const InformationPackage: React.FC<ActDataProps & { title: string }> = ({
           </label>
           <input
             type="text"
-            value={accepted || ""}
+            value={accepted}
             onChange={(e) => setAccepted(e.target.value)}
             placeholder="Введите имя принявшего"
             className="w-full px-4 py-2 border rounded-md focus:outline-none"
@@ -238,7 +225,7 @@ const InformationPackage: React.FC<ActDataProps & { title: string }> = ({
           </label>
           <input
             type="text"
-            value={acceptedPhone || ""}
+            value={acceptedPhone}
             onChange={(e) => setAcceptedPhone(e.target.value)}
             placeholder="Введите телефон принявшего"
             className="w-full px-4 py-2 border rounded-md focus:outline-none"
@@ -248,14 +235,12 @@ const InformationPackage: React.FC<ActDataProps & { title: string }> = ({
         {/* Date and Time Section */}
         <div className="mb-6">
           <label className="block text-sm font-medium text-gray-700">
-            Дата и время{" "}
-            {title.toLowerCase().includes("получении") ? "получения" : "выдачи"}
-            :
+            Дата и время {isReceiving ? "получения" : "выдачи"}:
           </label>
           <div className="mt-2 flex items-center gap-4">
             <input
               type="datetime-local"
-              value={dateTime || ""}
+              value={dateTime}
               onChange={handleDateTimeChange}
               className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
@@ -265,7 +250,7 @@ const InformationPackage: React.FC<ActDataProps & { title: string }> = ({
 
         {/* Signature Section */}
         <div className="mb-6">
-          {title.toLowerCase().includes("выдаче") ? (
+          {isDelivery ? (
             <>
               <h2 className="text-xl font-bold mb-4">Подпись Заказчика</h2>
               <Signature
@@ -287,9 +272,9 @@ const InformationPackage: React.FC<ActDataProps & { title: string }> = ({
           <div className="mt-4">
             <img
               src={
-                title.toLowerCase().includes("выдаче")
-                  ? data?.customer_data?.signature || ""
-                  : data?.receiver_data?.signature || ""
+                isDelivery
+                  ? signatureDataUrl || ""
+                  : receiverSignatureDataUrl || ""
               }
               alt="Подпись"
               className="max-w-full"

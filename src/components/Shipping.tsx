@@ -15,17 +15,17 @@ const Shipping: FC<ActDataProps> = ({ data, setData }) => {
 
   // Initialize local state from parent's data if available.
   const initialSender =
-    data?.transportation?.sender && data.transportation.sender !== ""
+    data?.transportation?.sender && data?.transportation.sender !== ""
       ? {
-          id: data.transportation.sender,
-          full_name: data.transportation.sender,
+          id: data?.transportation.sender,
+          full_name: data?.transportation.sender,
         }
       : null;
   const initialReceiver =
-    data?.transportation?.receiver && data.transportation.receiver !== ""
+    data?.transportation?.receiver && data?.transportation.receiver !== ""
       ? {
-          id: data.transportation.receiver,
-          full_name: data.transportation.receiver,
+          id: data?.transportation.receiver,
+          full_name: data?.transportation.receiver,
         }
       : null;
   const initialPayer = data?.transportation?.sender_is_payer
@@ -61,7 +61,7 @@ const Shipping: FC<ActDataProps> = ({ data, setData }) => {
   // Once options are available, try to update our local state with matching objects.
   useEffect(() => {
     if (!preSelectRef.current && options.length > 0 && data?.transportation) {
-      const { sender, receiver, sender_is_payer } = data.transportation;
+      const { sender, receiver, sender_is_payer } = data?.transportation;
       // Try to find matching option objects.
       const matchedSender =
         options.find((u) => u.full_name === sender) ||

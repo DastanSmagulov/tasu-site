@@ -38,8 +38,8 @@ export default function CalculatorPage() {
           );
           setCalculationData({
             ...response.data,
-            transportation_services: response.data.transportation_services
-              ? response.data.transportation_services.map((s: any) => s.id)
+            transportation_services: response?.data?.transportation_services
+              ? response.data?.transportation_services?.map((s: any) => s.id)
               : [],
             packaging_services: response.data.service_package
               ? response.data.service_package.map((s: any) => s.id)

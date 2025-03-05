@@ -175,9 +175,7 @@ const RequestsTable: React.FC<TableProps> = ({ data, role }) => {
                   />
                 </td>
                 <td className="p-3 border border-gray-300">
-                  <Link href={`/${role}/request/${row.id.slice(1)}`}>
-                    {row.id}
-                  </Link>
+                  <Link href={`/${role}/act/${row.id.slice(1)}`}>{row.id}</Link>
                 </td>
                 <td className="p-3 border border-gray-300">{row.customer}</td>
                 <td className="p-3 border border-gray-300">{row.date}</td>

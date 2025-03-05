@@ -123,6 +123,7 @@ export interface Act {
 }
 
 export interface TableRow {
+  number?: string;
   id: string;
   customer: string;
   created_at: string;
@@ -139,6 +140,7 @@ export interface TableRow {
 }
 
 export interface AccountantTableRow {
+  number?: string;
   has_esf: boolean;
   has_avr: boolean;
   id: string;

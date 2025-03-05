@@ -280,7 +280,6 @@ export default function ActPage() {
         }
       );
 
-      console.log(response.data);
       originalDataRef.current = response.data;
       setIsModalOpen(true);
     } catch (error) {
@@ -292,9 +291,10 @@ export default function ActPage() {
   // NEW: Function to immediately trigger patch API for sending to storage.
   const handleSendToStorage = async () => {
     try {
-      await axiosInstance.patch(`/acts/${params.id}/`, {
+      const response = await axiosInstance.patch(`/acts/${params.id}/`, {
         status: "SENT_TO_STORAGE",
       });
+      setActData(response.data);
       setIsModalOpen(true);
     } catch (error) {
       console.error("Error sending act to storage:", error);
