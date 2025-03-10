@@ -76,6 +76,7 @@ export default function ActPage() {
               title={"О получении"}
               data={props.data}
               setData={props.setData}
+              role="carrier"
             />
           </>
         ),
@@ -215,7 +216,7 @@ export default function ActPage() {
               onClick={handleSend}
               className="font-semibold px-4 py-2 bg-yellow-400 text-black rounded-lg hover:bg-yellow-500"
             >
-              Отправить
+              Сохранить
             </button>
           )}
         </div>
@@ -244,6 +245,7 @@ export default function ActPage() {
             title="О Получении"
             data={actData}
             setData={setActData}
+            role="carrier"
           />
         </div>
       </div>
@@ -302,14 +304,11 @@ export default function ActPage() {
             </svg>
             Распечатать Акт
           </button>
-          <button className="font-semibold border border-gray-500 px-4 py-2 bg-white hover:bg-gray-100 text-black rounded-lg">
-            Сохранить
-          </button>
           <button
             onClick={handleSend}
-            className="font-semibold px-4 py-2 bg-yellow-400 hover:bg-yellow-500 text-black rounded-lg"
+            className="font-semibold max-[500px]:hidden border border-gray-500 px-4 py-2 bg-white hover:bg-gray-100 text-black rounded-lg"
           >
-            Отправить
+            Сохранить
           </button>
         </div>
       </div>

@@ -52,6 +52,24 @@ const routes: Route[] = [
     roles: ["manager"],
   },
   {
+    path: "/manager/cargo",
+    name: "Грузы",
+    icon: "cargo",
+    roles: ["manager"],
+  },
+  {
+    path: "/manager/users",
+    name: "Пользователи",
+    icon: "users",
+    roles: ["manager"],
+  },
+  {
+    path: "/manager/partners",
+    name: "Партнеры",
+    icon: "partners",
+    roles: ["manager"],
+  },
+  {
     path: "/manager/cost-calculation",
     name: "Расчет стоимости",
     icon: "cost",

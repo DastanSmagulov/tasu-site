@@ -105,6 +105,7 @@ export default function CreateActPage() {
               title={"О получении"}
               data={props.data}
               setData={props.setData}
+              role="forwarder"
             />
           </>
         ),
@@ -315,6 +316,7 @@ export default function CreateActPage() {
             title="О Получении"
             setData={setActData}
             data={actData}
+            role="forwarder"
           />
         </div>
       </div>
@@ -342,14 +344,9 @@ export default function CreateActPage() {
             </svg>
             Распечатать Акт
           </button>
-
-          <button className="font-semibold border border-gray-500 px-4 py-2 bg-white hover:bg-gray-100 text-black rounded-lg">
-            Сохранить
-          </button>
-
           <button
             onClick={handleSend}
-            className="font-semibold px-4 py-2 bg-yellow-400 hover:bg-yellow-500 text-black rounded-lg"
+            className="font-semibold max-[500px]:hidden px-4 py-2 bg-yellow-400 hover:bg-yellow-500 text-black rounded-lg"
           >
             Отправить
           </button>

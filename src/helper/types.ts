@@ -122,6 +122,13 @@ export interface Act {
   accountant_photo: CargoImage[];
 }
 
+export interface TransportationQuantityService {
+  id: number;
+  name: string;
+  quantity: string;
+  price: string;
+}
+
 export interface TableRow {
   number?: string;
   id: string;

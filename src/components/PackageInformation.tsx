@@ -1,13 +1,12 @@
+"use client";
 import React, { useState, useEffect, useRef } from "react";
-import { axiosInstance } from "@/helper/utils";
 import { ActDataProps } from "@/helper/types";
 import Signature from "./Signature";
+import { useParams, useRouter } from "next/navigation";
 
-const InformationPackage: React.FC<ActDataProps & { title: string }> = ({
-  title,
-  data,
-  setData,
-}) => {
+const InformationPackage: React.FC<
+  ActDataProps & { title: string; role: string }
+> = ({ title, data, setData, role }) => {
   const isReceiving = title.toLowerCase().includes("получении");
   const isDelivery = title.toLowerCase().includes("выдаче");
 
@@ -250,31 +249,33 @@ const InformationPackage: React.FC<ActDataProps & { title: string }> = ({
 
         {/* Signature Section */}
         <div className="mb-6">
-          {isDelivery ? (
-            <>
-              <h2 className="text-xl font-bold mb-4">Подпись Заказчика</h2>
-              <Signature
-                onSubmit={setSignatureDataUrl}
-                onUpload={handleCustomerSignatureUpload}
-                initialDataUrl={signatureDataUrl}
-              />
-            </>
-          ) : (
-            <>
-              <h2 className="text-xl font-bold mb-4">Подпись Получателя</h2>
-              <Signature
-                onSubmit={setReceiverSignatureDataUrl}
-                onUpload={handleReceiverSignatureUpload}
-                initialDataUrl={receiverSignatureDataUrl}
-              />
-            </>
-          )}
+          {role !== "manager" ? (
+            isDelivery ? (
+              <>
+                <h2 className="text-xl font-bold mb-4">Подпись Заказчика</h2>
+                <Signature
+                  onSubmit={setSignatureDataUrl}
+                  onUpload={handleCustomerSignatureUpload}
+                  initialDataUrl={signatureDataUrl}
+                />
+              </>
+            ) : (
+              <>
+                <h2 className="text-xl font-bold mb-4">Подпись Получателя</h2>
+                <Signature
+                  onSubmit={setReceiverSignatureDataUrl}
+                  onUpload={handleReceiverSignatureUpload}
+                  initialDataUrl={receiverSignatureDataUrl}
+                />
+              </>
+            )
+          ) : null}
           <div className="mt-4">
             <img
               src={
                 isDelivery
-                  ? signatureDataUrl || ""
-                  : receiverSignatureDataUrl || ""
+                  ? data?.customer_data?.signature || ""
+                  : data?.receiver_data?.signature || ""
               }
               alt="Подпись"
               className="max-w-full"

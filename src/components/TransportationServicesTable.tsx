@@ -26,7 +26,6 @@ interface WarehouseService {
 }
 
 interface ServicesTablesProps {
-  availableTransportationServices: TransportationQuantityService[];
   onChange: (newSelectedIds: number[]) => void; // update parent's data
   data: Act; // Act should have a field: transportation_services: number[]
 }
@@ -39,8 +38,7 @@ const computeTotal = (services: any[], priceField: string) => {
   }, 0);
 };
 
-const ServicesTables: React.FC<ServicesTablesProps> = ({
-  availableTransportationServices,
+const TransportationServicesTables: React.FC<ServicesTablesProps> = ({
   onChange,
   data,
 }) => {
@@ -55,6 +53,8 @@ const ServicesTables: React.FC<ServicesTablesProps> = ({
   }, [data?.transportation_services]);
 
   /*** TRANSPORTATION SERVICES ***/
+  const [transportationQuantityServices, setTransportationQuantityServices] =
+    useState<TransportationQuantityService[]>([]);
   const [selectedTransportationRows, setSelectedTransportationRows] = useState<
     Set<number>
   >(new Set());
@@ -64,11 +64,11 @@ const ServicesTables: React.FC<ServicesTablesProps> = ({
   >("");
 
   const selectedTransportationServices =
-    availableTransportationServices?.filter((service) =>
+    transportationQuantityServices?.filter((service) =>
       selectedIds.includes(service.id)
     ) || [];
   const availableTransportationOptions =
-    availableTransportationServices?.filter(
+    transportationQuantityServices?.filter(
       (service) => !selectedIds.includes(service.id)
     ) || [];
 
@@ -126,6 +126,33 @@ const ServicesTables: React.FC<ServicesTablesProps> = ({
       }
     };
     fetchPackagingServices();
+  }, []);
+
+  // Fetch available transportation services.
+  useEffect(() => {
+    const fetchTransportationQuantityServices = async () => {
+      try {
+        const response = await axiosInstance.get(
+          `admin/transportation-services/quantity/`
+        );
+        setTransportationQuantityServices(
+          response.data.results.map(
+            (service: TransportationQuantityService) => ({
+              id: service.id,
+              name: service.name,
+              quantity: service.quantity,
+              price: service.price,
+            })
+          )
+        );
+      } catch (error) {
+        console.error(
+          "Error fetching transportation quantity services:",
+          error
+        );
+      }
+    };
+    fetchTransportationQuantityServices();
   }, []);
 
   useEffect(() => {
@@ -707,4 +734,4 @@ const ServicesTables: React.FC<ServicesTablesProps> = ({
   );
 };
 
-export default ServicesTables;
+export default TransportationServicesTables;

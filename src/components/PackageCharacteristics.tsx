@@ -30,7 +30,7 @@ interface GlobalPackageCharacteristicDropdownProps {
 }
 
 const PackageCharacteristics: FC<ActDataProps> = ({ data, setData }) => {
-  // Use local state with fallbacks so that inputs are always controlled.
+  // Local state for controlled inputs.
   const [cargoCost, setCargoCost] = useState(
     data?.characteristic?.cargo_cost ?? ""
   );
@@ -52,9 +52,10 @@ const PackageCharacteristics: FC<ActDataProps> = ({ data, setData }) => {
   const [cargoSlots, setCargoSlots] = useState<number>(
     Number(data?.cargo_slots) || 0
   );
+  // Use local state for packages rather than directly reading from data
   const [packages, setPackages] = useState<any[]>(data?.cargo || []);
 
-  // Other local states
+  // Other local states for dropdowns/options.
   const [packageOptions, setPackageOptions] = useState<PackageOption[]>([]);
   const [cities, setCities] = useState<City[]>([]);
   const [senderDropdownOpen, setSenderDropdownOpen] = useState(false);
@@ -86,7 +87,7 @@ const PackageCharacteristics: FC<ActDataProps> = ({ data, setData }) => {
     fetchCities();
   }, []);
 
-  // --- Combine updating parent's state in one effect ---
+  // --- Synchronize local state to parent state ---
   useEffect(() => {
     setData((prev: any) => ({
       ...prev,
@@ -95,7 +96,7 @@ const PackageCharacteristics: FC<ActDataProps> = ({ data, setData }) => {
         cargo_cost: cargoCost,
         sender_city: senderCity,
         receiver_city: receiverCity,
-        receiver_address: receiverAddress, // New field added here
+        receiver_address: receiverAddress,
         additional_info: additionalInfo,
       },
       cargo_characteristics: cargoCharacteristics,
@@ -366,6 +367,7 @@ const PackageCharacteristics: FC<ActDataProps> = ({ data, setData }) => {
         />
       </div>
 
+      {/* Packages Table */}
       <div className="overflow-x-auto mb-4 max-w-full md:max-w-3xl mx-auto">
         <table className="min-w-full divide-y divide-gray-200 text-sm">
           <thead className="bg-gray-50">
@@ -386,7 +388,7 @@ const PackageCharacteristics: FC<ActDataProps> = ({ data, setData }) => {
                 Высота
               </th>
               <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                {data?.transportation_type == "AVIATION"
+                {data?.transportation_type === "AVIATION"
                   ? "Объемный вес"
                   : "Объем"}
               </th>
@@ -461,7 +463,7 @@ const PackageCharacteristics: FC<ActDataProps> = ({ data, setData }) => {
                     const width = Number(pkg.dimensions?.width) || 0;
                     const height = Number(pkg.dimensions?.height) || 0;
                     const volume = length * width * height;
-                    return data?.transportation_type == "AVIATION"
+                    return data?.transportation_type === "AVIATION"
                       ? (volume / 6000).toFixed(2)
                       : volume.toFixed(2);
                   })()}

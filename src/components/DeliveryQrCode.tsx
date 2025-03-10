@@ -235,6 +235,7 @@ const DeliveryQRCard = ({ id }: CarrierPageProps) => {
             title={"О выдаче"}
             data={actData}
             setData={setActData}
+            role="carrier"
           />
         </div>
 

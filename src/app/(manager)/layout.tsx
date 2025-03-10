@@ -36,6 +36,10 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     headerText = "На складе";
   } else if (pathname === "/manager/users") {
     headerText = "Пользователи";
+  } else if (pathname === "/manager/cargo") {
+    headerText = "Грузы";
+  } else if (pathname === "/manager/partners") {
+    headerText = "Партнеры";
   } else if (pathname === "/manager/cost-calculation") {
     headerText = "Расчет стоимости";
   } else if (pathname === "/manager/cost-calculation/calculator") {

@@ -7,9 +7,7 @@ import PackageCharacteristics from "@/components/PackageCharacteristics";
 import CargoPhoto from "@/components/CargoPhoto";
 import InformationPackage from "@/components/PackageInformation";
 import QrAct from "@/components/QrAct";
-import Shipping from "@/components/Shipping";
 import Agreement from "@/components/Agreement";
-import ServicesTable from "@/components/ServicesTable";
 import TransportInfo from "@/components/TransportInfo";
 import DriverInfo from "@/components/DriverInfo";
 import ManagerLink from "@/components/ManagerLink";
@@ -18,7 +16,7 @@ import CreateSuccessAct from "@/components/modals/CreateSuccessAct";
 import AccountingEsf from "@/features/accountant/AccountingEsf";
 import AccountingAvr from "@/features/accountant/AccountingAvr";
 import TransportationServicesTable from "@/components/TransportationServicesTable";
-import { Act, CargoImage } from "@/helper/types";
+import { Act } from "@/helper/types";
 import { useParams, useSearchParams } from "next/navigation";
 import { axiosInstance } from "@/helper/utils";
 import Checkbox from "@/components/ui/CheckBox";
@@ -149,25 +147,6 @@ export default function CreateActPage() {
     }
   }, [searchParams]);
 
-  // Define our helper function BEFORE we use it
-  const fetchTransportationQuantityServices = async () => {
-    try {
-      const response = await axiosInstance.get(
-        `admin/transportation-services/quantity/`
-      );
-      setTransportationQuantityServices(
-        response.data.results.map((service: TransportationQuantityService) => ({
-          id: service.id,
-          name: service.name,
-          quantity: service.quantity,
-          price: service.price,
-        }))
-      );
-    } catch (error) {
-      console.error("Error fetching transportation quantity services:", error);
-    }
-  };
-
   // Fetch act data if editing an existing act
   useEffect(() => {
     if (params.id) {
@@ -201,11 +180,6 @@ export default function CreateActPage() {
       fetchNewActData();
     }
   }, [params.id]);
-
-  // Fetch the available transportation services (only once)
-  useEffect(() => {
-    fetchTransportationQuantityServices();
-  }, []);
 
   const handleSend = async () => {
     console.log(actData);
@@ -390,10 +364,9 @@ export default function CreateActPage() {
               setData={props.setData}
             /> */}
             <TransportationServicesTable
-              availableTransportationServices={transportationQuantityServices}
-              data={props.data}
+              data={actData}
               onChange={(newSelectedIds: number[]) =>
-                props.setData((prev) => ({
+                setActData((prev) => ({
                   ...prev,
                   transportation_service_ids: newSelectedIds,
                 }))
@@ -414,11 +387,13 @@ export default function CreateActPage() {
               title={"О получении"}
               data={props.data}
               setData={props.setData}
+              role="managerCreate"
             />
             <InformationPackage
               title={"О выдаче"}
               data={props.data}
               setData={props.setData}
+              role="managerCreate"
             />
           </>
         ),
@@ -445,7 +420,7 @@ export default function CreateActPage() {
         ),
       },
     ],
-    [transportationQuantityServices]
+    []
   );
   // Get the current step component (if needed, you could also render steps conditionally)
   const CurrentComponent = stepsMemo[currentStep].component as any;
@@ -547,10 +522,10 @@ export default function CreateActPage() {
             title={"О получении"}
             data={actData}
             setData={setActData}
+            role="managerCreate"
           />
           {/* <Agreement original={false} data={actData} setData={setActData} /> */}
           <TransportationServicesTable
-            availableTransportationServices={transportationQuantityServices}
             data={actData}
             onChange={(newSelectedIds: number[]) =>
               setActData((prev) => ({
@@ -563,6 +538,7 @@ export default function CreateActPage() {
             title={"О выдаче"}
             data={actData}
             setData={setActData}
+            role="managerCreate"
           />
           <AccountingEsf data={actData} setData={setActData} />
           <AccountingAvr data={actData} setData={setActData} />
@@ -630,14 +606,9 @@ export default function CreateActPage() {
             </svg>
             Распечатать Акт
           </button>
-
-          <button className="font-semibold border border-gray-500 px-4 py-2 bg-white hover:bg-gray-100 text-black rounded-lg">
-            Сохранить
-          </button>
-
           <button
             onClick={handleSend}
-            className="font-semibold px-4 py-2 bg-yellow-400 hover:bg-yellow-500 text-black rounded-lg"
+            className="font-semibold max-[500px]:hidden px-4 py-2 bg-yellow-400 hover:bg-yellow-500 text-black rounded-lg"
           >
             Отправить
           </button>

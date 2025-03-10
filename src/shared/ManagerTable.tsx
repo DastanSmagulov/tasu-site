@@ -10,6 +10,12 @@ const ManagerTable = ({ data, loading, fetchActsData }: any) => {
   const [selectedRows, setSelectedRows] = useState(new Set());
   const role = Cookies.get("role");
 
+  // Sorting state: field and direction ('asc' or 'desc')
+  const [sortConfig, setSortConfig] = useState<{
+    field: string;
+    direction: "asc" | "desc";
+  } | null>(null);
+
   const handleDelete = async (ids: unknown[]) => {
     if (ids.length === 0) return;
     try {
@@ -43,6 +49,95 @@ const ManagerTable = ({ data, loading, fetchActsData }: any) => {
     );
   };
 
+  // Helper to get sortable value for each row given a field key.
+  const getSortableValue = (act: any, field: string) => {
+    switch (field) {
+      case "id":
+        return act.id;
+      case "customer":
+        return act.customer?.full_name?.toLowerCase() || "";
+      case "date":
+        return act.created_at ? new Date(act.created_at).getTime() : 0;
+      case "places":
+        return act.cargo ? act.cargo.slots : 0;
+      case "esf":
+        return act.has_esf ? 1 : 0;
+      case "abp":
+        return act.has_avr ? 1 : 0;
+      case "accountant_photo":
+        return act.has_check ? 1 : 0;
+      case "status":
+        return act.status?.toLowerCase() || "";
+      case "amount":
+        return act.total_cost || 0;
+      default:
+        return act[field];
+    }
+  };
+
+  // Create sorted data copy if sortConfig is set.
+  const sortedData = React.useMemo(() => {
+    if (!sortConfig) return data;
+    const sorted = [...data].sort((a, b) => {
+      const aVal = getSortableValue(a, sortConfig.field);
+      const bVal = getSortableValue(b, sortConfig.field);
+      if (aVal < bVal) return sortConfig.direction === "asc" ? -1 : 1;
+      if (aVal > bVal) return sortConfig.direction === "asc" ? 1 : -1;
+      return 0;
+    });
+    return sorted;
+  }, [data, sortConfig]);
+
+  // Handler to update sort configuration.
+  const handleSort = (field: string) => {
+    setSortConfig((prev) => {
+      if (prev && prev.field === field) {
+        return { field, direction: prev.direction === "asc" ? "desc" : "asc" };
+      }
+      return { field, direction: "asc" };
+    });
+  };
+
+  // Columns array for manager table.
+  const columns = [
+    { label: "Номер", key: "id" },
+    { label: "Заказчик", key: "customer" },
+    { label: "Дата", key: "date" },
+    { label: "Места", key: "places" },
+    { label: "ЭСФ", key: "esf" },
+    { label: "АВР", key: "abp" },
+    { label: "Счёт", key: "accountant_photo" },
+    { label: "Статус", key: "status" },
+    { label: "Сумма", key: "amount" },
+  ];
+
+  // Render both up and down arrows (thinner, using font-thin and small text).
+  const renderSortArrow = (field: string) => {
+    const isSorted = sortConfig && sortConfig.field === field;
+    return (
+      <span className="ml-1 inline-flex flex-row">
+        <span
+          className={`text-[10px] font-thin ${
+            isSorted && sortConfig!.direction === "asc"
+              ? "text-gray-900"
+              : "text-gray-400"
+          }`}
+        >
+          ▲
+        </span>
+        <span
+          className={`text-[10px] font-thin ${
+            isSorted && sortConfig!.direction === "desc"
+              ? "text-gray-900"
+              : "text-gray-400"
+          }`}
+        >
+          ▼
+        </span>
+      </span>
+    );
+  };
+
   if (loading) return <p>Загрузка...</p>;
 
   return (
@@ -58,43 +153,31 @@ const ManagerTable = ({ data, loading, fetchActsData }: any) => {
                   onChange={toggleSelectAll}
                 />
               </th>
-              {[
-                { label: "Номер", key: "id" },
-                { label: "Заказчик", key: "customer" },
-                { label: "Дата", key: "date" },
-                { label: "Места", key: "places" },
-                { label: "ЭСФ", key: "esf" },
-                { label: "АВР", key: "abp" },
-                { label: "Счёт", key: "accountant_photo" },
-                { label: "Статус", key: "status" },
-                { label: "Сумма", key: "amount" },
-              ].map((col) => (
-                <th key={col.key} className="p-3 text-left">
+              {columns.map((col) => (
+                <th
+                  key={col.key}
+                  className="p-3 text-left cursor-pointer select-none"
+                  onClick={() => handleSort(col.key)}
+                >
                   {col.label}
+                  {renderSortArrow(col.key)}
                 </th>
               ))}
               <th className="p-3"></th>
             </tr>
           </thead>
           <tbody className="bg-white">
-            {data.map((act: any) => {
-              // Map act fields to table columns:
+            {sortedData.map((act: any) => {
               const actNumber = act.number || "-";
               const actId = act.id || "-";
               const customer = act.customer?.full_name || "-";
-              // Use receiving_cargo_info.date (or delivery_cargo_info.date) and format it:
               const date = act.created_at ? act.created_at : "-";
               const places = act.cargo ? act.cargo.slots : 0;
               const has_esf = act.has_esf;
               const has_avr = act.has_avr;
               const has_check = act.has_check;
-              // For status, you might have a dedicated field; here we fallback to transportation_type
               const status = act.status || "-";
-              // For view, we use transportation_type
-              const view = act.transportation_type || "-";
-              // For amount, we use characteristic.cargo_cost
               const amount = act.total_cost || "-";
-
               return (
                 <tr key={actId} className="text-sm text-gray-800">
                   <td className="p-3 pl-10 border border-gray-300">

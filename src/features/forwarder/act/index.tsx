@@ -220,6 +220,7 @@ export default function ActPage() {
               title={"О получении"}
               data={props.data}
               setData={props.setData}
+              role="forwarder"
             />
           </>
         ),
@@ -381,7 +382,7 @@ export default function ActPage() {
               onClick={handleSend}
               className="font-semibold px-4 py-2 bg-yellow-400 hover:bg-yellow-500 text-black rounded-lg"
             >
-              Отправить
+              Сохранить
             </button>
           )}
         </div>
@@ -410,6 +411,7 @@ export default function ActPage() {
             title="О получении"
             data={actData}
             setData={setActData}
+            role="forwarder"
           />
           {actData.status === "готов к отправке" && (
             <QrAct
@@ -476,15 +478,8 @@ export default function ActPage() {
             Распечатать Акт
           </button>
 
-          <button className="font-semibold border border-gray-500 px-4 py-2 bg-white hover:bg-gray-100 text-black rounded-lg">
+          <button className="font-semibold max-[500px]:hidden border border-gray-500 px-4 py-2 bg-white hover:bg-gray-100 text-black rounded-lg">
             Сохранить
-          </button>
-
-          <button
-            onClick={handleSend}
-            className="font-semibold px-4 py-2 bg-yellow-400 hover:bg-yellow-500 text-black rounded-lg"
-          >
-            Отправить
           </button>
         </div>
       </div>
