@@ -49,8 +49,8 @@ const PackageCharacteristics: FC<ActDataProps> = ({ data, setData }) => {
   const [cargoCharacteristics, setCargoCharacteristics] = useState<
     number | string | null
   >(data?.cargo_characteristics ?? "");
-  const [cargoSlots, setCargoSlots] = useState<number>(
-    Number(data?.cargo_slots) || 0
+  const [cargoWeight, setCargoWeight] = useState<number>(
+    Number(data?.cargo_weights) || 0
   );
   // Use local state for packages rather than directly reading from data
   const [packages, setPackages] = useState<any[]>(data?.cargo || []);
@@ -100,7 +100,7 @@ const PackageCharacteristics: FC<ActDataProps> = ({ data, setData }) => {
         additional_info: additionalInfo,
       },
       cargo_characteristics: cargoCharacteristics,
-      cargo_slots: cargoSlots,
+      cargo_weights: cargoWeight,
       cargo: packages,
     }));
   }, [
@@ -110,7 +110,7 @@ const PackageCharacteristics: FC<ActDataProps> = ({ data, setData }) => {
     receiverAddress,
     additionalInfo,
     cargoCharacteristics,
-    cargoSlots,
+    cargoWeight,
     packages,
     setData,
   ]);
@@ -123,7 +123,7 @@ const PackageCharacteristics: FC<ActDataProps> = ({ data, setData }) => {
         weight: "0",
         dimensions: {
           length: "0",
-          width: "0",
+          slots: "0",
           height: "0",
           amount: "0",
         },
@@ -314,7 +314,7 @@ const PackageCharacteristics: FC<ActDataProps> = ({ data, setData }) => {
         </div>
       </div>
 
-      {/* Receiver Address Input */}
+      {/* Receiver Address Input
       <div className="mb-4">
         <label className="block text-sm font-medium text-[#1D1B23] mb-1">
           Адрес получателя
@@ -326,7 +326,7 @@ const PackageCharacteristics: FC<ActDataProps> = ({ data, setData }) => {
           placeholder="Введите адрес получателя"
           className="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-[#09BD3C] text-sm"
         />
-      </div>
+      </div> */}
 
       {/* Additional Information */}
       <div className="mb-6">
@@ -356,13 +356,13 @@ const PackageCharacteristics: FC<ActDataProps> = ({ data, setData }) => {
       {/* Global Cargo Slots */}
       <div className="mb-6">
         <label className="block text-sm font-medium text-[#1D1B23] mb-1">
-          Количество мест
+          Общий вес
         </label>
         <input
           type="number"
-          value={data?.cargo_slots || ""}
-          onChange={(e) => setCargoSlots(Number(e.target.value))}
-          placeholder="Укажите места"
+          value={data?.cargo_weights || ""}
+          onChange={(e) => setCargoWeight(Number(e.target.value))}
+          placeholder="Вес"
           className="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-[#09BD3C] text-sm"
         />
       </div>
@@ -376,7 +376,7 @@ const PackageCharacteristics: FC<ActDataProps> = ({ data, setData }) => {
                 №
               </th>
               <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Вес
+                Количество мест
               </th>
               <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Длина
@@ -404,11 +404,11 @@ const PackageCharacteristics: FC<ActDataProps> = ({ data, setData }) => {
                 <td className="px-4 py-2 whitespace-nowrap">
                   <input
                     type="number"
-                    value={pkg.weight || ""}
+                    value={pkg?.slots || ""}
                     onChange={(e) =>
-                      handleChange(index, "weight", Number(e.target.value))
+                      handleChange(index, "slots", Number(e.target.value))
                     }
-                    placeholder="Вес"
+                    placeholder="Укажите места"
                     className="border border-gray-300 rounded-md p-1 w-16 text-sm"
                   />
                 </td>

@@ -166,16 +166,16 @@ export default function ActPage() {
   const params = useParams();
   const steps = useMemo(
     () => [
+      // {
+      //   id: 1,
+      //   name: "Данные о Заказчике",
+      //   component: (props: {
+      //     data: Act;
+      //     setData: React.Dispatch<React.SetStateAction<Act>>;
+      //   }) => <Customer data={props.data} setData={props.setData} />,
+      // },
       {
         id: 1,
-        name: "Данные о Заказчике",
-        component: (props: {
-          data: Act;
-          setData: React.Dispatch<React.SetStateAction<Act>>;
-        }) => <Customer data={props.data} setData={props.setData} />,
-      },
-      {
-        id: 2,
         name: "Характеристики и вес груза",
         component: (props: {
           data: Act;
@@ -185,7 +185,7 @@ export default function ActPage() {
         ),
       },
       {
-        id: 3,
+        id: 2,
         name: "Фотографии груза и информация о получении",
         component: (props: {
           data: Act;
@@ -196,20 +196,20 @@ export default function ActPage() {
           </>
         ),
       },
+      // {
+      //   id: 4,
+      //   name: "Перевозка",
+      //   component: (props: {
+      //     data: Act;
+      //     setData: React.Dispatch<React.SetStateAction<Act>>;
+      //   }) => (
+      //     <>
+      //       <Shipping data={props.data} setData={props.setData} />
+      //     </>
+      //   ),
+      // },
       {
-        id: 4,
-        name: "Перевозка",
-        component: (props: {
-          data: Act;
-          setData: React.Dispatch<React.SetStateAction<Act>>;
-        }) => (
-          <>
-            <Shipping data={props.data} setData={props.setData} />
-          </>
-        ),
-      },
-      {
-        id: 5,
+        id: 3,
         name: "Информация о получении груза",
         component: (props: {
           data: Act;
@@ -401,12 +401,12 @@ export default function ActPage() {
       </div>
       <div className="hidden min-[500px]:flex act-flex gap-4 mt-4 w-full">
         <div className="flex flex-col md:w-1/2 space-y-4">
-          <Customer data={actData} setData={setActData} />
+          {/* <Customer data={actData} setData={setActData} /> */}
           <PackageCharacteristics data={actData} setData={setActData} />
           <CargoPhoto data={actData} setData={setActData} />
         </div>
         <div className="flex flex-col md:w-1/2 space-y-4">
-          <Shipping data={actData} setData={setActData} />
+          {/* <Shipping data={actData} setData={setActData} /> */}
           <InformationPackage
             title="О получении"
             data={actData}
@@ -478,7 +478,10 @@ export default function ActPage() {
             Распечатать Акт
           </button>
 
-          <button className="font-semibold max-[500px]:hidden border border-gray-500 px-4 py-2 bg-white hover:bg-gray-100 text-black rounded-lg">
+          <button
+            onClick={handleSend}
+            className="font-semibold border border-gray-500 px-4 py-2 bg-white hover:bg-gray-100 text-black rounded-lg"
+          >
             Сохранить
           </button>
         </div>

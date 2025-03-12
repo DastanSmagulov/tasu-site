@@ -9,6 +9,7 @@ import AccountingEsf from "@/features/accountant/AccountingEsf";
 import AccountingAbp from "@/features/accountant/AccountingAvr";
 import { axiosInstance } from "@/helper/utils";
 import { Act } from "@/helper/types";
+import ExpensesTable from "../ExpensesTable";
 
 // --- Normalization & Deep Diff Utilities ---
 
@@ -200,12 +201,7 @@ export default function ActPage() {
                 <h2 className="text-lg font-semibold mb-4 text-[#1D1B23]">
                   Расходы
                 </h2>
-                <button
-                  onClick={openExpenses}
-                  className="font-semibold px-4 py-2 rounded-lg"
-                >
-                  Указать из таблицы
-                </button>
+                <ExpensesTable />
               </div>
             </div>
             <div className="flex flex-col lg:w-1/2 space-y-4">

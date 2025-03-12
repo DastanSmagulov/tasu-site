@@ -206,31 +206,34 @@ const InformationPackage: React.FC<
         </div>
 
         {/* Accepted By Section */}
-        <div className="mb-6">
-          <label className="block text-sm font-medium text-gray-700">
-            Принял
-          </label>
-          <input
-            type="text"
-            value={accepted}
-            onChange={(e) => setAccepted(e.target.value)}
-            placeholder="Введите имя принявшего"
-            className="w-full px-4 py-2 border rounded-md focus:outline-none"
-          />
-        </div>
-        <div className="mb-6">
-          <label className="block text-sm font-medium text-gray-700">
-            Телефон принявшего
-          </label>
-          <input
-            type="text"
-            value={acceptedPhone}
-            onChange={(e) => setAcceptedPhone(e.target.value)}
-            placeholder="Введите телефон принявшего"
-            className="w-full px-4 py-2 border rounded-md focus:outline-none"
-          />
-        </div>
-
+        {role !== "transceiver" && role !== "forwarder" && (
+          <>
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-gray-700">
+                Принял
+              </label>
+              <input
+                type="text"
+                value={accepted}
+                onChange={(e) => setAccepted(e.target.value)}
+                placeholder="Введите имя принявшего"
+                className="w-full px-4 py-2 border rounded-md focus:outline-none"
+              />
+            </div>
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-gray-700">
+                Телефон принявшего
+              </label>
+              <input
+                type="text"
+                value={acceptedPhone}
+                onChange={(e) => setAcceptedPhone(e.target.value)}
+                placeholder="Введите телефон принявшего"
+                className="w-full px-4 py-2 border rounded-md focus:outline-none"
+              />
+            </div>
+          </>
+        )}
         {/* Date and Time Section */}
         <div className="mb-6">
           <label className="block text-sm font-medium text-gray-700">

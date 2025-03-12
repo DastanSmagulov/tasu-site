@@ -32,7 +32,7 @@ const PaymentPhoto: React.FC<ActDataProps> = ({ data, setData }) => {
 
   return (
     <div className="bg-white p-6 rounded-lg shadow-md">
-      <h2 className="text-lg font-semibold mb-4 text-[#1D1B23]">Фото оплаты</h2>
+      <h2 className="text-lg font-semibold mb-4 text-[#1D1B23]">Счет</h2>
 
       {/* Drag-and-Drop / File Upload Area */}
       <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 mb-4 text-center">

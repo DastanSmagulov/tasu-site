@@ -1,18 +1,9 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import Table from "@/components/Table";
 import { axiosInstance } from "@/helper/utils";
-import Checkbox from "@/components/ui/CheckBox";
+import { ExpenseItem } from "@/helper/types";
 
-interface ExpenseItem {
-  id: number;
-  name: string | number;
-  quantity: number;
-  price: string;
-  total_cost: string;
-}
-
-// Common columns for expense items
 const expenseColumns = [
   { label: "Наименование", key: "name" },
   { label: "Кол-во", key: "quantity" },
@@ -20,17 +11,16 @@ const expenseColumns = [
   { label: "Стоимость", key: "total_cost" },
 ];
 
-const ExpensesPage: React.FC = () => {
+const ExpensesTable: React.FC = () => {
   // State for each expense type
   const [dataCustomer, setDataCustomer] = useState<ExpenseItem[]>([]);
   const [dataPartner, setDataPartner] = useState<ExpenseItem[]>([]);
   const [dataTransportation, setDataTransportation] = useState<ExpenseItem[]>(
     []
   );
-  // State for checkbox - only if checked will tables be shown
-  const [hasExpenses, setHasExpenses] = useState(false);
+  const [loading, setLoading] = useState(true);
 
-  // Fetch functions
+  // Fetch functions for each expense type
   const fetchExpenseCustomer = async () => {
     try {
       const response = await axiosInstance.get("/expenses/expense-customer/");
@@ -60,18 +50,21 @@ const ExpensesPage: React.FC = () => {
     }
   };
 
+  // Fetch all expense data when component mounts
   useEffect(() => {
-    // Only fetch expenses if checkbox is checked
-    if (hasExpenses) {
-      fetchExpenseCustomer();
-      fetchExpensePartner();
-      fetchExpenseTransportation();
-    }
-  }, [hasExpenses]);
+    const fetchAll = async () => {
+      setLoading(true);
+      await Promise.all([
+        fetchExpenseCustomer(),
+        fetchExpensePartner(),
+        fetchExpenseTransportation(),
+      ]);
+      setLoading(false);
+    };
+    fetchAll();
+  }, []);
 
-  // Expense API handlers for each type
-
-  // Customer
+  // API handlers (implement these as needed)
   const addExpenseCustomer = async (newRow: any) => {
     try {
       const payload = {
@@ -104,7 +97,8 @@ const ExpensesPage: React.FC = () => {
     }
   };
 
-  const deleteExpenseCustomer = async (ids: number[]) => {
+  const deleteExpenseCustomer = async (selectedRows: Set<number>) => {
+    const ids = Array.from(selectedRows);
     try {
       await axiosInstance.delete("/expenses/expense-customer/bulk-delete/", {
         data: { ids },
@@ -116,7 +110,6 @@ const ExpensesPage: React.FC = () => {
     }
   };
 
-  // Partner
   const addExpensePartner = async (newRow: any) => {
     try {
       const payload = {
@@ -149,7 +142,8 @@ const ExpensesPage: React.FC = () => {
     }
   };
 
-  const deleteExpensePartner = async (ids: number[]) => {
+  const deleteExpensePartner = async (selectedRows: Set<number>) => {
+    const ids = Array.from(selectedRows);
     try {
       await axiosInstance.delete("/expenses/expense-partner/bulk-delete/", {
         data: { ids },
@@ -161,7 +155,6 @@ const ExpensesPage: React.FC = () => {
     }
   };
 
-  // Transportation
   const addExpenseTransportation = async (newRow: any) => {
     try {
       const payload = {
@@ -194,11 +187,14 @@ const ExpensesPage: React.FC = () => {
     }
   };
 
-  const deleteExpenseTransportation = async (ids: number[]) => {
+  const deleteExpenseTransportation = async (selectedRows: Set<number>) => {
+    const ids = Array.from(selectedRows);
     try {
       await axiosInstance.delete(
         "/expenses/expense-transportation/bulk-delete/",
-        { data: { ids } }
+        {
+          data: { ids },
+        }
       );
       fetchExpenseTransportation();
     } catch (error) {
@@ -207,114 +203,49 @@ const ExpensesPage: React.FC = () => {
     }
   };
 
-  // Global report functions
-  const handleCreateReport = () => {
-    const reportPayload = {
-      customer: dataCustomer,
-      partner: dataPartner,
-      transportation: dataTransportation,
-    };
-    console.log("Creating report with payload:", reportPayload);
-    // Send reportPayload to your endpoint if needed.
-  };
-
-  const handleSendReport = async () => {
-    console.log("Отправка отчета...");
-    // Implement report submission if needed.
-  };
+  if (loading) return <p>Загрузка расходов...</p>;
 
   return (
-    <div className="flex flex-col bg-gray-50 pb-10">
-      <h1 className="text-2xl font-bold my-4">Наименование</h1>
-      <div className="flex gap-2 my-4 items-center">
-        <Checkbox
-          id="expensesCheckbox"
-          checked={hasExpenses}
-          onChange={(e) => setHasExpenses(e.target.checked)}
-        />
-        <p>Есть расходы?</p>
-      </div>
-      {hasExpenses && (
-        <>
-          <div className="flex flex-col gap-10">
-            {/* Customer Expenses Table */}
-            <Table
-              text="Расход Заказчика"
-              columns={expenseColumns}
-              data={dataCustomer}
-              onRowSelect={(selectedRows) => {
-                // Not used here because onDeleteRows is provided
-              }}
-              onAddRow={addExpenseCustomer}
-              onDeleteRows={(selectedRows: Set<number>) => {
-                const ids = Array.from(selectedRows).map(
-                  (index) => dataCustomer[index].id
-                );
-                deleteExpenseCustomer(ids);
-              }}
-              onEditRow={(id, updatedData) =>
-                updateExpenseCustomer(id, updatedData)
-              }
-              width="full"
-            />
+    <div className="flex flex-col gap-10">
+      {/* Customer Expenses Table */}
+      <Table
+        text="Расход Заказчика"
+        columns={expenseColumns}
+        data={dataCustomer}
+        onRowSelect={() => {}}
+        onAddRow={addExpenseCustomer}
+        onDeleteRows={deleteExpenseCustomer}
+        onEditRow={(id, updatedData) => updateExpenseCustomer(id, updatedData)}
+        width="full"
+      />
 
-            {/* Partner Expenses Table */}
-            <Table
-              text="Расход Партнёров"
-              columns={expenseColumns}
-              data={dataPartner}
-              onRowSelect={() => {}}
-              onAddRow={addExpensePartner}
-              onDeleteRows={(selectedRows: Set<number>) => {
-                const ids = Array.from(selectedRows).map(
-                  (index) => dataPartner[index].id
-                );
-                deleteExpensePartner(ids);
-              }}
-              onEditRow={(id, updatedData) =>
-                updateExpensePartner(id, updatedData)
-              }
-              width="full"
-            />
+      {/* Partner Expenses Table */}
+      <Table
+        text="Расход Партнёров"
+        columns={expenseColumns}
+        data={dataPartner}
+        onRowSelect={() => {}}
+        onAddRow={addExpensePartner}
+        onDeleteRows={deleteExpensePartner}
+        onEditRow={(id, updatedData) => updateExpensePartner(id, updatedData)}
+        width="full"
+      />
 
-            {/* Transportation Expenses Table */}
-            <Table
-              text="Расход Перевозчика"
-              columns={expenseColumns}
-              data={dataTransportation}
-              onRowSelect={() => {}}
-              onAddRow={addExpenseTransportation}
-              onDeleteRows={(selectedRows: Set<number>) => {
-                const ids = Array.from(selectedRows).map(
-                  (index) => dataTransportation[index].id
-                );
-                deleteExpenseTransportation(ids);
-              }}
-              onEditRow={(id, updatedData) =>
-                updateExpenseTransportation(id, updatedData)
-              }
-              width="full"
-            />
-          </div>
-
-          <div className="flex flex-wrap justify-end gap-4 mt-8">
-            <button
-              onClick={handleCreateReport}
-              className="font-semibold border border-gray-500 px-4 py-2 bg-white hover:bg-gray-100 text-black rounded-lg"
-            >
-              Создать карточку
-            </button>
-            <button
-              onClick={handleSendReport}
-              className="font-semibold px-4 py-2 rounded-lg bg-blue-500 hover:bg-blue-600 text-white"
-            >
-              Выслать
-            </button>
-          </div>
-        </>
-      )}
+      {/* Transportation Expenses Table */}
+      <Table
+        text="Расход Перевозчика"
+        columns={expenseColumns}
+        data={dataTransportation}
+        onRowSelect={() => {}}
+        onAddRow={addExpenseTransportation}
+        onDeleteRows={deleteExpenseTransportation}
+        onEditRow={(id, updatedData) =>
+          updateExpenseTransportation(id, updatedData)
+        }
+        width="full"
+      />
     </div>
   );
 };
 
-export default ExpensesPage;
+export default ExpensesTable;

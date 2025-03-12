@@ -21,6 +21,7 @@ import AccountingEsf from "@/features/accountant/AccountingEsf";
 import AccountingAvr from "@/features/accountant/AccountingAvr";
 import TransportationServicesTables from "@/components/TransportationServicesTable";
 import Agreement from "@/components/Agreement";
+import Sender from "@/components/Sender";
 
 // --- Normalization & Deep Diff Utilities ---
 function normalizeValue(val: any): any {
@@ -491,6 +492,7 @@ export default function ActPage() {
       <div className="hidden min-[500px]:flex act-flex gap-4 mt-4 w-full">
         <div className="flex flex-col md:w-1/2 space-y-4">
           <Customer data={actData} setData={setActData} />
+          <Sender data={actData} setData={setActData} />
           <PackageCharacteristics data={actData} setData={setActData} />
           <CargoPhoto data={actData} setData={setActData} />
           <TransportationTypes data={actData} setData={setActData} />
@@ -610,7 +612,7 @@ export default function ActPage() {
           </button>
           <button
             onClick={handleSend}
-            className="font-semibold max-[500px]:hidden border border-gray-500 px-4 py-2 bg-white hover:bg-gray-100 text-black rounded-lg"
+            className="font-semibold border border-gray-500 px-4 py-2 bg-white hover:bg-gray-100 text-black rounded-lg"
           >
             Сохранить
           </button>

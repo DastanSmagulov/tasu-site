@@ -306,7 +306,7 @@ export default function ActPage() {
           </button>
           <button
             onClick={handleSend}
-            className="font-semibold max-[500px]:hidden border border-gray-500 px-4 py-2 bg-white hover:bg-gray-100 text-black rounded-lg"
+            className="font-semibold border border-gray-500 px-4 py-2 bg-white hover:bg-gray-100 text-black rounded-lg"
           >
             Сохранить
           </button>

@@ -28,6 +28,8 @@ interface Customer {
   customer_is_payer: boolean;
   role?: string;
   customer_currency_type?: string;
+  account_details?: string;
+  address?: string;
 }
 
 interface Receiver {
@@ -36,6 +38,18 @@ interface Receiver {
   phone?: string;
   signature: string;
   role?: string;
+  account_details?: string;
+  address?: string;
+  receiver_is_payer?: boolean;
+}
+
+interface Sender {
+  id?: number;
+  full_name: string;
+  phone?: string;
+  signature: string;
+  role?: string;
+  sender_is_payer?: boolean;
 }
 
 interface Characteristic {
@@ -99,12 +113,13 @@ export interface Act {
   id?: number;
   status?: string;
   customer_data: Customer;
+  sender_data: Sender;
   characteristic: Characteristic;
   cargo: Cargo[];
   cargo_images: CargoImage[];
   transportation_type: string;
   cargo_characteristics: string;
-  cargo_slots: string;
+  cargo_weights: string;
   driver_data: DriverData;
   vehicle_data: VehicleData;
   packaging_is_damaged: boolean | null;
@@ -120,6 +135,14 @@ export interface Act {
   cargo_status: string;
   transportation?: Transportation;
   accountant_photo: CargoImage[];
+}
+
+export interface ExpenseItem {
+  id: number;
+  name: string | number;
+  quantity: number;
+  price: string;
+  total_cost: string;
 }
 
 export interface TransportationQuantityService {

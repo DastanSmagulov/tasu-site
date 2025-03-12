@@ -2,16 +2,19 @@
 import React, { useState, useEffect } from "react";
 import { axiosInstance } from "@/helper/utils";
 import { ActDataProps } from "@/helper/types";
+import Checkbox from "./ui/CheckBox";
 
 interface CustomerOption {
   id: string;
   full_name: string;
   phone?: string;
   role?: string;
+  account_details?: string;
+  address?: string;
 }
 
 const CustomerReceiver: React.FC<ActDataProps> = ({ data, setData }) => {
-  // Local state for form fields with fallbacks.
+  // Локальные состояния для полей формы
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [fullName, setFullName] = useState<string>(
     data?.receiver_data?.full_name || ""
@@ -19,18 +22,28 @@ const CustomerReceiver: React.FC<ActDataProps> = ({ data, setData }) => {
   const [phoneNumber, setPhoneNumber] = useState<string>(
     data?.receiver_data?.phone || ""
   );
-  // Array of fetched customers.
+  const [accountDetails, setAccountDetails] = useState<string>(
+    data?.receiver_data?.account_details || ""
+  );
+  const [address, setAddress] = useState<string>(
+    data?.receiver_data?.address || ""
+  );
+  const [isPayer, setIsPayer] = useState<boolean>(
+    data?.receiver_data?.receiver_is_payer || false
+  );
+
+  // Массив полученных заказчиков
   const [customers, setCustomers] = useState<CustomerOption[]>([]);
-  // When a customer is selected via dropdown.
+  // Выбранный заказчик из выпадающего списка
   const [selectedCustomer, setSelectedCustomer] =
     useState<CustomerOption | null>(null);
 
-  // Toggle the dropdown.
+  // Переключение выпадающего списка
   const toggleDropdown = () => {
     setDropdownOpen((prev) => !prev);
   };
 
-  // Fetch customers from the API.
+  // Получение списка заказчиков с API
   const fetchCustomers = async () => {
     try {
       const response = await axiosInstance.get("/admin/users/search/");
@@ -44,14 +57,16 @@ const CustomerReceiver: React.FC<ActDataProps> = ({ data, setData }) => {
     fetchCustomers();
   }, []);
 
-  // When a customer is selected from the dropdown.
+  // Выбор заказчика из списка
   const handleSelectCustomer = (customer: CustomerOption) => {
     setSelectedCustomer(customer);
     setFullName(customer.full_name);
     setPhoneNumber(customer.phone || "");
+    setAccountDetails(customer.account_details || "");
+    setAddress(customer.address || "");
     setDropdownOpen(false);
 
-    // Update parent's data with the selected customer's info (include id).
+    // Обновление родительского состояния с выбранными данными
     setData((prevData: any) => ({
       ...prevData,
       receiver_data: {
@@ -59,28 +74,30 @@ const CustomerReceiver: React.FC<ActDataProps> = ({ data, setData }) => {
         id: customer.id,
         full_name: customer.full_name,
         phone: customer.phone || "",
-        role: customer.role || "",
+        role: "RECEIVER",
+        receiver_is_payer: false,
+        account_details: customer.account_details || "",
+        address: customer.address || "",
       },
     }));
   };
 
-  // When the user manually edits the Full Name.
+  // Обработчик изменения ФИО (при ручном вводе)
   const handleFullNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newFullName = e.target.value;
     setFullName(newFullName);
-    // Clear any selected customer (i.e. clear id).
-    setSelectedCustomer(null);
+    setSelectedCustomer(null); // Сброс выбранного заказчика (id)
     setData((prevData: any) => ({
       ...prevData,
       receiver_data: {
         ...prevData.receiver_data,
-        id: "", // Clear id if manually changed
+        id: "", // Очистка id при ручном вводе
         full_name: newFullName,
       },
     }));
   };
 
-  // When the user manually edits the Phone Number.
+  // Обработчик изменения номера телефона
   const handlePhoneNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newPhone = e.target.value;
     setPhoneNumber(newPhone);
@@ -93,6 +110,47 @@ const CustomerReceiver: React.FC<ActDataProps> = ({ data, setData }) => {
     }));
   };
 
+  // Обработчик изменения реквизитов
+  const handleAccountDetailsChange = (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const newAccountDetails = e.target.value;
+    setAccountDetails(newAccountDetails);
+    setData((prevData: any) => ({
+      ...prevData,
+      receiver_data: {
+        ...prevData.receiver_data,
+        account_details: newAccountDetails,
+      },
+    }));
+  };
+
+  // Обработчик изменения адреса
+  const handleAddressChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newAddress = e.target.value;
+    setAddress(newAddress);
+    setData((prevData: any) => ({
+      ...prevData,
+      receiver_data: {
+        ...prevData.receiver_data,
+        address: newAddress,
+      },
+    }));
+  };
+
+  const handlePayerChange = () => {
+    const newValue = !isPayer;
+    setIsPayer(newValue);
+    setData((prevData: any) => ({
+      ...prevData,
+      receiver_data: {
+        ...prevData.receiver_data,
+        receiver_is_payer: newValue,
+        role: "Receiver",
+      },
+    }));
+  };
+
   return (
     <div className="bg-white p-6 rounded-lg shadow-md flex flex-col">
       <div className="flex items-center md:flex-row flex-col gap-3 mb-4">
@@ -101,7 +159,20 @@ const CustomerReceiver: React.FC<ActDataProps> = ({ data, setData }) => {
         </h2>
       </div>
 
-      {/* Dropdown for Selecting Customer */}
+      <div className="flex items-start gap-3">
+        <label
+          htmlFor="isPayer"
+          className="flex items-center mb-6 text-sm font-medium text-gray-700 cursor-pointer"
+        >
+          Получатель является плательщиком?
+        </label>
+        <Checkbox
+          checked={data?.receiver_data?.receiver_is_payer || false}
+          onChange={handlePayerChange}
+        />
+      </div>
+
+      {/* Выпадающий список для выбора заказчика */}
       <div className="mb-4 relative">
         <label className="block text-sm font-medium text-gray-700 mb-1">
           Выберите заказчика
@@ -129,7 +200,7 @@ const CustomerReceiver: React.FC<ActDataProps> = ({ data, setData }) => {
         )}
       </div>
 
-      {/* Full Name Input */}
+      {/* Поле для ввода ФИО */}
       <div className="mb-4">
         <label className="block text-sm font-medium text-gray-700 mb-1">
           Укажите ФИО
@@ -143,7 +214,7 @@ const CustomerReceiver: React.FC<ActDataProps> = ({ data, setData }) => {
         />
       </div>
 
-      {/* Phone Number Input */}
+      {/* Поле для ввода номера телефона */}
       <div className="mb-4">
         <label className="block text-sm font-medium text-gray-700 mb-1">
           Телефон
@@ -153,6 +224,34 @@ const CustomerReceiver: React.FC<ActDataProps> = ({ data, setData }) => {
           value={data?.receiver_data?.phone || ""}
           onChange={handlePhoneNumberChange}
           placeholder="Укажите номер телефона"
+          className="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-[#09BD3C] focus:border-transparent"
+        />
+      </div>
+
+      {/* Поле для ввода реквизитов */}
+      <div className="mb-4">
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          Реквизиты
+        </label>
+        <input
+          type="text"
+          value={data?.receiver_data?.account_details || ""}
+          onChange={handleAccountDetailsChange}
+          placeholder="Введите реквизиты"
+          className="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-[#09BD3C] focus:border-transparent"
+        />
+      </div>
+
+      {/* Поле для ввода адреса */}
+      <div className="mb-4">
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          Адрес
+        </label>
+        <input
+          type="text"
+          value={data?.receiver_data?.address || ""}
+          onChange={handleAddressChange}
+          placeholder="Введите адрес"
           className="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-[#09BD3C] focus:border-transparent"
         />
       </div>
