@@ -2,7 +2,7 @@
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import Avatar from "../../public/images/avatar.svg";
-import { FiPlus } from "react-icons/fi";
+import { FiPlus, FiCamera } from "react-icons/fi";
 import { usePathname, useRouter } from "next/navigation";
 import AccountSettings from "@/components/modals/AccountSettings";
 import { axiosInstance } from "@/helper/utils";
@@ -20,6 +20,11 @@ const Header: React.FC<HeaderProps> = ({ text, role }) => {
 
   const handleCreateAct = () => {
     router.push(`/${role}/create-act`);
+  };
+
+  // New: Handle QR scanning page navigation.
+  const handleScanQR = () => {
+    router.push("/qr");
   };
 
   useEffect(() => {
@@ -63,13 +68,22 @@ const Header: React.FC<HeaderProps> = ({ text, role }) => {
             role !== "courier" &&
             role !== "carrier" &&
             role !== "admin" && (
-              <button
-                className="flex items-center justify-center w-full sm:w-auto px-6 py-2 text-[#1A1A1A] bg-[#FDE107] rounded-lg hover:bg-[#f1d81d]"
-                onClick={handleCreateAct}
-              >
-                <FiPlus className="mr-2 w-5 sm:w-7 h-5 sm:h-7 font-normal" />
-                <p className="text-base">Создать акт</p>
-              </button>
+              <>
+                <button
+                  className="flex items-center justify-center w-full sm:w-auto px-6 py-2 text-[#1A1A1A] bg-[#FDE107] rounded-lg hover:bg-[#f1d81d]"
+                  onClick={handleCreateAct}
+                >
+                  <FiPlus className="mr-2 w-5 sm:w-7 h-5 sm:h-7 font-normal" />
+                  <p className="text-base">Создать акт</p>
+                </button>
+                <button
+                  className="flex items-center justify-center w-full sm:w-auto px-6 py-2 text-[#1A1A1A] bg-[#FDE107] rounded-lg hover:bg-[#f1d81d]"
+                  onClick={handleScanQR}
+                >
+                  <FiCamera className="mr-2 w-5 sm:w-7 h-5 sm:h-7 font-normal" />
+                  <p className="text-base">Сканировать QR</p>
+                </button>
+              </>
             )}
           {role !== "carrier" && (
             <div className="cursor-pointer">

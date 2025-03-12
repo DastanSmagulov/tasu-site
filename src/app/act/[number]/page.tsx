@@ -42,8 +42,6 @@ const ActNumberPage: React.FC = () => {
       setSuccess("");
       setError("");
 
-      console.log(number, role);
-
       try {
         await axiosInstance.post(`/acts/scan_qr_code/${number}`, {
           role,

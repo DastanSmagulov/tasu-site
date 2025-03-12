@@ -371,6 +371,7 @@ export default function ActPage() {
 
       const formData = buildFormData(changedData);
 
+      // First patch call: update the act with the changed fields.
       const response = await axiosInstance.patch(
         `/acts/${params.id}/`,
         formData,
@@ -379,8 +380,24 @@ export default function ActPage() {
         }
       );
 
-      originalDataRef.current = response.data;
-      setIsModalOpen(true);
+      // Check if the first patch call was successful.
+      if (response && response.status >= 200 && response.status < 300) {
+        // Second patch call: update the is_srm field to true.
+        const srmResponse = await axiosInstance.patch(`/acts/${params.id}/`, {
+          is_smr: true,
+        });
+
+        if (
+          srmResponse &&
+          srmResponse.status >= 200 &&
+          srmResponse.status < 300
+        ) {
+          // Merge the updated data, including is_srm: true.
+          const updatedData = { ...response.data, is_srm: true };
+          originalDataRef.current = updatedData;
+          setIsModalOpen(true);
+        }
+      }
     } catch (error) {
       console.error("Error sending act data:", error);
       alert("Ошибка при отправке акта");
