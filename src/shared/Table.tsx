@@ -200,13 +200,7 @@ const Table = ({ data, loading, fetchActsData }: any) => {
                         />
                       </td>
                       <td className="p-3 border border-gray-300">
-                        {role !== "admin" ? (
-                          <Link href={`/${role}/act/${actId}`}>
-                            {actNumber}
-                          </Link>
-                        ) : (
-                          <h2>{actNumber}</h2>
-                        )}
+                        <Link href={`/${role}/act/${actId}`}>{actNumber}</Link>
                       </td>
                       <td className="p-3 border border-gray-300">{customer}</td>
                       <td className="p-3 border border-gray-300">

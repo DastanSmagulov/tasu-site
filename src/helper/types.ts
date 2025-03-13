@@ -107,6 +107,18 @@ interface Transportation {
   sender_is_payer: boolean;
 }
 
+interface AccountDetails {
+  bin: string;
+  bik: string;
+  address?: string;
+  number_check?: string;
+  kbe?: string;
+  director?: string;
+  contacts?: string;
+  currency?: string;
+  name_bank?: string;
+}
+
 export interface Act {
   qr_code: { qr: string };
   number?: string;
@@ -135,6 +147,8 @@ export interface Act {
   cargo_status: string;
   transportation?: Transportation;
   accountant_photo: CargoImage[];
+  receiver_account_details: AccountDetails;
+  sender_account_details?: AccountDetails;
 }
 
 export interface ExpenseItem {
@@ -185,6 +199,8 @@ export interface AccountantTableRow {
   avr?: string;
   accountant_photo?: string;
   processed?: boolean;
+  expense_is_confirmed?: boolean;
+  expense_is_paid?: boolean;
 }
 
 export interface Status {

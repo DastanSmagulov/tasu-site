@@ -22,6 +22,8 @@ import AccountingAvr from "@/features/accountant/AccountingAvr";
 import TransportationServicesTables from "@/components/TransportationServicesTable";
 import Agreement from "@/components/Agreement";
 import Sender from "@/components/Sender";
+import PaymentPhoto from "@/components/PaymentPhoto";
+import PayerDetails from "@/components/PayerDetails";
 
 // --- Normalization & Deep Diff Utilities ---
 function normalizeValue(val: any): any {
@@ -156,19 +158,28 @@ export default function ActPage() {
     () => [
       {
         id: 1,
-        name: "Данные о Заказчике и Получателе",
+        name: "Данные о Заказчике, Получателя и Отправителя",
         component: (props: {
           data: Act;
           setData: React.Dispatch<React.SetStateAction<Act>>;
         }) => (
-          <>
+          <div className="flex flex-col gap-8">
             <Customer data={props.data} setData={props.setData} />
             <CustomerReceiver data={props.data} setData={props.setData} />
-          </>
+            <Sender data={actData} setData={setActData} />
+          </div>
         ),
       },
       {
         id: 2,
+        name: "Реквезиты",
+        component: (props: {
+          data: Act;
+          setData: React.Dispatch<React.SetStateAction<Act>>;
+        }) => <PayerDetails data={props.data} setData={props.setData} />,
+      },
+      {
+        id: 3,
         name: "Характеристики и фотографии груза",
         component: (props: {
           data: Act;
@@ -181,7 +192,7 @@ export default function ActPage() {
         ),
       },
       {
-        id: 3,
+        id: 4,
         name: "Типы транспорта и информация о водителе",
         component: (props: {
           data: Act;
@@ -198,7 +209,7 @@ export default function ActPage() {
         ),
       },
       {
-        id: 4,
+        id: 5,
         name: "Упаковка и ссылки для менеджера",
         component: (props: {
           data: Act;
@@ -227,7 +238,7 @@ export default function ActPage() {
         ),
       },
       {
-        id: 5,
+        id: 6,
         name: "Договор и услуги",
         component: (props: {
           data: Act;
@@ -258,7 +269,7 @@ export default function ActPage() {
         ),
       },
       {
-        id: 6,
+        id: 7,
         name: "Информация о получении и выдаче",
         component: (props: {
           data: Act;
@@ -281,7 +292,7 @@ export default function ActPage() {
         ),
       },
       {
-        id: 7,
+        id: 8,
         name: "Документы",
         component: (props: {
           data: Act;
@@ -371,6 +382,8 @@ export default function ActPage() {
 
       const formData = buildFormData(changedData);
 
+      console.log(changedData);
+
       // First patch call: update the act with the changed fields.
       const response = await axiosInstance.patch(
         `/acts/${params.id}/`,
@@ -379,9 +392,13 @@ export default function ActPage() {
           headers: { "Content-Type": "multipart/form-data" },
         }
       );
-
       // Check if the first patch call was successful.
-      if (response && response.status >= 200 && response.status < 300) {
+      if (
+        response &&
+        response.status >= 200 &&
+        response.status < 300 &&
+        !actData.is_smr
+      ) {
         // Second patch call: update the is_srm field to true.
         const srmResponse = await axiosInstance.patch(`/acts/${params.id}/`, {
           is_smr: true,
@@ -393,11 +410,11 @@ export default function ActPage() {
           srmResponse.status < 300
         ) {
           // Merge the updated data, including is_srm: true.
-          const updatedData = { ...response.data, is_srm: true };
+          const updatedData = { ...response.data, is_smr: true };
           originalDataRef.current = updatedData;
-          setIsModalOpen(true);
         }
       }
+      setIsModalOpen(true);
     } catch (error) {
       console.error("Error sending act data:", error);
       alert("Ошибка при отправке акта");
@@ -541,6 +558,7 @@ export default function ActPage() {
         </div>
         <div className="flex flex-col md:w-1/2 space-y-4">
           <CustomerReceiver data={actData} setData={setActData} />
+          <PayerDetails data={actData} setData={setActData} />
           <InformationPackage
             title={"О получении"}
             data={actData}
@@ -565,6 +583,7 @@ export default function ActPage() {
           />
           <AccountingEsf data={actData} setData={setActData} />
           <AccountingAvr data={actData} setData={setActData} />
+          <PaymentPhoto data={actData} setData={setActData} />
           <QrAct
             qrCodeUrl={actData?.qr_code + ""}
             actNumber={actData?.number + ""}

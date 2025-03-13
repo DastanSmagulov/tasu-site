@@ -50,7 +50,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           <Sidebar roleValue="админ" roleKey="admin" />
           {/* Main Content */}
           <div className="flex-1 flex flex-col lg:ml-64 px-6 py-4 h-screen overflow-auto">
-            <Header role="admin" text={headerText} />
+            <Header role="manager" text={headerText} />
             {children}
           </div>
         </SessionProvider>

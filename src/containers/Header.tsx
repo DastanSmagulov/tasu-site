@@ -101,7 +101,12 @@ const Header: React.FC<HeaderProps> = ({ text, role }) => {
                   onClick={() => setModalOpen(true)}
                 />
               ) : (
-                <div className="Загрузка..."></div>
+                <img
+                  src={profileImage + ""}
+                  alt="User Avatar"
+                  className="rounded-full w-12 sm:w-14 h-12 sm:h-14"
+                  onClick={() => setModalOpen(true)}
+                />
               )}
             </div>
           )}

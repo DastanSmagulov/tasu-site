@@ -22,9 +22,6 @@ const CustomerReceiver: React.FC<ActDataProps> = ({ data, setData }) => {
   const [phoneNumber, setPhoneNumber] = useState<string>(
     data?.receiver_data?.phone || ""
   );
-  const [accountDetails, setAccountDetails] = useState<string>(
-    data?.receiver_data?.account_details || ""
-  );
   const [address, setAddress] = useState<string>(
     data?.receiver_data?.address || ""
   );
@@ -62,7 +59,6 @@ const CustomerReceiver: React.FC<ActDataProps> = ({ data, setData }) => {
     setSelectedCustomer(customer);
     setFullName(customer.full_name);
     setPhoneNumber(customer.phone || "");
-    setAccountDetails(customer.account_details || "");
     setAddress(customer.address || "");
     setDropdownOpen(false);
 
@@ -115,7 +111,6 @@ const CustomerReceiver: React.FC<ActDataProps> = ({ data, setData }) => {
     e: React.ChangeEvent<HTMLInputElement>
   ) => {
     const newAccountDetails = e.target.value;
-    setAccountDetails(newAccountDetails);
     setData((prevData: any) => ({
       ...prevData,
       receiver_data: {
@@ -224,20 +219,6 @@ const CustomerReceiver: React.FC<ActDataProps> = ({ data, setData }) => {
           value={data?.receiver_data?.phone || ""}
           onChange={handlePhoneNumberChange}
           placeholder="Укажите номер телефона"
-          className="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-[#09BD3C] focus:border-transparent"
-        />
-      </div>
-
-      {/* Поле для ввода реквизитов */}
-      <div className="mb-4">
-        <label className="block text-sm font-medium text-gray-700 mb-1">
-          Реквизиты
-        </label>
-        <input
-          type="text"
-          value={data?.receiver_data?.account_details || ""}
-          onChange={handleAccountDetailsChange}
-          placeholder="Введите реквизиты"
           className="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-[#09BD3C] focus:border-transparent"
         />
       </div>

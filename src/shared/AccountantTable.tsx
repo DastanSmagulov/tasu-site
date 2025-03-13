@@ -69,11 +69,12 @@ const AccountantTable: React.FC<TableProps> = ({
               {[
                 "Номер",
                 "Заказчик",
-                "ЭCФ",
+                "ЭСФ",
                 "АВР",
                 "Счёт",
+                "Рассходы Подтверждены",
+                "Оплачен",
                 "Статус",
-                "Обработан",
                 "Сумма",
               ].map((col) => (
                 <th key={col} className="p-3 text-left">
@@ -110,13 +111,19 @@ const AccountantTable: React.FC<TableProps> = ({
                   <Checkbox checked={!!row.has_avr} readOnly={true} />
                 </td>
                 <td className="p-3 border border-gray-300">
-                  <Checkbox checked={!!row.accountant_photo} />
+                  <Checkbox checked={!!row.accountant_photo} readOnly={true} />
+                </td>
+                <td className="p-3 border border-gray-300">
+                  <Checkbox
+                    checked={!!row.expense_is_confirmed}
+                    readOnly={true}
+                  />
+                </td>
+                <td className="p-3 border border-gray-300">
+                  <Checkbox checked={!!row.expense_is_paid} readOnly={true} />
                 </td>
                 <td className="p-3 border border-gray-300">
                   {getStatusBadge(row.status)}{" "}
-                </td>
-                <td className="p-3 border border-gray-300">
-                  {row.processed ? "-" : "-"}
                 </td>
                 <td className="p-3 border border-gray-300">
                   {row.total_cost || "-"}

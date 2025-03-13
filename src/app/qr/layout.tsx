@@ -43,7 +43,6 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           <Sidebar roleValue={roleValue} roleKey={roleKey} />
           <div className="flex flex-col flex-1 px-4 md:px-10 py-4 lg:ml-64 overflow-auto h-screen">
             <Header role={roleKey} text={headerText} />
-            <TabsNavigation role="transceiver" />
             {children}
           </div>
         </SessionProvider>
